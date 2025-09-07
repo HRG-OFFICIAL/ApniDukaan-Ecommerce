@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shopsphere-config
+  namespace: shopsphere
+data:
+  NODE_ENV: "production"
+  API_GATEWAY_PORT: "4000"
+  CATALOG_SERVICE_PORT: "4001"
+  USER_SERVICE_PORT: "4002"
+  ORDER_SERVICE_PORT: "4003"
+  PAYMENT_SERVICE_PORT: "4004"
+  KAFKA_BROKERS: "kafka:9092"
+  KAFKA_CLIENT_ID: "shopsphere"
+  KAFKA_GROUP_ID: "shopsphere-group"
+  REDIS_URL: "redis://redis:6379"
+  MONGODB_DB_CATALOG: "shopsphere_catalog"
+  MONGODB_DB_USERS: "shopsphere_users"
+  MONGODB_DB_ORDERS: "shopsphere_orders"
+  MONGODB_DB_PAYMENTS: "shopsphere_payments"
+  AWS_REGION: "us-east-1"
+  RATE_LIMIT_WINDOW_MS: "900000"
+  RATE_LIMIT_MAX_REQUESTS: "100"
+  LOG_LEVEL: "info"
