@@ -1,42 +1,28 @@
-'use client';
+'use client'
 
-import { ReactNode } from 'react';
-import { Navbar } from './Navbar';
-import { Footer } from './Footer';
-import { Toaster } from 'react-hot-toast';
+import { Inter } from 'next/font/google'
+import Navbar from './Navbar'
+import Footer from './Footer'
+import CartSidebar from '../cart/CartSidebar'
+import { cn } from '../../utils/cn'
+
+const inter = Inter({ subsets: ['latin'] })
 
 interface MainLayoutProps {
-  children: ReactNode;
+  children: React.ReactNode
+  className?: string
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
+export default function MainLayout({ children, className }: MainLayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className={cn('min-h-screen bg-gray-50', inter.className)}>
       <Navbar />
-      <main className="flex-1">
+      <main className={cn('flex-1', className)}>
         {children}
       </main>
       <Footer />
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-          },
-          success: {
-            style: {
-              background: '#10B981',
-            },
-          },
-          error: {
-            style: {
-              background: '#EF4444',
-            },
-          },
-        }}
-      />
+      <CartSidebar />
     </div>
-  );
+  )
 }
+

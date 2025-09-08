@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { StringValue } from 'ms';
 import { logger } from './logger';
 import { IUser, UserRole } from '../types/user';
 
@@ -25,14 +26,14 @@ export interface RefreshTokenPayload {
 export class JWTService {
   private accessTokenSecret: string;
   private refreshTokenSecret: string;
-  private accessTokenExpiry: string;
-  private refreshTokenExpiry: string;
+  private accessTokenExpiry: StringValue;
+  private refreshTokenExpiry: StringValue;
 
   constructor() {
     this.accessTokenSecret = process.env.JWT_ACCESS_SECRET || 'access_secret_key_change_in_production';
     this.refreshTokenSecret = process.env.JWT_REFRESH_SECRET || 'refresh_secret_key_change_in_production';
-    this.accessTokenExpiry = process.env.JWT_ACCESS_EXPIRY || '15m';
-    this.refreshTokenExpiry = process.env.JWT_REFRESH_EXPIRY || '7d';
+    this.accessTokenExpiry = (process.env.JWT_ACCESS_EXPIRY || '15m') as StringValue;
+    this.refreshTokenExpiry = (process.env.JWT_REFRESH_EXPIRY || '7d') as StringValue;
 
     if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET) {
       logger.warn('JWT secrets not set in environment variables. Using defaults (not secure for production)');
@@ -44,17 +45,18 @@ export class JWTService {
    */
   generateAccessToken(user: IUser | JWTPayload): string {
     const payload: JWTPayload = {
-      userId: user._id || user.userId,
+      userId: 'userId' in user ? user.userId : (user as any)._id?.toString() || (user as any).id,
       email: user.email,
       role: user.role
     };
 
     try {
-      return jwt.sign(payload, this.accessTokenSecret, {
+      const options: jwt.SignOptions = {
         expiresIn: this.accessTokenExpiry,
         issuer: 'shopsphere',
         audience: 'shopsphere-client'
-      });
+      };
+      return jwt.sign(payload, this.accessTokenSecret, options);
     } catch (error) {
       logger.error('Error generating access token:', error);
       throw new Error('Failed to generate access token');
@@ -71,11 +73,12 @@ export class JWTService {
     };
 
     try {
-      return jwt.sign(payload, this.refreshTokenSecret, {
+      const options: jwt.SignOptions = {
         expiresIn: this.refreshTokenExpiry,
         issuer: 'shopsphere',
         audience: 'shopsphere-refresh'
-      });
+      };
+      return jwt.sign(payload, this.refreshTokenSecret, options);
     } catch (error) {
       logger.error('Error generating refresh token:', error);
       throw new Error('Failed to generate refresh token');
@@ -85,10 +88,11 @@ export class JWTService {
   /**
    * Generate both access and refresh tokens
    */
-  generateTokenPair(user: IUser, tokenVersion: number = 0): TokenPair {
+  generateTokenPair(user: IUser | JWTPayload, tokenVersion: number = 0): TokenPair {
+    const userId = 'userId' in user ? user.userId : (user as any)._id?.toString() || (user as any).id;
     return {
       accessToken: this.generateAccessToken(user),
-      refreshToken: this.generateRefreshToken(user._id, tokenVersion)
+      refreshToken: this.generateRefreshToken(userId, tokenVersion)
     };
   }
 

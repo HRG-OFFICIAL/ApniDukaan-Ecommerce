@@ -1,3 +1,372 @@
+import mongoose from 'mongoose';
+import { timestampPlugin } from '@shopsphere/shared';
+
+export interface IReview extends mongoose.Document {
+  _id: string;
+  product: mongoose.Types.ObjectId;
+  user: mongoose.Types.ObjectId;
+  rating: number;
+  title: string;
+  comment: string;
+  pros?: string[];
+  cons?: string[];
+  images?: string[];
+  isVerifiedPurchase: boolean;
+  isHelpful: {
+    yes: number;
+    no: number;
+  };
+  status: 'pending' | 'approved' | 'rejected' | 'flagged';
+  moderatorNote?: string;
+  replies: Array<{
+    user: mongoose.Types.ObjectId;
+    message: string;
+    isFromSeller: boolean;
+    createdAt: Date;
+  }>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const ReviewSchema = new mongoose.Schema<IReview>({
+  product: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    required: [true, 'Product reference is required']
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'User reference is required']
+  },
+  rating: {
+    type: Number,
+    required: [true, 'Rating is required'],
+    min: [1, 'Rating must be at least 1'],
+    max: [5, 'Rating cannot exceed 5']
+  },
+  title: {
+    type: String,
+    required: [true, 'Review title is required'],
+    trim: true,
+    maxlength: [200, 'Title cannot exceed 200 characters']
+  },
+  comment: {
+    type: String,
+    required: [true, 'Review comment is required'],
+    trim: true,
+    maxlength: [2000, 'Comment cannot exceed 2000 characters']
+  },
+  pros: [{
+    type: String,
+    trim: true,
+    maxlength: [200, 'Pro cannot exceed 200 characters']
+  }],
+  cons: [{
+    type: String,
+    trim: true,
+    maxlength: [200, 'Con cannot exceed 200 characters']
+  }],
+  images: [{
+    type: String
+  }],
+  isVerifiedPurchase: {
+    type: Boolean,
+    default: false
+  },
+  isHelpful: {
+    yes: {
+      type: Number,
+      default: 0,
+      min: [0, 'Helpful count cannot be negative']
+    },
+    no: {
+      type: Number,
+      default: 0,
+      min: [0, 'Helpful count cannot be negative']
+    }
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected', 'flagged'],
+    default: 'pending'
+  },
+  moderatorNote: {
+    type: String,
+    maxlength: [500, 'Moderator note cannot exceed 500 characters']
+  },
+  replies: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    message: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: [1000, 'Reply cannot exceed 1000 characters']
+    },
+    isFromSeller: {
+      type: Boolean,
+      default: false
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }]
+});
+
+// Apply timestamp plugin
+ReviewSchema.plugin(timestampPlugin);
+
+// Indexes
+ReviewSchema.index({ product: 1, status: 1 });
+ReviewSchema.index({ user: 1 });
+ReviewSchema.index({ rating: -1 });
+ReviewSchema.index({ createdAt: -1 });
+ReviewSchema.index({ isVerifiedPurchase: -1 });
+ReviewSchema.index({ 'isHelpful.yes': -1 });
+ReviewSchema.index({ product: 1, user: 1 }, { unique: true }); // One review per user per product
+
+// Virtual for helpful score (yes - no)
+ReviewSchema.virtual('helpfulScore').get(function(this: IReview) {
+  return this.isHelpful.yes - this.isHelpful.no;
+});
+
+// Virtual for total helpful votes
+ReviewSchema.virtual('totalHelpfulVotes').get(function(this: IReview) {
+  return this.isHelpful.yes + this.isHelpful.no;
+});
+
+// Virtual for checking if review has images
+ReviewSchema.virtual('hasImages').get(function(this: IReview) {
+  return this.images && this.images.length > 0;
+});
+
+// Virtual for checking if review has replies
+ReviewSchema.virtual('hasReplies').get(function(this: IReview) {
+  return this.replies && this.replies.length > 0;
+});
+
+// Static method to get review statistics for a product
+ReviewSchema.statics.getProductReviewStats = async function(productId: string) {
+  const stats = await this.aggregate([
+    { $match: { product: new mongoose.Types.ObjectId(productId), status: 'approved' } },
+    {
+      $group: {
+        _id: null,
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+        ratingDistribution: {
+          $push: '$rating'
+        }
+      }
+    }
+  ]);
+
+  if (!stats.length) {
+    return {
+      averageRating: 0,
+      totalReviews: 0,
+      distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+    };
+  }
+
+  const result = stats[0];
+  const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  
+  result.ratingDistribution.forEach((rating: number) => {
+    distribution[rating as keyof typeof distribution]++;
+  });
+
+  return {
+    averageRating: Math.round(result.averageRating * 10) / 10, // Round to 1 decimal
+    totalReviews: result.totalReviews,
+    distribution
+  };
+};
+
+// Static method to update product rating after review changes
+ReviewSchema.statics.updateProductRating = async function(productId: string) {
+  const Product = mongoose.model('Product');
+  const stats = await this.getProductReviewStats(productId);
+  
+  await Product.findByIdAndUpdate(productId, {
+    'rating.average': stats.averageRating,
+    'rating.count': stats.totalReviews,
+    'rating.distribution': stats.distribution
+  });
+};
+
+// Middleware to update product rating after save
+ReviewSchema.post('save', async function(this: IReview) {
+  await this.constructor.updateProductRating(this.product.toString());
+});
+
+// Middleware to update product rating after delete
+ReviewSchema.post('findOneAndDelete', async function(doc: IReview) {
+  if (doc) {
+    await doc.constructor.updateProductRating(doc.product.toString());
+  }
+});
+
+// Middleware to update product rating after update
+ReviewSchema.post('findOneAndUpdate', async function(doc: IReview) {
+  if (doc) {
+    await doc.constructor.updateProductRating(doc.product.toString());
+  }
+});
+
+// Instance method to add a reply
+ReviewSchema.methods.addReply = function(
+  userId: string,
+  message: string,
+  isFromSeller: boolean = false
+) {
+  this.replies.push({
+    user: new mongoose.Types.ObjectId(userId),
+    message,
+    isFromSeller,
+    createdAt: new Date()
+  });
+  return this.save();
+};
+
+// Instance method to mark as helpful
+ReviewSchema.methods.markHelpful = function(isHelpful: boolean) {
+  if (isHelpful) {
+    this.isHelpful.yes += 1;
+  } else {
+    this.isHelpful.no += 1;
+  }
+  return this.save();
+};
+
+// Static method to get reviews with pagination and filtering
+ReviewSchema.statics.getReviews = function(
+  productId: string,
+  options: {
+    page?: number;
+    limit?: number;
+    rating?: number;
+    sortBy?: 'newest' | 'oldest' | 'helpful' | 'rating_high' | 'rating_low';
+    verifiedOnly?: boolean;
+  } = {}
+) {
+  const {
+    page = 1,
+    limit = 10,
+    rating,
+    sortBy = 'newest',
+    verifiedOnly = false
+  } = options;
+
+  const skip = (page - 1) * limit;
+  const query: any = {
+    product: productId,
+    status: 'approved'
+  };
+
+  if (rating) {
+    query.rating = rating;
+  }
+
+  if (verifiedOnly) {
+    query.isVerifiedPurchase = true;
+  }
+
+  let sort: any = { createdAt: -1 }; // Default: newest first
+  
+  switch (sortBy) {
+    case 'oldest':
+      sort = { createdAt: 1 };
+      break;
+    case 'helpful':
+      sort = { 'isHelpful.yes': -1, createdAt: -1 };
+      break;
+    case 'rating_high':
+      sort = { rating: -1, createdAt: -1 };
+      break;
+    case 'rating_low':
+      sort = { rating: 1, createdAt: -1 };
+      break;
+  }
+
+  return this.find(query)
+    .populate('user', 'name avatar')
+    .populate('replies.user', 'name avatar')
+    .sort(sort)
+    .skip(skip)
+    .limit(limit)
+    .lean();
+};
+
+// Static method to get review summary for a product
+ReviewSchema.statics.getReviewSummary = async function(productId: string) {
+  const pipeline = [
+    {
+      $match: {
+        product: new mongoose.Types.ObjectId(productId),
+        status: 'approved'
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        totalReviews: { $sum: 1 },
+        averageRating: { $avg: '$rating' },
+        ratingDistribution: {
+          $push: '$rating'
+        },
+        verifiedReviews: {
+          $sum: { $cond: ['$isVerifiedPurchase', 1, 0] }
+        }
+      }
+    }
+  ];
+
+  const result = await this.aggregate(pipeline);
+  
+  if (!result || result.length === 0) {
+    return {
+      totalReviews: 0,
+      averageRating: 0,
+      ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+      verifiedReviews: 0,
+      recommendationPercentage: 0
+    };
+  }
+
+  const summary = result[0];
+  const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  
+  // Count rating distribution
+  summary.ratingDistribution.forEach((rating: number) => {
+    distribution[rating as keyof typeof distribution]++;
+  });
+  
+  // Calculate recommendation percentage (4 and 5 stars)
+  const positiveReviews = distribution[4] + distribution[5];
+  const recommendationPercentage = summary.totalReviews > 0 
+    ? Math.round((positiveReviews / summary.totalReviews) * 100)
+    : 0;
+  
+  return {
+    totalReviews: summary.totalReviews,
+    averageRating: parseFloat(summary.averageRating.toFixed(1)),
+    ratingDistribution: distribution,
+    verifiedReviews: summary.verifiedReviews,
+    recommendationPercentage
+  };
+};
+
+const Review = mongoose.model<IReview>('Review', ReviewSchema);
+
+export default Review;
+export { ReviewSchema };
+
 import mongoose, { Schema, Document } from 'mongoose';
 import { IReview, ReviewStatus, timestampPlugin } from '@shopsphere/shared';
 

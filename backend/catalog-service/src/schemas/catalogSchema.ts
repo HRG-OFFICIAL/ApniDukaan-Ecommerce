@@ -1,129 +1,132 @@
 import { gql } from 'apollo-server-express';
 
 export const catalogTypeDefs = gql`
-  type Product {
+  scalar DateTime
+  scalar JSON
+
+  # Product Types
+  type Product @key(fields: "id") {
     id: ID!
     name: String!
+    slug: String!
     description: String!
     shortDescription: String
-    price: Float!
-    comparePrice: Float
     sku: String!
-    barcode: String
+    price: Float!
+    originalPrice: Float
+    currency: String!
+    images: [String!]!
+    thumbnailImage: String
     category: Category!
     subcategory: Category
     brand: String
     tags: [String!]!
-    images: [ProductImage!]!
-    variants: [ProductVariant!]!
-    specifications: [ProductSpecification!]!
+    attributes: [ProductAttribute!]!
     inventory: ProductInventory!
-    dimensions: ProductDimensions
-    seo: ProductSEO
+    shipping: ProductShipping!
+    seo: ProductSEO!
     status: ProductStatus!
     featured: Boolean!
+    visibility: ProductVisibility!
     rating: ProductRating!
-    views: Int!
-    salesCount: Int!
-    availableInventory: Int!
+    sales: ProductSales!
+    isOnSale: Boolean!
+    saleStartDate: DateTime
+    saleEndDate: DateTime
+    # Virtual fields
     discountPercentage: Int!
+    isNew: Boolean!
+    isBestseller: Boolean!
     isLowStock: Boolean!
     isOutOfStock: Boolean!
-    publishedAt: DateTime
+    reviews(page: Int = 1, limit: Int = 10, rating: Int, sortBy: ReviewSortBy = NEWEST, verifiedOnly: Boolean = false): ReviewConnection!
     createdAt: DateTime!
     updatedAt: DateTime!
   }
 
-  type Category {
-    id: ID!
-    name: String!
-    description: String
-    slug: String!
-    parent: Category
-    level: Int!
-    path: String!
-    image: CategoryImage
-    icon: String
-    isActive: Boolean!
-    isFeatured: Boolean!
-    sortOrder: Int!
-    seo: CategorySEO
-    productCount: Int!
-    children: [Category!]!
-    createdAt: DateTime!
-    updatedAt: DateTime!
-  }
-
-  type Review {
-    id: ID!
-    product: Product!
-    user: ID!
-    userName: String!
-    rating: Int!
-    title: String!
-    content: String!
-    images: [ReviewImage!]!
-    verified: Boolean!
-    status: ReviewStatus!
-    helpfulVotes: ReviewVotes!
-    unhelpfulVotes: ReviewVotes!
-    helpfulnessRatio: Float!
-    createdAt: DateTime!
-    updatedAt: DateTime!
-  }
-
-  type ProductImage {
-    url: String!
-    alt: String!
-    isPrimary: Boolean!
-  }
-
-  type ProductVariant {
-    name: String!
-    options: [ProductVariantOption!]!
-  }
-
-  type ProductVariantOption {
+  type ProductAttribute {
     name: String!
     value: String!
-    priceModifier: Float!
-  }
-
-  type ProductSpecification {
-    name: String!
-    value: String!
+    type: ProductAttributeType!
   }
 
   type ProductInventory {
     quantity: Int!
+    reserved: Int!
+    available: Int!
     lowStockThreshold: Int!
-    trackInventory: Boolean!
+    trackQuantity: Boolean!
+    allowBackorder: Boolean!
+    sku: String
+    barcode: String
+    weight: Float
+    dimensions: ProductDimensions
   }
 
-  type ProductDimensions {
-    length: Float
-    width: Float
-    height: Float
-    weight: Float
-    unit: String
-    weightUnit: String
+  type ProductShipping {
+    weight: Float!
+    dimensions: ProductDimensions!
+    freeShipping: Boolean!
+    shippingClass: String
+    estimatedDeliveryDays: Int
   }
 
   type ProductSEO {
     title: String
     description: String
     keywords: [String!]!
-    slug: String
+    canonicalUrl: String
+    metaTags: [MetaTag!]!
+  }
+
+  type MetaTag {
+    name: String!
+    content: String!
+    property: String
   }
 
   type ProductRating {
     average: Float!
     count: Int!
+    distribution: [RatingDistribution!]!
   }
 
-  type CategoryImage {
-    url: String!
-    alt: String!
+  type RatingDistribution {
+    rating: Int!
+    count: Int!
+    percentage: Float!
+  }
+
+  type ProductSales {
+    totalSold: Int!
+    revenue: Float!
+    lastSoldAt: DateTime
+  }
+
+  # Category Types
+  type Category @key(fields: "id") {
+    id: ID!
+    name: String!
+    slug: String!
+    description: String
+    image: String
+    parent: Category
+    children: [Category!]!
+    level: Int!
+    order: Int!
+    active: Boolean!
+    seo: CategorySEO!
+    productCount: Int!
+    breadcrumb: [CategoryBreadcrumb!]!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+  }
+
+  type CategoryBreadcrumb {
+    id: ID!
+    name: String!
+    slug: String!
+    level: Int!
   }
 
   type CategorySEO {
@@ -132,95 +135,196 @@ export const catalogTypeDefs = gql`
     keywords: [String!]!
   }
 
+  # Review Types
+  type Review {
+    id: ID!
+    product: Product!
+    user: User!
+    rating: Int!
+    title: String!
+    comment: String!
+    pros: [String!]!
+    cons: [String!]!
+    images: [ReviewImage!]!
+    verified: Boolean!
+    helpfulVotes: Int!
+    helpfulBy: [ID!]!
+    status: ReviewStatus!
+    replies: [ReviewReply!]!
+    moderatedBy: User
+    moderatedAt: DateTime
+    moderationNote: String
+    createdAt: DateTime!
+    updatedAt: DateTime!
+  }
+
   type ReviewImage {
     url: String!
-    alt: String!
+    alt: String
+    caption: String
   }
 
-  type ReviewVotes {
-    count: Int!
+  type ReviewReply {
+    id: ID!
+    user: User!
+    comment: String!
+    createdAt: DateTime!
   }
 
-  type RatingStats {
-    averageRating: Float!
-    totalReviews: Int!
-    ratingDistribution: RatingDistribution!
+  type ReviewConnection {
+    edges: [ReviewEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
   }
 
-  type RatingDistribution {
-    five: Int!
-    four: Int!
-    three: Int!
-    two: Int!
-    one: Int!
+  type ReviewEdge {
+    node: Review!
+    cursor: String!
   }
 
-  type ProductSearchResult {
-    products: [Product!]!
-    total: Int!
-    page: Int!
-    limit: Int!
-    hasMore: Boolean!
+  type PageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
+    endCursor: String
   }
 
+  # User Type (from user service)
+  type User @key(fields: "id") {
+    id: ID!
+    email: String!
+    firstName: String!
+    lastName: String!
+    avatar: String
+  }
+
+  # Enums
   enum ProductStatus {
-    DRAFT
     ACTIVE
-    INACTIVE
+    DRAFT
     ARCHIVED
+    DELETED
+  }
+
+  enum ProductVisibility {
+    PUBLIC
+    PRIVATE
+    HIDDEN
+  }
+
+  enum ProductAttributeType {
+    TEXT
+    NUMBER
+    BOOLEAN
+    SELECT
+    MULTI_SELECT
+    DATE
+    URL
   }
 
   enum ReviewStatus {
     PENDING
     APPROVED
     REJECTED
+    SPAM
   }
 
-  enum SortBy {
+  enum ReviewSortBy {
     NEWEST
     OLDEST
-    PRICE_LOW_HIGH
-    PRICE_HIGH_LOW
-    RATING
-    POPULARITY
-    NAME_A_Z
-    NAME_Z_A
+    HIGHEST_RATING
+    LOWEST_RATING
+    MOST_HELPFUL
   }
 
+  enum ProductSortBy {
+    NAME_A_Z
+    NAME_Z_A
+    PRICE_LOW_HIGH
+    PRICE_HIGH_LOW
+    NEWEST
+    OLDEST
+    RATING_HIGH_LOW
+    POPULARITY
+  }
+
+  # Input Types
   input ProductSearchInput {
     query: String
     category: ID
+    brand: String
     minPrice: Float
     maxPrice: Float
-    brand: String
+    rating: Int
     tags: [String!]
-    inStock: Boolean
+    sortBy: ProductSortBy
+    page: Int = 1
+    limit: Int = 20
     featured: Boolean
-    sortBy: SortBy
-    page: Int
-    limit: Int
+    onSale: Boolean
+    inStock: Boolean
   }
 
   input CreateProductInput {
     name: String!
     description: String!
     shortDescription: String
-    price: Float!
-    comparePrice: Float
     sku: String!
-    barcode: String
+    price: Float!
+    originalPrice: Float
+    currency: String = "USD"
+    images: [String!]!
     category: ID!
     subcategory: ID
     brand: String
-    tags: [String!]
-    images: [ProductImageInput!]!
-    variants: [ProductVariantInput!]
-    specifications: [ProductSpecificationInput!]
+    tags: [String!] = []
+    attributes: [ProductAttributeInput!] = []
     inventory: ProductInventoryInput!
-    dimensions: ProductDimensionsInput
+    shipping: ProductShippingInput!
     seo: ProductSEOInput
-    status: ProductStatus
-    featured: Boolean
+    featured: Boolean = false
+    visibility: ProductVisibility = PUBLIC
+    saleStartDate: DateTime
+    saleEndDate: DateTime
+  }
+
+  input ProductAttributeInput {
+    name: String!
+    value: String!
+    type: ProductAttributeType!
+  }
+
+  input ProductInventoryInput {
+    quantity: Int!
+    lowStockThreshold: Int = 5
+    trackQuantity: Boolean = true
+    allowBackorder: Boolean = false
+    sku: String
+    barcode: String
+    weight: Float
+    dimensions: ProductDimensionsInput
+  }
+
+  input ProductDimensionsInput {
+    length: Float!
+    width: Float!
+    height: Float!
+    unit: String = "cm"
+  }
+
+  input ProductShippingInput {
+    weight: Float!
+    dimensions: ProductDimensionsInput!
+    freeShipping: Boolean = false
+    shippingClass: String
+    estimatedDeliveryDays: Int
+  }
+
+  input ProductSEOInput {
+    title: String
+    description: String
+    keywords: [String!] = []
+    canonicalUrl: String
   }
 
   input UpdateProductInput {
@@ -228,148 +332,97 @@ export const catalogTypeDefs = gql`
     description: String
     shortDescription: String
     price: Float
-    comparePrice: Float
-    sku: String
-    barcode: String
+    originalPrice: Float
+    images: [String!]
     category: ID
     subcategory: ID
     brand: String
     tags: [String!]
-    images: [ProductImageInput!]
-    variants: [ProductVariantInput!]
-    specifications: [ProductSpecificationInput!]
+    attributes: [ProductAttributeInput!]
     inventory: ProductInventoryInput
-    dimensions: ProductDimensionsInput
+    shipping: ProductShippingInput
     seo: ProductSEOInput
     status: ProductStatus
     featured: Boolean
-  }
-
-  input ProductImageInput {
-    url: String!
-    alt: String
-    isPrimary: Boolean
-  }
-
-  input ProductVariantInput {
-    name: String!
-    options: [ProductVariantOptionInput!]!
-  }
-
-  input ProductVariantOptionInput {
-    name: String!
-    value: String!
-    priceModifier: Float
-  }
-
-  input ProductSpecificationInput {
-    name: String!
-    value: String!
-  }
-
-  input ProductInventoryInput {
-    quantity: Int!
-    lowStockThreshold: Int
-    trackInventory: Boolean
-  }
-
-  input ProductDimensionsInput {
-    length: Float
-    width: Float
-    height: Float
-    weight: Float
-    unit: String
-    weightUnit: String
-  }
-
-  input ProductSEOInput {
-    title: String
-    description: String
-    keywords: [String!]
-    slug: String
+    visibility: ProductVisibility
+    saleStartDate: DateTime
+    saleEndDate: DateTime
   }
 
   input CreateCategoryInput {
     name: String!
     description: String
-    slug: String
+    image: String
     parent: ID
-    image: CategoryImageInput
-    icon: String
-    isActive: Boolean
-    isFeatured: Boolean
-    sortOrder: Int
+    order: Int = 0
+    active: Boolean = true
     seo: CategorySEOInput
-  }
-
-  input UpdateCategoryInput {
-    name: String
-    description: String
-    slug: String
-    parent: ID
-    image: CategoryImageInput
-    icon: String
-    isActive: Boolean
-    isFeatured: Boolean
-    sortOrder: Int
-    seo: CategorySEOInput
-  }
-
-  input CategoryImageInput {
-    url: String!
-    alt: String
   }
 
   input CategorySEOInput {
     title: String
     description: String
-    keywords: [String!]
+    keywords: [String!] = []
+  }
+
+  input UpdateCategoryInput {
+    name: String
+    description: String
+    image: String
+    parent: ID
+    order: Int
+    active: Boolean
+    seo: CategorySEOInput
   }
 
   input CreateReviewInput {
     product: ID!
     rating: Int!
     title: String!
-    content: String!
-    images: [ReviewImageInput!]
+    comment: String!
+    pros: [String!] = []
+    cons: [String!] = []
+    images: [ReviewImageInput!] = []
   }
 
   input ReviewImageInput {
     url: String!
     alt: String
+    caption: String
   }
 
+  # Query Types
   type Query {
     # Product queries
     products(input: ProductSearchInput): ProductSearchResult!
     product(id: ID, slug: String, sku: String): Product
-    featuredProducts(limit: Int): [Product!]!
-    
+    featuredProducts(limit: Int = 12): [Product!]!
+
     # Category queries
-    categories: [Category!]!
+    categories(tree: Boolean = false, includeProductCount: Boolean = false): [Category!]!
     category(id: ID, slug: String): Category
-    categoryTree: [Category!]!
-    featuredCategories(limit: Int): [Category!]!
-    
+    featuredCategories(limit: Int = 8): [Category!]!
+
     # Review queries
-    reviews(productId: ID!, limit: Int, offset: Int): [Review!]!
+    reviews(productId: ID!, limit: Int = 10, offset: Int = 0): [Review!]!
     review(id: ID!): Review
     productRatingStats(productId: ID!): RatingStats!
-    userReviews(limit: Int, offset: Int): [Review!]!
+    userReviews(limit: Int = 10, offset: Int = 0): [Review!]!
   }
 
+  # Mutation Types
   type Mutation {
     # Product mutations (Admin only)
     createProduct(input: CreateProductInput!): Product!
     updateProduct(id: ID!, input: UpdateProductInput!): Product!
     deleteProduct(id: ID!): Boolean!
     updateProductInventory(id: ID!, quantity: Int!): Product!
-    
+
     # Category mutations (Admin only)
     createCategory(input: CreateCategoryInput!): Category!
     updateCategory(id: ID!, input: UpdateCategoryInput!): Category!
     deleteCategory(id: ID!): Boolean!
-    
+
     # Review mutations
     createReview(input: CreateReviewInput!): Review!
     updateReviewStatus(id: ID!, status: ReviewStatus!): Review!
@@ -378,5 +431,35 @@ export const catalogTypeDefs = gql`
     deleteReview(id: ID!): Boolean!
   }
 
-  scalar DateTime
+  # Result Types
+  type ProductSearchResult {
+    products: [Product!]!
+    totalCount: Int!
+    pageInfo: PageInfo!
+    filters: ProductFilters!
+  }
+
+  type ProductFilters {
+    categories: [Category!]!
+    brands: [String!]!
+    priceRange: PriceRange!
+    ratings: [RatingFilter!]!
+    tags: [String!]!
+  }
+
+  type PriceRange {
+    min: Float!
+    max: Float!
+  }
+
+  type RatingFilter {
+    rating: Int!
+    count: Int!
+  }
+
+  type RatingStats {
+    average: Float!
+    total: Int!
+    distribution: [RatingDistribution!]!
+  }
 `;

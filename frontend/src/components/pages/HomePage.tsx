@@ -5,14 +5,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, TrendingUp, Star, ShoppingBag, Truck, Shield, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { ProductCard } from '@/components/product/ProductCard';
+import ProductCard from '@/components/product/ProductCard';
 import { useFeaturedProducts } from '@/hooks/useProducts';
 
 export const HomePage: React.FC = () => {
   const { 
-    data: featuredProducts, 
-    isLoading: loadingFeatured 
-  } = useFeaturedProducts({ limit: 8 });
+    products: featuredProducts, 
+    loading: loadingFeatured 
+  } = useFeaturedProducts();
 
   return (
     <div className="min-h-screen">

@@ -24,8 +24,7 @@ export class DatabaseConnection {
         maxPoolSize: 10,
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
-        bufferCommands: false,
-        bufferMaxEntries: 0,
+        bufferCommands: false
       });
 
       this.isConnected = true;
@@ -108,7 +107,7 @@ export const timestampPlugin = (schema: mongoose.Schema) => {
     this.updatedAt = new Date();
   });
 
-  schema.pre(['updateOne', 'updateMany', 'findOneAndUpdate'], function() {
+  schema.pre(['updateOne', 'updateMany', 'findOneAndUpdate'], function(this: any) {
     this.set({ updatedAt: new Date() });
   });
 };

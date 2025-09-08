@@ -1,47 +1,16 @@
 import express from 'express';
-import { ApolloServer } from 'apollo-server-express';
-import { buildFederatedSchema } from '@apollo/federation';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { connectDatabase, connectRedis, logger } from '@shopsphere/shared';
-import { catalogTypeDefs } from './schemas/catalogSchema';
-import { catalogResolvers } from './resolvers/catalogResolver';
-import { GraphQLScalarType } from 'graphql';
-import { Kind } from 'graphql/language';
-
-// Custom DateTime scalar
-const DateTimeScalar = new GraphQLScalarType({
-  name: 'DateTime',
-  description: 'DateTime custom scalar type',
-  serialize(value: any) {
-    return value instanceof Date ? value.toISOString() : null;
-  },
-  parseValue(value: any) {
-    return new Date(value);
-  },
-  parseLiteral(ast) {
-    if (ast.kind === Kind.STRING) {
-      return new Date(ast.value);
-    }
-    return null;
-  }
-});
-
-// Merge resolvers with DateTime scalar
-const resolvers = {
-  ...catalogResolvers,
-  DateTime: DateTimeScalar
-};
+import { connectDatabase, logger } from '@shopsphere/shared';
 
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 4001;
 
   try {
-    // Connect to databases
-    await connectDatabase(process.env.MONGODB_URI!, 'catalog_db');
-    await connectRedis(process.env.REDIS_URL!);
+    // Connect to database
+    await connectDatabase(process.env.MONGODB_URI || 'mongodb://localhost:27017', 'catalog_db');
 
     // Security middleware
     app.use(helmet({
@@ -79,63 +48,64 @@ async function startServer() {
       });
     });
 
-    // Create Apollo Server with Federation
-    const server = new ApolloServer({
-      schema: buildFederatedSchema([{
-        typeDefs: catalogTypeDefs,
-        resolvers
-      }]),
-      context: ({ req }) => {
-        // Extract user from headers (set by API Gateway)
-        const userId = req.headers['x-user-id'] as string;
-        const userRole = req.headers['x-user-role'] as string;
-        
-        let user = null;
-        if (userId && userRole) {
-          user = {
-            userId,
-            role: userRole
-          };
+    // Simple products endpoint
+    app.get('/api/products', (req, res) => {
+      res.json({
+        success: true,
+        data: {
+          products: [
+            {
+              id: '1',
+              name: 'Sample Product 1',
+              description: 'This is a sample product for testing',
+              price: 29.99,
+              image: 'https://via.placeholder.com/300x300',
+              category: 'Electronics'
+            },
+            {
+              id: '2',
+              name: 'Sample Product 2',
+              description: 'Another sample product for testing',
+              price: 49.99,
+              image: 'https://via.placeholder.com/300x300',
+              category: 'Clothing'
+            }
+          ],
+          pagination: {
+            page: 1,
+            limit: 20,
+            total: 2,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false
+          }
         }
-
-        return {
-          req,
-          user
-        };
-      },
-      introspection: process.env.NODE_ENV !== 'production',
-      playground: process.env.NODE_ENV !== 'production',
-      formatError: (error) => {
-        logger.error('GraphQL Error in Catalog Service', {
-          message: error.message,
-          path: error.path,
-          source: error.source?.body,
-          action: 'graphql_error'
-        });
-
-        // Don't expose internal errors in production
-        if (process.env.NODE_ENV === 'production' && error.message.includes('Internal')) {
-          return new Error('Internal server error');
-        }
-
-        return error;
-      },
-      formatResponse: (response, { request }) => {
-        logger.info('GraphQL Request in Catalog Service', {
-          query: request.query,
-          variables: request.variables,
-          operationName: request.operationName,
-          action: 'graphql_request'
-        });
-        return response;
-      }
+      });
     });
 
-    await server.start();
-    server.applyMiddleware({ 
-      app, 
-      path: '/graphql',
-      cors: false // We handle CORS above
+    // Simple categories endpoint
+    app.get('/api/categories', (req, res) => {
+      res.json({
+        success: true,
+        data: {
+          categories: [
+            {
+              id: '1',
+              name: 'Electronics',
+              slug: 'electronics',
+              description: 'Electronic devices and gadgets',
+              productCount: 1
+            },
+            {
+              id: '2',
+              name: 'Clothing',
+              slug: 'clothing',
+              description: 'Fashion and apparel',
+              productCount: 1
+            }
+          ]
+        }
+      });
     });
 
     // Global error handler
@@ -164,25 +134,22 @@ async function startServer() {
     app.listen(PORT, () => {
       logger.info('Catalog Service started successfully', {
         port: PORT,
-        graphqlPath: server.graphqlPath,
         environment: process.env.NODE_ENV || 'development',
         action: 'server_start'
       });
       
       console.log(`🚀 Catalog Service ready at http://localhost:${PORT}`);
-      console.log(`📊 GraphQL endpoint: http://localhost:${PORT}${server.graphqlPath}`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
     });
 
     // Graceful shutdown
     process.on('SIGTERM', async () => {
       logger.info('SIGTERM received, shutting down Catalog Service gracefully');
-      await server.stop();
       process.exit(0);
     });
 
     process.on('SIGINT', async () => {
       logger.info('SIGINT received, shutting down Catalog Service gracefully');
-      await server.stop();
       process.exit(0);
     });
 

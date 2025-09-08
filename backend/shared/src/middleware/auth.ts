@@ -51,18 +51,18 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
       });
       
       next();
-    } catch (tokenError) {
+    } catch (tokenError: any) {
       logSecurityEvent('INVALID_AUTH_TOKEN', {
         ip: req.ip,
         userAgent: req.get('User-Agent'),
         url: req.originalUrl,
-        error: tokenError.message
+        error: tokenError?.message || 'Unknown token error'
       });
 
-      const errorCode = tokenError.message.includes('expired') ? 'TOKEN_EXPIRED' : 'INVALID_TOKEN';
+      const errorCode = tokenError?.message?.includes('expired') ? 'TOKEN_EXPIRED' : 'INVALID_TOKEN';
       res.status(401).json({
         success: false,
-        error: tokenError.message,
+        error: tokenError?.message || 'Authentication failed',
         code: errorCode
       });
       return;
@@ -95,9 +95,9 @@ export const optionalAuthenticate = (req: Request, res: Response, next: NextFunc
       const payload = jwtService.verifyAccessToken(token);
       req.user = payload;
       req.userId = payload.userId;
-    } catch (tokenError) {
+    } catch (tokenError: any) {
       // Invalid token, but continue without authentication
-      logger.debug('Optional auth failed, continuing without authentication:', tokenError.message);
+      logger.debug('Optional auth failed, continuing without authentication:', tokenError?.message || 'Unknown error');
     }
 
     next();
@@ -229,12 +229,12 @@ export const authenticateService = (req: Request, res: Response, next: NextFunct
       });
 
       next();
-    } catch (keyError) {
+    } catch (keyError: any) {
       logSecurityEvent('INVALID_API_KEY', {
         ip: req.ip,
         userAgent: req.get('User-Agent'),
         url: req.originalUrl,
-        error: keyError.message
+        error: keyError?.message || 'API key verification failed'
       });
 
       res.status(401).json({
@@ -339,10 +339,10 @@ export const handleRefreshToken = async (req: Request, res: Response, next: Next
       const payload = jwtService.verifyRefreshToken(refreshToken);
       req.body.refreshTokenPayload = payload;
       next();
-    } catch (error) {
+    } catch (error: any) {
       logSecurityEvent('INVALID_REFRESH_TOKEN', {
         ip: req.ip,
-        error: error.message
+        error: error?.message || 'Refresh token verification failed'
       });
 
       res.status(401).json({
