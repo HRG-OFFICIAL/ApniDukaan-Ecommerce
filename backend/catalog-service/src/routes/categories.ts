@@ -1,747 +1,353 @@
 import express from 'express';
 import { body, param, query, validationResult } from 'express-validator';
-import { authenticate, authorize } from '@shopsphere/shared';
-import { CategoryModel } from '../models/Category';
-import { ProductModel } from '../models/Product';
+import { CategoryService } from '../services/categoryService';
 import { logger } from '@shopsphere/shared';
 
 const router = express.Router();
+const categoryService = new CategoryService();
 
-// Validation rules
-const createCategoryValidation = [
-  body('name')
-    .trim()
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Category name is required and must be less than 100 characters'),
-  body('description')
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage('Description must be less than 500 characters'),
-  body('parent')
-    .optional()
-    .isMongoId()
-    .withMessage('Parent category must be a valid ID')
-];
+// Validation middleware
+const handleValidationErrors = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      errors: errors.array()
+    });
+  }
+  next();
+};
 
-const updateCategoryValidation = [
-  param('id')
-    .isMongoId()
-    .withMessage('Category ID must be valid'),
-  body('name')
-    .optional()
-    .trim()
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Category name must be less than 100 characters'),
-  body('description')
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage('Description must be less than 500 characters')
-];
+// GET /api/categories - Get all categories
+router.get('/', [
+  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+  query('parent').optional().isMongoId().withMessage('Parent must be a valid MongoDB ID'),
+  query('level').optional().isInt({ min: 0 }).withMessage('Level must be a non-negative integer'),
+  query('isActive').optional().isBoolean().withMessage('IsActive must be a boolean'),
+  query('search').optional().isString().withMessage('Search must be a string'),
+  handleValidationErrors
+], async (req: express.Request, res: express.Response) => {
+  try {
+    const {
+      page = 1,
+      limit = 50,
+      parent,
+      level,
+      isActive,
+      search
+    } = req.query;
 
-/**
- * @route GET /categories
- * @desc Get all categories with optional tree structure
- * @access Public
- */
-router.get('/',
-  query('tree').optional().isBoolean().withMessage('Tree must be boolean'),
-  query('includeProductCount').optional().isBoolean().withMessage('includeProductCount must be boolean'),
-  async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          error: 'Validation failed',
-          details: errors.array()
-        });
+    const filters = {
+      parent: parent as string,
+      level: level ? parseInt(level as string) : undefined,
+      isActive: isActive ? isActive === 'true' : undefined,
+      search: search as string
+    };
+
+    const result = await categoryService.getCategories(
+      filters,
+      parseInt(page as string),
+      parseInt(limit as string)
+    );
+
+    res.json({
+      success: true,
+      data: result.categories,
+      pagination: {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        total: result.total,
+        pages: result.pages
       }
+    });
+  } catch (error: any) {
+    logger.error('Failed to get categories', {
+      error: error.message,
+      query: req.query,
+      action: 'get_categories_api_failed'
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get categories',
+      error: error.message
+    });
+  }
+});
 
-      const tree = req.query.tree === 'true';
-      const includeProductCount = req.query.includeProductCount === 'true';
+// GET /api/categories/tree - Get category tree
+router.get('/tree', async (req: express.Request, res: express.Response) => {
+  try {
+    const categories = await categoryService.getCategoryTree();
 
-      if (tree) {
-        // Return hierarchical tree structure
-        const categories = await CategoryModel.buildTree();
-        
-        if (includeProductCount) {
-          await CategoryModel.populateProductCounts(categories);
-        }
+    res.json({
+      success: true,
+      data: categories
+    });
+  } catch (error: any) {
+    logger.error('Failed to get category tree', {
+      error: error.message,
+      action: 'get_category_tree_api_failed'
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get category tree',
+      error: error.message
+    });
+  }
+});
 
-        res.json({
-          success: true,
-          data: { categories }
-        });
-      } else {
-        // Return flat list of categories
-        const categories = await CategoryModel.find({ active: true })
-          .populate('parent', 'name slug')
-          .sort({ level: 1, order: 1, name: 1 })
-          .lean();
+// GET /api/categories/popular - Get popular categories
+router.get('/popular', [
+  query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50'),
+  handleValidationErrors
+], async (req: express.Request, res: express.Response) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 10;
+    const categories = await categoryService.getPopularCategories(limit);
 
-        if (includeProductCount) {
-          for (const category of categories) {
-            const productCount = await ProductModel.countDocuments({ 
-              category: category._id,
-              status: 'active'
-            });
-            (category as any).productCount = productCount;
-          }
-        }
+    res.json({
+      success: true,
+      data: categories
+    });
+  } catch (error: any) {
+    logger.error('Failed to get popular categories', {
+      error: error.message,
+      query: req.query,
+      action: 'get_popular_categories_api_failed'
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get popular categories',
+      error: error.message
+    });
+  }
+});
 
-        res.json({
-          success: true,
-          data: { categories }
-        });
-      }
+// GET /api/categories/:id - Get category by ID
+router.get('/:id', [
+  param('id').isMongoId().withMessage('Category ID must be a valid MongoDB ID'),
+  handleValidationErrors
+], async (req: express.Request, res: express.Response) => {
+  try {
+    const category = await categoryService.getCategoryById(req.params.id);
 
-    } catch (error) {
-      logger.error('Error fetching categories:', error);
-      res.status(500).json({
+    if (!category) {
+      return res.status(404).json({
         success: false,
-        error: 'Failed to fetch categories',
-        code: 'FETCH_CATEGORIES_ERROR'
+        message: 'Category not found'
       });
     }
+
+    res.json({
+      success: true,
+      data: category
+    });
+  } catch (error: any) {
+    logger.error('Failed to get category by ID', {
+      error: error.message,
+      categoryId: req.params.id,
+      action: 'get_category_by_id_api_failed'
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get category',
+      error: error.message
+    });
   }
-);
+});
 
-/**
- * @route GET /categories/:id
- * @desc Get single category by ID
- * @access Public
- */
-router.get('/:id',
-  param('id').isMongoId().withMessage('Category ID must be valid'),
-  async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          error: 'Validation failed',
-          details: errors.array()
-        });
-      }
+// GET /api/categories/slug/:slug - Get category by slug
+router.get('/slug/:slug', [
+  param('slug').isSlug().withMessage('Slug must be a valid slug'),
+  handleValidationErrors
+], async (req: express.Request, res: express.Response) => {
+  try {
+    const category = await categoryService.getCategoryBySlug(req.params.slug);
 
-      const category = await CategoryModel.findById(req.params.id)
-        .populate('parent', 'name slug')
-        .lean();
-
-      if (!category) {
-        return res.status(404).json({
-          success: false,
-          error: 'Category not found',
-          code: 'CATEGORY_NOT_FOUND'
-        });
-      }
-
-      // Get product count for this category
-      const productCount = await ProductModel.countDocuments({ 
-        category: category._id,
-        status: 'active'
-      });
-
-      res.json({
-        success: true,
-        data: { 
-          category: {
-            ...category,
-            productCount
-          }
-        }
-      });
-
-    } catch (error) {
-      logger.error('Error fetching category:', error);
-      res.status(500).json({
+    if (!category) {
+      return res.status(404).json({
         success: false,
-        error: 'Failed to fetch category',
-        code: 'FETCH_CATEGORY_ERROR'
+        message: 'Category not found'
       });
     }
+
+    res.json({
+      success: true,
+      data: category
+    });
+  } catch (error: any) {
+    logger.error('Failed to get category by slug', {
+      error: error.message,
+      slug: req.params.slug,
+      action: 'get_category_by_slug_api_failed'
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get category',
+      error: error.message
+    });
   }
-);
+});
 
-/**
- * @route GET /categories/slug/:slug
- * @desc Get single category by slug
- * @access Public
- */
-router.get('/slug/:slug',
-  param('slug').notEmpty().withMessage('Category slug is required'),
-  async (req, res) => {
-    try {
-      const category = await CategoryModel.findOne({ 
-        slug: req.params.slug,
-        active: true
-      })
-      .populate('parent', 'name slug')
-      .lean();
+// GET /api/categories/:id/products - Get category with products
+router.get('/:id/products', [
+  param('id').isMongoId().withMessage('Category ID must be a valid MongoDB ID'),
+  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+  handleValidationErrors
+], async (req: express.Request, res: express.Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
 
-      if (!category) {
-        return res.status(404).json({
-          success: false,
-          error: 'Category not found',
-          code: 'CATEGORY_NOT_FOUND'
-        });
-      }
+    const result = await categoryService.getCategoryWithProducts(
+      req.params.id,
+      page,
+      limit
+    );
 
-      // Get product count for this category
-      const productCount = await ProductModel.countDocuments({ 
-        category: category._id,
-        status: 'active'
-      });
-
-      // Get breadcrumb
-      const breadcrumb = await CategoryModel.getBreadcrumb(category._id);
-
-      res.json({
-        success: true,
-        data: { 
-          category: {
-            ...category,
-            productCount,
-            breadcrumb
-          }
-        }
-      });
-
-    } catch (error) {
-      logger.error('Error fetching category by slug:', error);
-      res.status(500).json({
+    if (!result.category) {
+      return res.status(404).json({
         success: false,
-        error: 'Failed to fetch category',
-        code: 'FETCH_CATEGORY_ERROR'
+        message: 'Category not found'
       });
     }
-  }
-);
 
-/**
- * @route POST /categories
- * @desc Create new category
- * @access Admin/Moderator
- */
-router.post('/',
-  authenticate,
-  authorize({ roles: ['admin', 'moderator'] }),
-  createCategoryValidation,
-  async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          error: 'Validation failed',
-          details: errors.array()
-        });
-      }
-
-      // Check if parent category exists (if specified)
-      if (req.body.parent) {
-        const parentCategory = await CategoryModel.findById(req.body.parent);
-        if (!parentCategory) {
-          return res.status(400).json({
-            success: false,
-            error: 'Parent category not found',
-            code: 'PARENT_NOT_FOUND'
-          });
+    res.json({
+      success: true,
+      data: {
+        category: result.category,
+        products: result.products,
+        pagination: {
+          page,
+          limit,
+          total: result.total,
+          pages: result.pages
         }
       }
+    });
+  } catch (error: any) {
+    logger.error('Failed to get category with products', {
+      error: error.message,
+      categoryId: req.params.id,
+      query: req.query,
+      action: 'get_category_with_products_api_failed'
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get category with products',
+      error: error.message
+    });
+  }
+});
 
-      // Check for duplicate name at the same level
-      const existingCategory = await CategoryModel.findOne({
-        name: req.body.name,
-        parent: req.body.parent || null
-      });
+// POST /api/categories - Create new category
+router.post('/', [
+  body('name').notEmpty().withMessage('Category name is required'),
+  body('slug').isSlug().withMessage('Slug must be a valid slug'),
+  body('description').optional().isString().withMessage('Description must be a string'),
+  body('parent').optional().isMongoId().withMessage('Parent must be a valid MongoDB ID'),
+  body('isActive').optional().isBoolean().withMessage('IsActive must be a boolean'),
+  body('sortOrder').optional().isInt().withMessage('Sort order must be an integer'),
+  handleValidationErrors
+], async (req: express.Request, res: express.Response) => {
+  try {
+    const category = await categoryService.createCategory(req.body);
 
-      if (existingCategory) {
-        return res.status(409).json({
-          success: false,
-          error: 'Category with this name already exists at this level',
-          code: 'DUPLICATE_NAME'
-        });
-      }
+    res.status(201).json({
+      success: true,
+      data: category,
+      message: 'Category created successfully'
+    });
+  } catch (error: any) {
+    logger.error('Failed to create category', {
+      error: error.message,
+      categoryData: req.body,
+      action: 'create_category_api_failed'
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create category',
+      error: error.message
+    });
+  }
+});
 
-      // Create category
-      const category = new CategoryModel({
-        ...req.body,
-        createdBy: req.user!.userId,
-        updatedBy: req.user!.userId
-      });
+// PUT /api/categories/:id - Update category
+router.put('/:id', [
+  param('id').isMongoId().withMessage('Category ID must be a valid MongoDB ID'),
+  body('name').optional().notEmpty().withMessage('Category name cannot be empty'),
+  body('slug').optional().isSlug().withMessage('Slug must be a valid slug'),
+  body('isActive').optional().isBoolean().withMessage('IsActive must be a boolean'),
+  body('sortOrder').optional().isInt().withMessage('Sort order must be an integer'),
+  handleValidationErrors
+], async (req: express.Request, res: express.Response) => {
+  try {
+    const category = await categoryService.updateCategory(req.params.id, req.body);
 
-      await category.save();
-
-      logger.info('Category created', {
-        categoryId: category._id,
-        name: category.name,
-        createdBy: req.user!.userId,
-        action: 'create_category'
-      });
-
-      res.status(201).json({
-        success: true,
-        message: 'Category created successfully',
-        data: { category }
-      });
-
-    } catch (error) {
-      logger.error('Error creating category:', error);
-      res.status(500).json({
+    if (!category) {
+      return res.status(404).json({
         success: false,
-        error: 'Failed to create category',
-        code: 'CREATE_CATEGORY_ERROR'
+        message: 'Category not found'
       });
     }
+
+    res.json({
+      success: true,
+      data: category,
+      message: 'Category updated successfully'
+    });
+  } catch (error: any) {
+    logger.error('Failed to update category', {
+      error: error.message,
+      categoryId: req.params.id,
+      updateData: req.body,
+      action: 'update_category_api_failed'
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update category',
+      error: error.message
+    });
   }
-);
+});
 
-/**
- * @route PUT /categories/:id
- * @desc Update category
- * @access Admin/Moderator
- */
-router.put('/:id',
-  authenticate,
-  authorize({ roles: ['admin', 'moderator'] }),
-  updateCategoryValidation,
-  async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          error: 'Validation failed',
-          details: errors.array()
-        });
-      }
+// DELETE /api/categories/:id - Delete category
+router.delete('/:id', [
+  param('id').isMongoId().withMessage('Category ID must be a valid MongoDB ID'),
+  handleValidationErrors
+], async (req: express.Request, res: express.Response) => {
+  try {
+    const deleted = await categoryService.deleteCategory(req.params.id);
 
-      const category = await CategoryModel.findById(req.params.id);
-      if (!category) {
-        return res.status(404).json({
-          success: false,
-          error: 'Category not found',
-          code: 'CATEGORY_NOT_FOUND'
-        });
-      }
-
-      // Check if parent category exists (if being updated)
-      if (req.body.parent) {
-        const parentCategory = await CategoryModel.findById(req.body.parent);
-        if (!parentCategory) {
-          return res.status(400).json({
-            success: false,
-            error: 'Parent category not found',
-            code: 'PARENT_NOT_FOUND'
-          });
-        }
-
-        // Prevent circular references
-        if (req.body.parent === req.params.id) {
-          return res.status(400).json({
-            success: false,
-            error: 'Category cannot be its own parent',
-            code: 'CIRCULAR_REFERENCE'
-          });
-        }
-      }
-
-      // Check for duplicate name (if being updated)
-      if (req.body.name && req.body.name !== category.name) {
-        const existingCategory = await CategoryModel.findOne({
-          name: req.body.name,
-          parent: req.body.parent || category.parent,
-          _id: { $ne: req.params.id }
-        });
-
-        if (existingCategory) {
-          return res.status(409).json({
-            success: false,
-            error: 'Category with this name already exists at this level',
-            code: 'DUPLICATE_NAME'
-          });
-        }
-      }
-
-      // Update category
-      Object.assign(category, {
-        ...req.body,
-        updatedBy: req.user!.userId,
-        updatedAt: new Date()
-      });
-
-      await category.save();
-
-      logger.info('Category updated', {
-        categoryId: category._id,
-        name: category.name,
-        updatedBy: req.user!.userId,
-        action: 'update_category'
-      });
-
-      res.json({
-        success: true,
-        message: 'Category updated successfully',
-        data: { category }
-      });
-
-    } catch (error) {
-      logger.error('Error updating category:', error);
-      res.status(500).json({
+    if (!deleted) {
+      return res.status(404).json({
         success: false,
-        error: 'Failed to update category',
-        code: 'UPDATE_CATEGORY_ERROR'
+        message: 'Category not found'
       });
     }
+
+    res.json({
+      success: true,
+      message: 'Category deleted successfully'
+    });
+  } catch (error: any) {
+    logger.error('Failed to delete category', {
+      error: error.message,
+      categoryId: req.params.id,
+      action: 'delete_category_api_failed'
+    });
+    
+    const statusCode = error.message.includes('children') || error.message.includes('products') ? 400 : 500;
+    
+    res.status(statusCode).json({
+      success: false,
+      message: 'Failed to delete category',
+      error: error.message
+    });
   }
-);
-
-/**
- * @route DELETE /categories/:id
- * @desc Delete category
- * @access Admin
- */
-router.delete('/:id',
-  authenticate,
-  authorize({ roles: ['admin'] }),
-  param('id').isMongoId().withMessage('Category ID must be valid'),
-  async (req, res) => {
-    try {
-      const category = await CategoryModel.findById(req.params.id);
-      if (!category) {
-        return res.status(404).json({
-          success: false,
-          error: 'Category not found',
-          code: 'CATEGORY_NOT_FOUND'
-        });
-      }
-
-      // Check if category has products
-      const productCount = await ProductModel.countDocuments({ 
-        category: req.params.id,
-        status: { $ne: 'deleted' }
-      });
-
-      if (productCount > 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'Cannot delete category with products. Move or delete products first.',
-          code: 'CATEGORY_HAS_PRODUCTS',
-          meta: { productCount }
-        });
-      }
-
-      // Check if category has subcategories
-      const subcategoryCount = await CategoryModel.countDocuments({ 
-        parent: req.params.id,
-        active: true
-      });
-
-      if (subcategoryCount > 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'Cannot delete category with subcategories. Delete subcategories first.',
-          code: 'CATEGORY_HAS_SUBCATEGORIES',
-          meta: { subcategoryCount }
-        });
-      }
-
-      // Soft delete
-      category.active = false;
-      category.updatedBy = req.user!.userId;
-      await category.save();
-
-      logger.info('Category deleted', {
-        categoryId: category._id,
-        name: category.name,
-        deletedBy: req.user!.userId,
-        action: 'delete_category'
-      });
-
-      res.json({
-        success: true,
-        message: 'Category deleted successfully'
-      });
-
-    } catch (error) {
-      logger.error('Error deleting category:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to delete category',
-        code: 'DELETE_CATEGORY_ERROR'
-      });
-    }
-  }
-);
-
-/**
- * @route GET /categories/:id/children
- * @desc Get child categories
- * @access Public
- */
-router.get('/:id/children',
-  param('id').isMongoId().withMessage('Category ID must be valid'),
-  async (req, res) => {
-    try {
-      const category = await CategoryModel.findById(req.params.id);
-      if (!category) {
-        return res.status(404).json({
-          success: false,
-          error: 'Category not found',
-          code: 'CATEGORY_NOT_FOUND'
-        });
-      }
-
-      const children = await CategoryModel.find({ 
-        parent: req.params.id,
-        active: true
-      })
-      .sort({ order: 1, name: 1 })
-      .lean();
-
-      // Add product counts if requested
-      if (req.query.includeProductCount === 'true') {
-        for (const child of children) {
-          const productCount = await ProductModel.countDocuments({ 
-            category: child._id,
-            status: 'active'
-          });
-          (child as any).productCount = productCount;
-        }
-      }
-
-      res.json({
-        success: true,
-        data: { categories: children }
-      });
-
-    } catch (error) {
-      logger.error('Error fetching child categories:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch child categories',
-        code: 'FETCH_CHILDREN_ERROR'
-      });
-    }
-  }
-);
-
-/**
- * @route GET /categories/:id/breadcrumb
- * @desc Get category breadcrumb
- * @access Public
- */
-router.get('/:id/breadcrumb',
-  param('id').isMongoId().withMessage('Category ID must be valid'),
-  async (req, res) => {
-    try {
-      const category = await CategoryModel.findById(req.params.id);
-      if (!category) {
-        return res.status(404).json({
-          success: false,
-          error: 'Category not found',
-          code: 'CATEGORY_NOT_FOUND'
-        });
-      }
-
-      const breadcrumb = await CategoryModel.getBreadcrumb(req.params.id);
-
-      res.json({
-        success: true,
-        data: { breadcrumb }
-      });
-
-    } catch (error) {
-      logger.error('Error fetching category breadcrumb:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch category breadcrumb',
-        code: 'FETCH_BREADCRUMB_ERROR'
-      });
-    }
-  }
-);
-
-/**
- * @route GET /categories/:id/products
- * @desc Get products in category
- * @access Public
- */
-router.get('/:id/products',
-  [
-    param('id').isMongoId().withMessage('Category ID must be valid'),
-    query('page').optional().isInt({ min: 1 }).withMessage('Page must be positive'),
-    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be 1-100'),
-    query('includeSubcategories').optional().isBoolean().withMessage('includeSubcategories must be boolean')
-  ],
-  async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          error: 'Validation failed',
-          details: errors.array()
-        });
-      }
-
-      const category = await CategoryModel.findById(req.params.id);
-      if (!category) {
-        return res.status(404).json({
-          success: false,
-          error: 'Category not found',
-          code: 'CATEGORY_NOT_FOUND'
-        });
-      }
-
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 12;
-      const skip = (page - 1) * limit;
-      const includeSubcategories = req.query.includeSubcategories === 'true';
-
-      let categoryFilter: any = { category: req.params.id };
-
-      if (includeSubcategories) {
-        const subcategories = await CategoryModel.find({ 
-          parent: req.params.id,
-          active: true
-        }).select('_id');
-        
-        const subcategoryIds = subcategories.map(sub => sub._id);
-        categoryFilter = { 
-          category: { $in: [req.params.id, ...subcategoryIds] }
-        };
-      }
-
-      const filter = {
-        ...categoryFilter,
-        status: 'active'
-      };
-
-      // Build sort
-      let sort: any = { createdAt: -1 };
-      switch (req.query.sort) {
-        case 'price_asc':
-          sort = { price: 1 };
-          break;
-        case 'price_desc':
-          sort = { price: -1 };
-          break;
-        case 'name_asc':
-          sort = { name: 1 };
-          break;
-        case 'rating_desc':
-          sort = { averageRating: -1 };
-          break;
-        case 'popularity':
-          sort = { reviewCount: -1, averageRating: -1 };
-          break;
-      }
-
-      const [products, total] = await Promise.all([
-        ProductModel.find(filter)
-          .populate('category', 'name slug')
-          .sort(sort)
-          .skip(skip)
-          .limit(limit)
-          .lean(),
-        ProductModel.countDocuments(filter)
-      ]);
-
-      const totalPages = Math.ceil(total / limit);
-
-      res.json({
-        success: true,
-        data: {
-          products,
-          pagination: {
-            page,
-            limit,
-            total,
-            totalPages,
-            hasNext: page < totalPages,
-            hasPrev: page > 1
-          }
-        }
-      });
-
-    } catch (error) {
-      logger.error('Error fetching category products:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch category products',
-        code: 'FETCH_CATEGORY_PRODUCTS_ERROR'
-      });
-    }
-  }
-);
-
-/**
- * @route PATCH /categories/:id/reorder
- * @desc Reorder categories
- * @access Admin/Moderator
- */
-router.patch('/:id/reorder',
-  authenticate,
-  authorize({ roles: ['admin', 'moderator'] }),
-  [
-    param('id').isMongoId().withMessage('Category ID must be valid'),
-    body('order').isInt({ min: 0 }).withMessage('Order must be non-negative integer')
-  ],
-  async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          error: 'Validation failed',
-          details: errors.array()
-        });
-      }
-
-      const category = await CategoryModel.findByIdAndUpdate(
-        req.params.id,
-        {
-          order: req.body.order,
-          updatedBy: req.user!.userId,
-          updatedAt: new Date()
-        },
-        { new: true }
-      );
-
-      if (!category) {
-        return res.status(404).json({
-          success: false,
-          error: 'Category not found',
-          code: 'CATEGORY_NOT_FOUND'
-        });
-      }
-
-      logger.info('Category reordered', {
-        categoryId: category._id,
-        order: req.body.order,
-        updatedBy: req.user!.userId,
-        action: 'reorder_category'
-      });
-
-      res.json({
-        success: true,
-        message: 'Category order updated successfully',
-        data: { category }
-      });
-
-    } catch (error) {
-      logger.error('Error reordering category:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to reorder category',
-        code: 'REORDER_CATEGORY_ERROR'
-      });
-    }
-  }
-);
+});
 
 export default router;

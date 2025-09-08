@@ -4,6 +4,11 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { connectDatabase, logger } from '@shopsphere/shared';
 
+// Import routes
+import productRoutes from './routes/products';
+import categoryRoutes from './routes/categories';
+import reviewRoutes from './routes/reviews';
+
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 4001;
@@ -48,65 +53,25 @@ async function startServer() {
       });
     });
 
-    // Simple products endpoint
-    app.get('/api/products', (req, res) => {
+    // API info endpoint
+    app.get('/api', (req, res) => {
       res.json({
         success: true,
-        data: {
-          products: [
-            {
-              id: '1',
-              name: 'Sample Product 1',
-              description: 'This is a sample product for testing',
-              price: 29.99,
-              image: 'https://via.placeholder.com/300x300',
-              category: 'Electronics'
-            },
-            {
-              id: '2',
-              name: 'Sample Product 2',
-              description: 'Another sample product for testing',
-              price: 49.99,
-              image: 'https://via.placeholder.com/300x300',
-              category: 'Clothing'
-            }
-          ],
-          pagination: {
-            page: 1,
-            limit: 20,
-            total: 2,
-            totalPages: 1,
-            hasNext: false,
-            hasPrev: false
-          }
+        message: 'Catalog Service API',
+        version: '1.0.0',
+        endpoints: {
+          health: '/health',
+          products: '/api/products',
+          categories: '/api/categories',
+          reviews: '/api/reviews'
         }
       });
     });
 
-    // Simple categories endpoint
-    app.get('/api/categories', (req, res) => {
-      res.json({
-        success: true,
-        data: {
-          categories: [
-            {
-              id: '1',
-              name: 'Electronics',
-              slug: 'electronics',
-              description: 'Electronic devices and gadgets',
-              productCount: 1
-            },
-            {
-              id: '2',
-              name: 'Clothing',
-              slug: 'clothing',
-              description: 'Fashion and apparel',
-              productCount: 1
-            }
-          ]
-        }
-      });
-    });
+    // Mount route handlers
+    app.use('/api/products', productRoutes);
+    app.use('/api/categories', categoryRoutes);
+    app.use('/api/reviews', reviewRoutes);
 
     // Global error handler
     app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -153,7 +118,7 @@ async function startServer() {
       process.exit(0);
     });
 
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Failed to start Catalog Service', {
       error: error.message,
       stack: error.stack,
@@ -173,7 +138,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', (error: any) => {
   logger.error('Uncaught Exception in Catalog Service', {
     error: error.message,
     stack: error.stack,

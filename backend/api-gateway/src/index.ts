@@ -1,27 +1,11 @@
 import express from 'express';
-import { ApolloServer } from 'apollo-server-express';
-import { ApolloGateway, IntrospectAndCompose, RemoteGraphQLDataSource } from '@apollo/gateway';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 import { logger } from '@shopsphere/shared';
 
-class AuthenticatedDataSource extends RemoteGraphQLDataSource {
-  willSendRequest({ request, context }: any) {
-    // Forward authentication headers to subgraphs
-    if (context.req?.headers?.authorization) {
-      request.http?.headers.set('authorization', context.req.headers.authorization);
-    }
-    
-    // Forward user context
-    if (context.user) {
-      request.http?.headers.set('x-user-id', context.user.userId);
-      request.http?.headers.set('x-user-role', context.user.role);
-    }
-  }
-}
-
-async function startGateway() {
+async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 4000;
 
@@ -58,168 +42,83 @@ async function startGateway() {
       res.json({ 
         status: 'ok', 
         service: 'api-gateway',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        services: {
+          catalog: 'http://localhost:4001',
+          user: 'http://localhost:4002',
+          order: 'http://localhost:4003',
+          payment: 'http://localhost:4004'
+        }
       });
     });
 
-    // Create Apollo Gateway
-    const gateway = new ApolloGateway({
-      supergraphSdl: new IntrospectAndCompose({
-        subgraphs: [
-          {
-            name: 'users',
-            url: process.env.USER_SERVICE_URL || 'http://localhost:4002/graphql'
-          },
-          {
-            name: 'catalog',
-            url: process.env.CATALOG_SERVICE_URL || 'http://localhost:4001/graphql'
-          },
-          {
-            name: 'orders',
-            url: process.env.ORDER_SERVICE_URL || 'http://localhost:4003/graphql'
-          },
-          {
-            name: 'payments',
-            url: process.env.PAYMENT_SERVICE_URL || 'http://localhost:4004/graphql'
-          }
-        ],
-        pollIntervalInMs: 30000 // Poll for schema changes every 30 seconds
-      }),
-      buildService({ url }) {
-        return new AuthenticatedDataSource({ url });
+    // Proxy to catalog service
+    app.use('/api/catalog', createProxyMiddleware({
+      target: 'http://localhost:4001',
+      changeOrigin: true,
+      pathRewrite: {
+        '^/api/catalog': '/api'
       },
-      debug: process.env.NODE_ENV !== 'production'
-    });
-
-    // Create Apollo Server
-    const server = new ApolloServer({
-      gateway,
-      subscriptions: false, // Disable subscriptions for gateway
-      context: async ({ req }) => {
-        // Extract user from JWT token if present
-        let user = null;
-        
-        try {
-          const authHeader = req.headers.authorization;
-          if (authHeader && authHeader.startsWith('Bearer ')) {
-            const token = authHeader.substring(7);
-            
-            // Validate token with user service
-            const response = await fetch(`${process.env.USER_SERVICE_URL || 'http://localhost:4002'}/auth/validate-token`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ token })
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              if (data.valid) {
-                user = data.user;
-              }
-            }
-          }
-        } catch (error) {
-          logger.warn('Token validation failed', {
-            error: error.message,
-            action: 'token_validation'
-          });
-        }
-
-        return {
-          req,
-          user
-        };
-      },
-      introspection: process.env.NODE_ENV !== 'production',
-      playground: process.env.NODE_ENV !== 'production',
-      formatError: (error) => {
-        logger.error('GraphQL Gateway Error', {
-          message: error.message,
-          path: error.path,
-          source: error.source?.body,
-          action: 'graphql_gateway_error'
+      onError: (err, req, res) => {
+        logger.error('Catalog service proxy error', {
+          error: err.message,
+          url: req.url,
+          action: 'proxy_error'
         });
-
-        // Don't expose internal errors in production
-        if (process.env.NODE_ENV === 'production' && error.message.includes('Internal')) {
-          return new Error('Internal server error');
-        }
-
-        return error;
-      },
-      formatResponse: (response, { request }) => {
-        logger.info('GraphQL Gateway Request', {
-          query: request.query,
-          variables: request.variables,
-          operationName: request.operationName,
-          action: 'graphql_gateway_request'
-        });
-        return response;
-      },
-      plugins: [
-        {
-          requestDidStart() {
-            return {
-              willSendResponse(requestContext) {
-                // Log response metrics
-                const { response, request } = requestContext;
-                logger.info('GraphQL Response', {
-                  operationName: request.operationName,
-                  hasErrors: !!response.errors,
-                  errorCount: response.errors?.length || 0,
-                  action: 'graphql_response'
-                });
-              }
-            };
-          }
-        }
-      ]
-    });
-
-    await server.start();
-    server.applyMiddleware({ 
-      app, 
-      path: '/graphql',
-      cors: false // We handle CORS above
-    });
-
-    // Service discovery endpoint
-    app.get('/services', async (req, res) => {
-      try {
-        const services = [
-          {
-            name: 'users',
-            url: process.env.USER_SERVICE_URL || 'http://localhost:4002/graphql',
-            health: await checkServiceHealth(process.env.USER_SERVICE_URL || 'http://localhost:4002')
-          },
-          {
-            name: 'catalog',
-            url: process.env.CATALOG_SERVICE_URL || 'http://localhost:4001/graphql',
-            health: await checkServiceHealth(process.env.CATALOG_SERVICE_URL || 'http://localhost:4001')
-          },
-          {
-            name: 'orders',
-            url: process.env.ORDER_SERVICE_URL || 'http://localhost:4003/graphql',
-            health: await checkServiceHealth(process.env.ORDER_SERVICE_URL || 'http://localhost:4003')
-          },
-          {
-            name: 'payments',
-            url: process.env.PAYMENT_SERVICE_URL || 'http://localhost:4004/graphql',
-            health: await checkServiceHealth(process.env.PAYMENT_SERVICE_URL || 'http://localhost:4004')
-          }
-        ];
-
-        res.json({ services });
-      } catch (error) {
-        logger.error('Service discovery failed', {
-          error: error.message,
-          action: 'service_discovery'
-        });
-        res.status(500).json({ error: 'Service discovery failed' });
+        res.status(503).json({ error: 'Catalog service unavailable' });
       }
-    });
+    }));
+
+    // Proxy to user service
+    app.use('/api/users', createProxyMiddleware({
+      target: 'http://localhost:4002',
+      changeOrigin: true,
+      pathRewrite: {
+        '^/api/users': '/api'
+      },
+      onError: (err, req, res) => {
+        logger.error('User service proxy error', {
+          error: err.message,
+          url: req.url,
+          action: 'proxy_error'
+        });
+        res.status(503).json({ error: 'User service unavailable' });
+      }
+    }));
+
+    // Proxy to order service
+    app.use('/api/orders', createProxyMiddleware({
+      target: 'http://localhost:4003',
+      changeOrigin: true,
+      pathRewrite: {
+        '^/api/orders': '/api'
+      },
+      onError: (err, req, res) => {
+        logger.error('Order service proxy error', {
+          error: err.message,
+          url: req.url,
+          action: 'proxy_error'
+        });
+        res.status(503).json({ error: 'Order service unavailable' });
+      }
+    }));
+
+    // Proxy to payment service
+    app.use('/api/payments', createProxyMiddleware({
+      target: 'http://localhost:4004',
+      changeOrigin: true,
+      pathRewrite: {
+        '^/api/payments': '/api'
+      },
+      onError: (err, req, res) => {
+        logger.error('Payment service proxy error', {
+          error: err.message,
+          url: req.url,
+          action: 'proxy_error'
+        });
+        res.status(503).json({ error: 'Payment service unavailable' });
+      }
+    }));
 
     // Global error handler
     app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -247,55 +146,36 @@ async function startGateway() {
     app.listen(PORT, () => {
       logger.info('API Gateway started successfully', {
         port: PORT,
-        graphqlPath: server.graphqlPath,
         environment: process.env.NODE_ENV || 'development',
-        action: 'gateway_start'
+        action: 'server_start'
       });
       
       console.log(`🚀 API Gateway ready at http://localhost:${PORT}`);
-      console.log(`📊 GraphQL endpoint: http://localhost:${PORT}${server.graphqlPath}`);
-      console.log(`🔍 Service discovery: http://localhost:${PORT}/services`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+      console.log(`🛍️  Catalog API: http://localhost:${PORT}/api/catalog`);
+      console.log(`👤 User API: http://localhost:${PORT}/api/users`);
+      console.log(`📦 Order API: http://localhost:${PORT}/api/orders`);
+      console.log(`💳 Payment API: http://localhost:${PORT}/api/payments`);
     });
 
     // Graceful shutdown
     process.on('SIGTERM', async () => {
       logger.info('SIGTERM received, shutting down API Gateway gracefully');
-      await server.stop();
-      await gateway.stop();
       process.exit(0);
     });
 
     process.on('SIGINT', async () => {
       logger.info('SIGINT received, shutting down API Gateway gracefully');
-      await server.stop();
-      await gateway.stop();
       process.exit(0);
     });
 
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Failed to start API Gateway', {
       error: error.message,
       stack: error.stack,
-      action: 'gateway_start_error'
+      action: 'server_start_error'
     });
     process.exit(1);
-  }
-}
-
-async function checkServiceHealth(baseUrl: string): Promise<string> {
-  try {
-    const response = await fetch(`${baseUrl}/health`, {
-      method: 'GET',
-      timeout: 5000
-    });
-    
-    if (response.ok) {
-      return 'healthy';
-    } else {
-      return 'unhealthy';
-    }
-  } catch (error) {
-    return 'unreachable';
   }
 }
 
@@ -309,7 +189,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', (error: any) => {
   logger.error('Uncaught Exception in API Gateway', {
     error: error.message,
     stack: error.stack,
@@ -318,4 +198,4 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-startGateway();
+startServer();

@@ -1,355 +1,244 @@
-# 🛍️ ShopSphere - Full-Stack E-Commerce Platform
+# ShopSphere E-Commerce Platform
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3.0-blue)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-15.5.2-black)](https://nextjs.org/)
-
-A modern, scalable e-commerce platform built with cutting-edge technologies including **Next.js**, **Node.js microservices**, **GraphQL**, **MongoDB**, **Redis**, **Kafka**, **Docker**, and **Kubernetes**.
+A full-stack e-commerce platform built with microservices architecture, featuring a modern React frontend and Node.js backend services.
 
 ## 🚀 Features
 
-### Frontend
-- ⚡ **Next.js 15** with App Router and Server Components
-- 🎨 **Tailwind CSS** for responsive design
-- 🔐 **NextAuth.js** for authentication
-- 🛒 **Real-time cart management** with Zustand
-- 💳 **Stripe & PayPal** payment integration
-- 📱 **Mobile-first responsive design**
-- 🔍 **Advanced product search and filtering**
-- ⭐ **Product reviews and ratings**
-- 📊 **User dashboard and order tracking**
+- **Modern Frontend**: Built with Next.js 14, React 18, and Tailwind CSS
+- **Microservices Architecture**: Scalable backend with separate services
+- **API Gateway**: Centralized routing and load balancing
+- **Product Catalog**: Comprehensive product management
+- **User Management**: Authentication and user profiles
+- **Shopping Cart**: Real-time cart management
+- **Order Processing**: Complete order lifecycle
+- **Payment Integration**: Stripe payment processing
+- **Responsive Design**: Mobile-first approach
 
-### Backend Architecture
-- 🏗️ **Microservices architecture** with API Gateway
-- 📊 **GraphQL APIs** with Apollo Server
-- 🗄️ **MongoDB** for data persistence
-- ⚡ **Redis** for caching and session management
-- 📨 **Apache Kafka** for event streaming
-- 🔒 **JWT authentication** with refresh tokens
-- 🌐 **CORS** and security middleware
-- 📈 **Rate limiting** and request validation
+## 🏗️ Architecture
 
-### Infrastructure
-- 🐳 **Docker** containers for all services
-- ☸️ **Kubernetes** deployment configurations
-- 🌩️ **AWS integration** (S3, CloudFront)
-- 🔄 **CI/CD** with GitHub Actions
-- 📊 **Monitoring** and logging setup
-- 🔧 **Environment-based configuration**
-
-## 🏗️ System Architecture
-
-```mermaid
-graph TB
-    Client[Client Browser] --> LB[Load Balancer/Ingress]
-    LB --> FE[Frontend Next.js]
-    LB --> GW[API Gateway]
-    
-    GW --> CS[Catalog Service]
-    GW --> US[User Service]
-    GW --> OS[Order Service]
-    GW --> PS[Payment Service]
-    
-    CS --> DB1[(MongoDB - Catalog)]
-    US --> DB2[(MongoDB - Users)]
-    OS --> DB3[(MongoDB - Orders)]
-    PS --> DB4[(MongoDB - Payments)]
-    
-    CS --> Redis[(Redis Cache)]
-    US --> Redis
-    OS --> Redis
-    
-    OS --> Kafka[Apache Kafka]
-    PS --> Kafka
-    
-    CS --> S3[AWS S3]
-    
-    PS --> Stripe[Stripe API]
-    PS --> PayPal[PayPal API]
 ```
+┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   API Gateway   │
+│   (Next.js)     │◄──►│   (Express)     │
+│   Port: 3000    │    │   Port: 4000    │
+└─────────────────┘    └─────────────────┘
+                                │
+                    ┌───────────┼───────────┐
+                    │           │           │
+            ┌───────▼──┐ ┌──────▼──┐ ┌─────▼────┐
+            │ Catalog  │ │  User   │ │  Order   │
+            │ Service  │ │ Service │ │ Service  │
+            │ Port:    │ │ Port:   │ │ Port:    │
+            │ 4001     │ │ 4002    │ │ 4003     │
+            └──────────┘ └─────────┘ └──────────┘
+```
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **Next.js 14** - React framework
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **Zustand** - State management
+- **React Hook Form** - Form handling
+- **Framer Motion** - Animations
+
+### Backend
+- **Node.js** - Runtime environment
+- **Express.js** - Web framework
+- **TypeScript** - Type safety
+- **MongoDB** - Database
+- **Redis** - Caching
+- **JWT** - Authentication
+- **Stripe** - Payment processing
 
 ## 📋 Prerequisites
 
-- **Node.js** >= 18.0.0
-- **npm** >= 8.0.0
-- **Docker** >= 20.0.0
-- **Docker Compose** >= 2.0.0
-- **Kubernetes** (optional, for production)
+- Node.js 18+ 
+- npm 8+
+- MongoDB (local or cloud)
+- Redis (optional, for caching)
 
 ## 🚀 Quick Start
 
 ### 1. Clone the Repository
-
 ```bash
-git clone https://github.com/your-username/shopsphere-ecommerce.git
+git clone <repository-url>
 cd shopsphere-ecommerce
 ```
 
-### 2. Environment Configuration
-
+### 2. Install Dependencies
 ```bash
-# Copy environment template
-cp .env.example .env
-
-# Edit the .env file with your configuration
-# Update database URLs, API keys, and service configurations
-```
-
-### 3. Install Dependencies
-
-```bash
-# Install all workspace dependencies
 npm install
-
-# Or install dependencies for individual services
-npm install --workspace=frontend
-npm install --workspace=backend/catalog-service
 ```
 
-### 4. Development with Docker
-
+### 3. Environment Setup
 ```bash
-# Start all services with Docker Compose
-npm run docker:up
-
-# Or manually:
-docker-compose -f infrastructure/docker/docker-compose.yml up -d
-
-# View logs
-docker-compose -f infrastructure/docker/docker-compose.yml logs -f
+cp env.example .env
+# Edit .env with your configuration
 ```
 
-### 5. Local Development
+### 4. Start Development Servers
 
+#### Option 1: Start All Services (Recommended)
 ```bash
-# Start all services in development mode
-npm run dev
-
-# Or start individual services
-npm run dev:frontend
-npm run dev:backend
+node start-dev.js
 ```
 
-## 🎯 Service Endpoints
+#### Option 2: Start Services Individually
+```bash
+# Terminal 1 - Frontend
+cd frontend && npm run dev
 
-| Service | Port | URL | Description |
-|---------|------|-----|-------------|
-| Frontend | 3000 | http://localhost:3000 | Next.js application |
-| API Gateway | 4000 | http://localhost:4000 | GraphQL gateway |
-| Catalog Service | 4001 | http://localhost:4001 | Product catalog API |
-| User Service | 4002 | http://localhost:4002 | User management API |
-| Order Service | 4003 | http://localhost:4003 | Order processing API |
-| Payment Service | 4004 | http://localhost:4004 | Payment processing API |
+# Terminal 2 - API Gateway
+cd backend/api-gateway && npm run dev
 
-## 📊 Database Schema
+# Terminal 3 - Catalog Service
+cd backend/catalog-service && npm run dev
+```
 
-### Catalog Service
-- **Products**: Product information, pricing, inventory
-- **Categories**: Product categorization
-- **Reviews**: Customer reviews and ratings
+### 5. Access the Application
+- **Frontend**: http://localhost:3000
+- **API Gateway**: http://localhost:4000
+- **Catalog Service**: http://localhost:4001
 
-### User Service
-- **Users**: User authentication and basic info
-- **Profiles**: Extended user profiles
-- **Wishlists**: User wishlists and favorites
+## 📁 Project Structure
 
-### Order Service
-- **Orders**: Order information and status
-- **Carts**: Shopping cart data
-- **Order Items**: Individual order line items
-
-### Payment Service
-- **Payments**: Payment transaction records
-- **Payment Methods**: Saved payment methods
-- **Transactions**: Detailed transaction logs
+```
+shopsphere-ecommerce/
+├── frontend/                 # Next.js frontend application
+│   ├── src/
+│   │   ├── app/             # App router pages
+│   │   ├── components/      # React components
+│   │   ├── contexts/        # React contexts
+│   │   ├── hooks/           # Custom hooks
+│   │   └── utils/           # Utility functions
+│   └── package.json
+├── backend/
+│   ├── api-gateway/         # API Gateway service
+│   ├── catalog-service/     # Product catalog service
+│   ├── user-service/        # User management service
+│   ├── order-service/       # Order processing service
+│   ├── payment-service/     # Payment processing service
+│   └── shared/              # Shared utilities and types
+├── infrastructure/          # Docker and K8s configs
+├── docs/                    # Documentation
+└── package.json            # Root package.json
+```
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
-Key environment variables (see `.env.example` for complete list):
+Create a `.env` file in the root directory:
 
-```bash
-# Database
+```env
+# Database Configuration
 MONGODB_URI=mongodb://localhost:27017
 REDIS_URL=redis://localhost:6379
 
-# Authentication
-JWT_SECRET=your-jwt-secret
-GOOGLE_CLIENT_ID=your-google-client-id
+# Service Ports
+API_GATEWAY_PORT=4000
+CATALOG_SERVICE_PORT=4001
+USER_SERVICE_PORT=4002
+ORDER_SERVICE_PORT=4003
+PAYMENT_SERVICE_PORT=4004
 
-# Payments
-STRIPE_SECRET_KEY=sk_test_your-stripe-key
-PAYPAL_CLIENT_ID=your-paypal-client-id
+# Frontend Configuration
+FRONTEND_URL=http://localhost:3000
 
-# AWS
-AWS_ACCESS_KEY_ID=your-aws-access-key
-S3_BUCKET_NAME=your-s3-bucket
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-here
+JWT_EXPIRES_IN=7d
+
+# Environment
+NODE_ENV=development
 ```
 
-### Service Configuration
+## 🧪 Testing
 
-Each microservice can be configured independently through environment variables and configuration files in the `config/` directory.
+### Frontend Tests
+```bash
+cd frontend
+npm test
+```
+
+### Backend Tests
+```bash
+cd backend/catalog-service
+npm test
+```
 
 ## 🚀 Deployment
 
 ### Docker Deployment
-
 ```bash
-# Build all images
-npm run docker:build
-
-# Deploy with Docker Compose
-npm run docker:up
+# Build and start all services
+docker-compose -f infrastructure/docker/docker-compose.yml up -d
 ```
 
 ### Kubernetes Deployment
-
 ```bash
-# Apply Kubernetes manifests
-npm run k8s:deploy
-
-# Or manually:
+# Deploy to Kubernetes
 kubectl apply -f infrastructure/k8s/
 ```
 
-### Production Deployment
+## 📚 API Documentation
 
-1. **Build and push Docker images**:
-   ```bash
-   docker build -t your-registry/shopsphere-frontend:latest frontend/
-   docker push your-registry/shopsphere-frontend:latest
-   ```
+### Catalog Service Endpoints
+- `GET /api/products` - Get all products
+- `GET /api/products/:id` - Get product by ID
+- `GET /api/categories` - Get all categories
+- `GET /health` - Health check
 
-2. **Configure production environment**:
-   - Update Kubernetes secrets
-   - Configure ingress and SSL certificates
-   - Set up monitoring and logging
-
-3. **Deploy to Kubernetes**:
-   ```bash
-   kubectl apply -f infrastructure/k8s/
-   ```
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-npm test
-
-# Run tests for specific service
-npm test --workspace=frontend
-npm test --workspace=backend/catalog-service
-
-# Run tests in watch mode
-npm run test:watch
-```
-
-## 📈 Monitoring & Logging
-
-- **Application logs**: Structured JSON logging with Winston
-- **Metrics**: Custom metrics for business logic
-- **Health checks**: Kubernetes liveness and readiness probes
-- **APM**: New Relic integration (configure with `NEW_RELIC_LICENSE_KEY`)
-
-## 🔒 Security Features
-
-- **JWT Authentication** with refresh tokens
-- **Rate limiting** on all endpoints
-- **CORS protection** with configurable origins
-- **Helmet.js** for security headers
-- **Input validation** with Joi schemas
-- **Encrypted sensitive data** in database
-- **Secure cookie settings** for sessions
+### API Gateway Endpoints
+- `GET /health` - Health check
+- `GET /api/catalog/*` - Proxy to catalog service
+- `GET /api/users/*` - Proxy to user service
+- `GET /api/orders/*` - Proxy to order service
+- `GET /api/payments/*` - Proxy to payment service
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📚 API Documentation
-
-### GraphQL Playground
-Access the GraphQL playground at:
-- Development: http://localhost:4000/graphql
-- Production: https://api.shopsphere.com/graphql
-
-### Key GraphQL Operations
-
-```graphql
-# Get products
-query GetProducts($limit: Int, $category: String) {
-  products(limit: $limit, category: $category) {
-    id
-    name
-    description
-    price
-    images
-    category
-    rating
-  }
-}
-
-# Create order
-mutation CreateOrder($input: CreateOrderInput!) {
-  createOrder(input: $input) {
-    id
-    status
-    total
-    items {
-      productId
-      quantity
-      price
-    }
-  }
-}
-```
-
-## 🛠️ Development Workflow
-
-### Adding a New Feature
-
-1. **Plan the feature**: Define requirements and design
-2. **Create branch**: `git checkout -b feature/feature-name`
-3. **Develop**: Write code following project conventions
-4. **Test**: Add unit and integration tests
-5. **Document**: Update README and API documentation
-6. **Review**: Submit pull request for code review
-7. **Deploy**: Merge and deploy to staging/production
-
-### Code Style
-
-- **ESLint** and **Prettier** for code formatting
-- **Conventional Commits** for commit messages
-- **TypeScript** for type safety
-- **Modular architecture** with clear separation of concerns
-
-## 📞 Support
-
-- 📧 Email: support@shopsphere.com
-- 💬 Discord: [Join our community](https://discord.gg/shopsphere)
-- 📖 Documentation: [Full documentation](https://docs.shopsphere.com)
-- 🐛 Issues: [GitHub Issues](https://github.com/your-username/shopsphere-ecommerce/issues)
-
-## 📄 License
+## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## 🆘 Support
+
+If you encounter any issues or have questions:
+
+1. Check the [Issues](https://github.com/your-repo/issues) page
+2. Create a new issue with detailed information
+3. Join our community discussions
+
+## 🎯 Roadmap
+
+- [ ] User authentication and authorization
+- [ ] Advanced product search and filtering
+- [ ] Order management system
+- [ ] Payment integration with Stripe
+- [ ] Admin dashboard
+- [ ] Email notifications
+- [ ] Product reviews and ratings
+- [ ] Inventory management
+- [ ] Analytics and reporting
+- [ ] Mobile app (React Native)
+
 ## 🙏 Acknowledgments
 
-- **Next.js team** for the amazing React framework
-- **Apollo GraphQL** for excellent GraphQL tools
-- **MongoDB** for flexible document storage
-- **Stripe** for secure payment processing
-- **Open source community** for all the fantastic tools and libraries
+- [Next.js](https://nextjs.org/) for the amazing React framework
+- [Tailwind CSS](https://tailwindcss.com/) for the utility-first CSS framework
+- [Express.js](https://expressjs.com/) for the web framework
+- [MongoDB](https://www.mongodb.com/) for the database
+- [Stripe](https://stripe.com/) for payment processing
 
 ---
 
-<div align="center">
-  <h3>Built with ❤️ for the modern web</h3>
-  <p>⭐ Star this repo if you find it helpful!</p>
-</div>
+**Happy Coding! 🚀**

@@ -1,288 +1,392 @@
-import { Review, IReviewDocument } from '../models/Review';
+import { Review, IReview } from '../models/Review';
 import { Product } from '../models/Product';
-import { ReviewStatus, logger, ValidationError, NotFoundError, ForbiddenError } from '@shopsphere/shared';
+import { logger } from '@shopsphere/shared';
 
-class ReviewService {
-  async getProductReviews(
-    productId: string,
-    status: ReviewStatus = ReviewStatus.APPROVED,
-    limit: number = 20,
-    offset: number = 0
-  ): Promise<IReviewDocument[]> {
+export interface ReviewFilters {
+  product?: string;
+  user?: string;
+  rating?: number;
+  status?: string;
+  isVerified?: boolean;
+}
+
+export class ReviewService {
+  async createReview(reviewData: Partial<IReview>): Promise<IReview> {
     try {
-      const reviews = await Review.findByProduct(productId, status, limit, offset);
-
-      logger.info('Product reviews retrieved', {
-        productId,
-        status,
-        count: reviews.length,
-        action: 'get_product_reviews'
-      });
-
-      return reviews;
-    } catch (error) {
-      logger.error('Failed to get product reviews', {
-        productId,
-        error: error.message,
-        action: 'get_product_reviews'
-      });
-      throw error;
-    }
-  }
-
-  async getUserReviews(
-    userId: string,
-    limit: number = 20,
-    offset: number = 0
-  ): Promise<IReviewDocument[]> {
-    try {
-      const reviews = await Review.findByUser(userId, limit, offset);
-
-      logger.info('User reviews retrieved', {
-        userId,
-        count: reviews.length,
-        action: 'get_user_reviews'
-      });
-
-      return reviews;
-    } catch (error) {
-      logger.error('Failed to get user reviews', {
-        userId,
-        error: error.message,
-        action: 'get_user_reviews'
-      });
-      throw error;
-    }
-  }
-
-  async getReviewById(id: string): Promise<IReviewDocument | null> {
-    try {
-      const review = await Review.findById(id)
-        .populate('product', 'name images')
-        .exec();
-
-      return review;
-    } catch (error) {
-      logger.error('Failed to get review by ID', {
-        reviewId: id,
-        error: error.message,
-        action: 'get_review_by_id'
-      });
-      throw error;
-    }
-  }
-
-  async getProductRatingStats(productId: string): Promise<any> {
-    try {
-      const stats = await Review.getProductRatingStats(productId);
-
-      logger.info('Product rating stats retrieved', {
-        productId,
-        stats,
-        action: 'get_product_rating_stats'
-      });
-
-      return {
-        ...stats,
-        ratingDistribution: {
-          five: stats.ratingDistribution[5] || 0,
-          four: stats.ratingDistribution[4] || 0,
-          three: stats.ratingDistribution[3] || 0,
-          two: stats.ratingDistribution[2] || 0,
-          one: stats.ratingDistribution[1] || 0
-        }
-      };
-    } catch (error) {
-      logger.error('Failed to get product rating stats', {
-        productId,
-        error: error.message,
-        action: 'get_product_rating_stats'
-      });
-      throw error;
-    }
-  }
-
-  async createReview(reviewData: any, userId: string, userName: string): Promise<IReviewDocument> {
-    try {
-      // Validate product exists
-      const product = await Product.findById(reviewData.product);
-      if (!product) {
-        throw new ValidationError('Product not found');
-      }
-
       // Check if user already reviewed this product
       const existingReview = await Review.findOne({
         product: reviewData.product,
-        user: userId
+        user: reviewData.user
       });
 
       if (existingReview) {
-        throw new ValidationError('You have already reviewed this product');
+        throw new Error('User has already reviewed this product');
       }
 
-      // Create review
-      const review = new Review({
-        ...reviewData,
-        user: userId,
-        userName,
-        status: ReviewStatus.PENDING
-      });
-
+      const review = new Review(reviewData);
       await review.save();
 
       // Update product rating
-      await product.updateRating(reviewData.rating);
+      await this.updateProductRating(review.product.toString());
 
       logger.info('Review created successfully', {
         reviewId: review._id,
-        productId: reviewData.product,
-        userId,
-        rating: reviewData.rating,
-        action: 'create_review'
+        productId: review.product,
+        userId: review.user,
+        action: 'review_created'
       });
 
       return review;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to create review', {
-        reviewData,
-        userId,
         error: error.message,
-        action: 'create_review'
+        reviewData,
+        action: 'review_creation_failed'
       });
       throw error;
     }
   }
 
-  async updateReviewStatus(
-    id: string,
-    status: ReviewStatus,
-    moderatorId: string
-  ): Promise<IReviewDocument> {
+  async getReviewById(id: string): Promise<IReview | null> {
     try {
-      const review = await Review.findById(id);
-      if (!review) {
-        throw new NotFoundError('Review not found');
-      }
-
-      review.status = status;
-      review.moderatedBy = moderatorId;
-      review.moderatedAt = new Date();
-      await review.save();
-
-      // If approved, update product rating
-      if (status === ReviewStatus.APPROVED) {
-        const product = await Product.findById(review.product);
-        if (product) {
-          await product.updateRating(review.rating);
-        }
-      }
-
-      logger.info('Review status updated', {
-        reviewId: id,
-        status,
-        moderatorId,
-        action: 'update_review_status'
-      });
+      const review = await Review.findById(id)
+        .populate('product', 'name slug')
+        .populate('user', 'name email');
 
       return review;
-    } catch (error) {
-      logger.error('Failed to update review status', {
-        reviewId: id,
-        status,
-        moderatorId,
+    } catch (error: any) {
+      logger.error('Failed to get review by ID', {
         error: error.message,
-        action: 'update_review_status'
+        reviewId: id,
+        action: 'get_review_failed'
       });
       throw error;
     }
   }
 
-  async markReviewHelpful(id: string, userId: string): Promise<IReviewDocument> {
+  async getReviews(
+    filters: ReviewFilters = {},
+    page: number = 1,
+    limit: number = 20
+  ): Promise<{ reviews: IReview[]; total: number; pages: number }> {
     try {
-      const review = await Review.findById(id);
-      if (!review) {
-        throw new NotFoundError('Review not found');
+      const query: any = {};
+
+      // Apply filters
+      if (filters.product) {
+        query.product = filters.product;
+      }
+      if (filters.user) {
+        query.user = filters.user;
+      }
+      if (filters.rating) {
+        query.rating = filters.rating;
+      }
+      if (filters.status) {
+        query.status = filters.status;
+      }
+      if (filters.isVerified !== undefined) {
+        query.isVerified = filters.isVerified;
       }
 
-      await review.markAsHelpful(userId);
+      // Execute query
+      const skip = (page - 1) * limit;
+      const [reviews, total] = await Promise.all([
+        Review.find(query)
+          .populate('product', 'name slug')
+          .populate('user', 'name email')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit),
+        Review.countDocuments(query)
+      ]);
 
-      logger.info('Review marked as helpful', {
-        reviewId: id,
-        userId,
-        action: 'mark_review_helpful'
-      });
+      const pages = Math.ceil(total / limit);
 
-      return await Review.findById(id);
-    } catch (error) {
-      logger.error('Failed to mark review as helpful', {
-        reviewId: id,
-        userId,
+      return { reviews, total, pages };
+    } catch (error: any) {
+      logger.error('Failed to get reviews', {
         error: error.message,
-        action: 'mark_review_helpful'
+        filters,
+        page,
+        limit,
+        action: 'get_reviews_failed'
       });
       throw error;
     }
   }
 
-  async markReviewUnhelpful(id: string, userId: string): Promise<IReviewDocument> {
+  async getProductReviews(
+    productId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{ reviews: IReview[]; total: number; pages: number; averageRating: number }> {
     try {
-      const review = await Review.findById(id);
-      if (!review) {
-        throw new NotFoundError('Review not found');
-      }
+      const skip = (page - 1) * limit;
+      const [reviews, total, ratingStats] = await Promise.all([
+        Review.find({ product: productId, status: 'approved' })
+          .populate('user', 'name email')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit),
+        Review.countDocuments({ product: productId, status: 'approved' }),
+        Review.aggregate([
+          { $match: { product: productId, status: 'approved' } },
+          {
+            $group: {
+              _id: null,
+              averageRating: { $avg: '$rating' },
+              totalReviews: { $sum: 1 },
+              ratingDistribution: {
+                $push: '$rating'
+              }
+            }
+          }
+        ])
+      ]);
 
-      await review.markAsUnhelpful(userId);
+      const pages = Math.ceil(total / limit);
+      const averageRating = ratingStats.length > 0 ? ratingStats[0].averageRating : 0;
 
-      logger.info('Review marked as unhelpful', {
-        reviewId: id,
-        userId,
-        action: 'mark_review_unhelpful'
-      });
-
-      return await Review.findById(id);
-    } catch (error) {
-      logger.error('Failed to mark review as unhelpful', {
-        reviewId: id,
-        userId,
+      return { reviews, total, pages, averageRating };
+    } catch (error: any) {
+      logger.error('Failed to get product reviews', {
         error: error.message,
-        action: 'mark_review_unhelpful'
+        productId,
+        page,
+        limit,
+        action: 'get_product_reviews_failed'
       });
       throw error;
     }
   }
 
-  async deleteReview(id: string, userId: string, isAdmin: boolean = false): Promise<boolean> {
+  async updateReview(id: string, updateData: Partial<IReview>): Promise<IReview | null> {
+    try {
+      const review = await Review.findByIdAndUpdate(
+        id,
+        updateData,
+        { new: true, runValidators: true }
+      ).populate('product', 'name slug')
+       .populate('user', 'name email');
+
+      if (review) {
+        // Update product rating if rating changed
+        if (updateData.rating || updateData.status) {
+          await this.updateProductRating(review.product.toString());
+        }
+
+        logger.info('Review updated successfully', {
+          reviewId: id,
+          action: 'review_updated'
+        });
+      }
+
+      return review;
+    } catch (error: any) {
+      logger.error('Failed to update review', {
+        error: error.message,
+        reviewId: id,
+        updateData,
+        action: 'review_update_failed'
+      });
+      throw error;
+    }
+  }
+
+  async deleteReview(id: string): Promise<boolean> {
     try {
       const review = await Review.findById(id);
-      if (!review) {
-        throw new NotFoundError('Review not found');
-      }
+      if (!review) return false;
 
-      // Check permissions
-      if (!isAdmin && review.user.toString() !== userId) {
-        throw new ForbiddenError('You can only delete your own reviews');
-      }
-
+      const productId = review.product.toString();
       await Review.findByIdAndDelete(id);
+
+      // Update product rating
+      await this.updateProductRating(productId);
 
       logger.info('Review deleted successfully', {
         reviewId: id,
-        userId,
-        isAdmin,
-        action: 'delete_review'
+        action: 'review_deleted'
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to delete review', {
-        reviewId: id,
-        userId,
         error: error.message,
-        action: 'delete_review'
+        reviewId: id,
+        action: 'review_deletion_failed'
+      });
+      throw error;
+    }
+  }
+
+  async approveReview(id: string): Promise<IReview | null> {
+    try {
+      const review = await Review.findByIdAndUpdate(
+        id,
+        { status: 'approved' },
+        { new: true }
+      ).populate('product', 'name slug')
+       .populate('user', 'name email');
+
+      if (review) {
+        // Update product rating
+        await this.updateProductRating(review.product.toString());
+
+        logger.info('Review approved successfully', {
+          reviewId: id,
+          action: 'review_approved'
+        });
+      }
+
+      return review;
+    } catch (error: any) {
+      logger.error('Failed to approve review', {
+        error: error.message,
+        reviewId: id,
+        action: 'review_approval_failed'
+      });
+      throw error;
+    }
+  }
+
+  async rejectReview(id: string): Promise<IReview | null> {
+    try {
+      const review = await Review.findByIdAndUpdate(
+        id,
+        { status: 'rejected' },
+        { new: true }
+      ).populate('product', 'name slug')
+       .populate('user', 'name email');
+
+      if (review) {
+        logger.info('Review rejected successfully', {
+          reviewId: id,
+          action: 'review_rejected'
+        });
+      }
+
+      return review;
+    } catch (error: any) {
+      logger.error('Failed to reject review', {
+        error: error.message,
+        reviewId: id,
+        action: 'review_rejection_failed'
+      });
+      throw error;
+    }
+  }
+
+  async markReviewHelpful(reviewId: string, helpful: boolean): Promise<IReview | null> {
+    try {
+      const updateField = helpful ? 'helpful.yes' : 'helpful.no';
+      const review = await Review.findByIdAndUpdate(
+        reviewId,
+        { $inc: { [updateField]: 1 } },
+        { new: true }
+      );
+
+      if (review) {
+        logger.info('Review helpfulness updated', {
+          reviewId,
+          helpful,
+          action: 'review_helpfulness_updated'
+        });
+      }
+
+      return review;
+    } catch (error: any) {
+      logger.error('Failed to update review helpfulness', {
+        error: error.message,
+        reviewId,
+        helpful,
+        action: 'review_helpfulness_update_failed'
+      });
+      throw error;
+    }
+  }
+
+  async getReviewStats(productId: string): Promise<any> {
+    try {
+      const stats = await Review.aggregate([
+        { $match: { product: productId, status: 'approved' } },
+        {
+          $group: {
+            _id: null,
+            totalReviews: { $sum: 1 },
+            averageRating: { $avg: '$rating' },
+            ratingDistribution: {
+              $push: '$rating'
+            }
+          }
+        }
+      ]);
+
+      if (stats.length === 0) {
+        return {
+          totalReviews: 0,
+          averageRating: 0,
+          ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+        };
+      }
+
+      const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      stats[0].ratingDistribution.forEach((rating: number) => {
+        ratingDistribution[rating as keyof typeof ratingDistribution]++;
+      });
+
+      return {
+        totalReviews: stats[0].totalReviews,
+        averageRating: Math.round(stats[0].averageRating * 10) / 10,
+        ratingDistribution
+      };
+    } catch (error: any) {
+      logger.error('Failed to get review stats', {
+        error: error.message,
+        productId,
+        action: 'get_review_stats_failed'
+      });
+      throw error;
+    }
+  }
+
+  private async updateProductRating(productId: string): Promise<void> {
+    try {
+      const reviews = await Review.find({
+        product: productId,
+        status: 'approved'
+      });
+
+      if (reviews.length === 0) {
+        await Product.findByIdAndUpdate(productId, {
+          'rating.average': 0,
+          'rating.count': 0
+        });
+        return;
+      }
+
+      const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+      const averageRating = totalRating / reviews.length;
+
+      await Product.findByIdAndUpdate(productId, {
+        'rating.average': Math.round(averageRating * 10) / 10,
+        'rating.count': reviews.length
+      });
+
+      logger.info('Product rating updated', {
+        productId,
+        averageRating,
+        reviewCount: reviews.length,
+        action: 'product_rating_updated'
+      });
+    } catch (error: any) {
+      logger.error('Failed to update product rating', {
+        error: error.message,
+        productId,
+        action: 'product_rating_update_failed'
       });
       throw error;
     }
   }
 }
-
-export const reviewService = new ReviewService();
