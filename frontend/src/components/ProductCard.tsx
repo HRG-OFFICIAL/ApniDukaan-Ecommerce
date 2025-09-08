@@ -10,25 +10,29 @@ interface ProductCardProps {
   product: Product;
 }
 
-const badgeColors = {
-  'Best Seller': 'bg-yellow-400 text-yellow-900',
-  'New': 'bg-blue-500 text-white',
-  'Sale': 'bg-red-500 text-white',
+const getBadge = (product: Product) => {
+  if (product.isBestseller) return { text: 'Best Seller', classes: 'bg-yellow-400 text-yellow-900' };
+  if (product.isNew) return { text: 'New', classes: 'bg-blue-500 text-white' };
+  if (product.isOnSale) return { text: 'Sale', classes: 'bg-red-500 text-white' };
+  return null;
 };
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
-  const discount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+  const discount = product.originalPrice ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
+  const badge = getBadge(product);
+  const productImage = Array.isArray(product.images) ? product.images[0] : product.images;
+  const imageUrl = typeof productImage === 'string' ? productImage : productImage?.url || '/placeholder.jpg';
 
   const handleAddToCart = () => {
     addItem({
-      id: product.id.toString(),
-      productId: product.id.toString(),
+      id: product.id,
+      productId: product.id,
       name: product.name,
       price: product.price,
-      image: product.image,
+      image: imageUrl,
       quantity: 1,
-      maxStock: 100
+      maxStock: product.stock
     });
   };
 
@@ -37,15 +41,15 @@ export default function ProductCard({ product }: ProductCardProps) {
       <Link href={`/product/${product.id}`}>
         <div className="relative">
           <Image
-            src={product.image}
+            src={imageUrl}
             alt={product.name}
             width={400}
             height={400}
             className="object-cover w-full h-48 transition-transform duration-300 group-hover:scale-105"
           />
-          {product.badge && (
-            <span className={`absolute top-2 left-2 text-xs font-semibold px-2 py-1 rounded ${badgeColors[product.badge]}`}>
-              {product.badge}
+          {badge && (
+            <span className={`absolute top-2 left-2 text-xs font-semibold px-2 py-1 rounded ${badge.classes}`}>
+              {badge.text}
             </span>
           )}
         </div>
@@ -54,12 +58,16 @@ export default function ProductCard({ product }: ProductCardProps) {
           <div className="flex items-center mt-2">
             <div className="flex items-center">
               <Star className="w-4 h-4 text-yellow-500 fill-current" />
-              <span className="text-xs text-gray-600 ml-1">{product.rating} ({product.reviews})</span>
+              <span className="text-xs text-gray-600 ml-1">
+                {typeof product.rating === 'number' ? product.rating : product.rating.average} ({product.reviewCount})
+              </span>
             </div>
           </div>
           <div className="flex items-baseline space-x-2 mt-2">
             <p className="text-lg font-bold text-gray-900">₹{product.price.toLocaleString()}</p>
-            <p className="text-sm text-gray-500 line-through">₹{product.originalPrice.toLocaleString()}</p>
+            {product.originalPrice && (
+              <p className="text-sm text-gray-500 line-through">₹{product.originalPrice.toLocaleString()}</p>
+            )}
             <p className="text-xs font-semibold text-green-600">{discount}% off</p>
           </div>
         </div>

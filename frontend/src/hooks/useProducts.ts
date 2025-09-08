@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Product } from '@/components/product/ProductCard'
+import { Product } from '@/types'
 
 // Mock data for development
 const mockFeaturedProducts: Product[] = [
