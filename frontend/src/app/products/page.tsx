@@ -3,10 +3,10 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { 
-  FunnelIcon, 
-  AdjustmentsHorizontalIcon,
-  MagnifyingGlassIcon 
-} from '@heroicons/react/24/outline'
+  Filter, 
+  SlidersHorizontal,
+  Search 
+} from 'lucide-react'
 import ProductCard from '../../components/product/ProductCard'
 import { Product } from '../../types'
 import MainLayout from '../../components/layout/MainLayout'
@@ -234,7 +234,7 @@ function ProductsContent() {
               onClick={() => setShowFilters(!showFilters)}
               className="lg:hidden flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              <FunnelIcon className="h-5 w-5" />
+              <Filter className="h-5 w-5" />
               <span>Filters</span>
             </button>
           </div>
@@ -254,7 +254,7 @@ function ProductsContent() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                     />
-                    <MagnifyingGlassIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                    <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                   </div>
                 </div>
 

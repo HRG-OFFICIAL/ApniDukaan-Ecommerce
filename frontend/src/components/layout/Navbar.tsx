@@ -5,14 +5,15 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Dialog, Disclosure, Menu, Transition } from '@headlessui/react'
 import {
-  MagnifyingGlassIcon,
-  ShoppingCartIcon,
-  UserIcon,
-  Bars3Icon,
-  XMarkIcon,
-  ChevronDownIcon,
-} from '@heroicons/react/24/outline'
-import { HeartIcon, BellIcon } from '@heroicons/react/24/solid'
+  Search,
+  ShoppingCart,
+  User,
+  Menu as MenuIcon,
+  X,
+  ChevronDown,
+  Heart,
+  Bell
+} from 'lucide-react'
 import { useAuthStore } from '../../contexts/AuthContext'
 import { useCartStore } from '../../contexts/CartContext'
 import { cn } from '../../utils/cn'
@@ -84,7 +85,7 @@ export default function Navbar() {
           <div className="flex-1 max-w-lg mx-8 hidden md:block">
             <form onSubmit={handleSearch} className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                <Search className="h-5 w-5 text-gray-400" aria-hidden="true" />
               </div>
               <input
                 type="text"
@@ -101,14 +102,14 @@ export default function Navbar() {
             {/* Wishlist */}
             {isAuthenticated && (
               <Link href="/wishlist" className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                <HeartIcon className="h-6 w-6" />
+                <Heart className="h-6 w-6" />
               </Link>
             )}
 
             {/* Notifications */}
             {isAuthenticated && (
               <button className="p-2 text-gray-400 hover:text-primary-600 transition-colors relative">
-                <BellIcon className="h-6 w-6" />
+                <Bell className="h-6 w-6" />
                 <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                   3
                 </span>
@@ -120,7 +121,7 @@ export default function Navbar() {
               onClick={toggleCart}
               className="p-2 text-gray-400 hover:text-primary-600 transition-colors relative"
             >
-              <ShoppingCartIcon className="h-6 w-6" />
+              <ShoppingCart className="h-6 w-6" />
               {itemCount > 0 && (
                 <span className="absolute -top-1 -right-1 h-5 w-5 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center">
                   {itemCount > 99 ? '99+' : itemCount}
@@ -130,17 +131,17 @@ export default function Navbar() {
 
             {/* User menu */}
             {isAuthenticated ? (
-              <Menu as="div" className="relative">
+              <MenuIcon as="div" className="relative">
                 <div>
                   <Menu.Button className="flex items-center space-x-2 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                     <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
                       {user?.avatar ? (
                         <img className="h-8 w-8 rounded-full" src={user.avatar} alt="" />
                       ) : (
-                        <UserIcon className="h-5 w-5 text-gray-600" />
+                        <User className="h-5 w-5 text-gray-600" />
                       )}
                     </div>
-                    <ChevronDownIcon className="h-4 w-4 text-gray-500" />
+                    <ChevronDown className="h-4 w-4 text-gray-500" />
                   </Menu.Button>
                 </div>
                 <Transition
@@ -211,7 +212,7 @@ export default function Navbar() {
               className="md:hidden p-2 text-gray-400 hover:text-gray-500"
               onClick={() => setMobileMenuOpen(true)}
             >
-              <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+              <MenuIcon className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -233,7 +234,7 @@ export default function Navbar() {
               className="p-2 text-gray-400 hover:text-gray-500"
               onClick={() => setMobileMenuOpen(false)}
             >
-              <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+              <X className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
           <div className="mt-6 flow-root">
@@ -242,7 +243,7 @@ export default function Navbar() {
               <div className="py-6">
                 <form onSubmit={handleSearch} className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    <Search className="h-5 w-5 text-gray-400" aria-hidden="true" />
                   </div>
                   <input
                     type="text"

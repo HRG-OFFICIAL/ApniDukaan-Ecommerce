@@ -3,8 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
-import { HeartIcon, ShoppingCartIcon, StarIcon } from '@heroicons/react/24/outline'
-import { HeartIcon as HeartSolidIcon, StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
+import { Heart, ShoppingCart, Star } from 'lucide-react'
 import { useCart } from '@/contexts/CartContext'
 import { formatCurrency } from '@/utils/format'
 import { cn } from '@/utils/cn'
@@ -65,17 +64,17 @@ export default function ProductCard({
       return (
         <div key={i} className="relative">
           {filled ? (
-            <StarSolidIcon className="h-4 w-4 text-yellow-400" />
+            <Star className="h-4 w-4 text-yellow-400" fill="currentColor" />
           ) : halfFilled ? (
             <>
-              <StarIcon className="h-4 w-4 text-gray-300" />
-              <StarSolidIcon 
+              <Star className="h-4 w-4 text-gray-300" />
+              <Star 
                 className="absolute inset-0 h-4 w-4 text-yellow-400" 
                 style={{ clipPath: 'inset(0 50% 0 0)' }} 
               />
             </>
           ) : (
-            <StarIcon className="h-4 w-4 text-gray-300" />
+            <Star className="h-4 w-4 text-gray-300" />
           )}
         </div>
       )
@@ -139,9 +138,9 @@ export default function ProductCard({
               className="absolute top-2 right-2 p-2 rounded-full bg-white/80 hover:bg-white transition-colors opacity-0 group-hover:opacity-100"
             >
               {isWishlisted ? (
-                <HeartSolidIcon className="h-5 w-5 text-red-500" />
+                <Heart className="h-5 w-5 text-red-500" fill="currentColor" />
               ) : (
-                <HeartIcon className="h-5 w-5 text-gray-600" />
+                <Heart className="h-5 w-5 text-gray-600" />
               )}
             </button>
           )}
@@ -159,7 +158,7 @@ export default function ProductCard({
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 )}
               >
-                <ShoppingCartIcon className="h-4 w-4 mr-2" />
+                <ShoppingCart className="h-4 w-4 mr-2" />
                 {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
               </button>
             </div>
