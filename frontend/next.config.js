@@ -2,7 +2,7 @@
 const nextConfig = {
   experimental: {
     serverActions: {
-      allowedOrigins: true
+      allowedOrigins: ['*']
     }
   },
   images: {
