@@ -15,14 +15,17 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.calculateDiscount = exports.calculateTax = exports.formatPrice = exports.isDateInPast = exports.addDays = exports.formatDate = exports.sanitizeSearchTerm = exports.isValidMongoId = exports.isValidPassword = exports.isValidEmail = exports.createPaginationResponse = exports.createErrorResponse = exports.createSuccessResponse = exports.CONSTANTS = exports.InternalServerError = exports.ConflictError = exports.ForbiddenError = exports.UnauthorizedError = exports.NotFoundError = exports.ValidationError = exports.RefundReason = exports.RefundStatus = exports.PaymentTransactionStatus = exports.PaymentProvider = exports.PaymentMethod = exports.DiscountType = exports.FulfillmentStatus = exports.PaymentStatus = exports.OrderStatus = exports.ProductOptionType = exports.ProductVisibility = exports.ProductStatus = exports.AddressType = exports.Gender = exports.UserRole = void 0;
+// Export all types
 __exportStar(require("./types/user"), exports);
 __exportStar(require("./types/product"), exports);
 __exportStar(require("./types/order"), exports);
 __exportStar(require("./types/payment"), exports);
+// Export utilities
 __exportStar(require("./utils/database"), exports);
 __exportStar(require("./utils/redis"), exports);
 __exportStar(require("./utils/logger"), exports);
 __exportStar(require("./utils/jwt"), exports);
+// Export middleware
 __exportStar(require("./middleware/auth"), exports);
 var user_1 = require("./types/user");
 Object.defineProperty(exports, "UserRole", { enumerable: true, get: function () { return user_1.UserRole; } });
@@ -43,6 +46,7 @@ Object.defineProperty(exports, "PaymentProvider", { enumerable: true, get: funct
 Object.defineProperty(exports, "PaymentTransactionStatus", { enumerable: true, get: function () { return payment_1.PaymentStatus; } });
 Object.defineProperty(exports, "RefundStatus", { enumerable: true, get: function () { return payment_1.RefundStatus; } });
 Object.defineProperty(exports, "RefundReason", { enumerable: true, get: function () { return payment_1.RefundReason; } });
+// Common error classes
 class ValidationError extends Error {
     constructor(message, field) {
         super(message);
@@ -86,23 +90,25 @@ class InternalServerError extends Error {
     }
 }
 exports.InternalServerError = InternalServerError;
+// Common constants
 exports.CONSTANTS = {
     DEFAULT_PAGE_SIZE: 20,
     MAX_PAGE_SIZE: 100,
-    DEFAULT_CACHE_TTL: 3600,
+    DEFAULT_CACHE_TTL: 3600, // 1 hour in seconds
     JWT_ACCESS_TOKEN_EXPIRY: '15m',
     JWT_REFRESH_TOKEN_EXPIRY: '7d',
     PASSWORD_RESET_TOKEN_EXPIRY: '1h',
     EMAIL_VERIFICATION_TOKEN_EXPIRY: '24h',
-    SESSION_TIMEOUT: 86400,
+    SESSION_TIMEOUT: 86400, // 24 hours in seconds
     MAX_LOGIN_ATTEMPTS: 5,
-    RATE_LIMIT_WINDOW: 900000,
+    RATE_LIMIT_WINDOW: 900000, // 15 minutes in ms
     SUPPORTED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/webp'],
-    MAX_IMAGE_SIZE: 5242880,
+    MAX_IMAGE_SIZE: 5242880, // 5MB in bytes
     DEFAULT_CURRENCY: 'USD',
     MIN_PASSWORD_LENGTH: 8,
     MAX_SEARCH_RESULTS: 1000
 };
+// Helper functions
 const createSuccessResponse = (data, message) => ({
     success: true,
     data,
@@ -132,6 +138,7 @@ const createPaginationResponse = (items, page, limit, total, message) => ({
     message
 });
 exports.createPaginationResponse = createPaginationResponse;
+// Validation helpers
 const isValidEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -149,6 +156,7 @@ const sanitizeSearchTerm = (term) => {
     return term.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };
 exports.sanitizeSearchTerm = sanitizeSearchTerm;
+// Date helpers
 const formatDate = (date) => {
     return date.toISOString();
 };
@@ -163,11 +171,12 @@ const isDateInPast = (date) => {
     return date < new Date();
 };
 exports.isDateInPast = isDateInPast;
+// Price helpers
 const formatPrice = (amount, currency = exports.CONSTANTS.DEFAULT_CURRENCY) => {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency
-    }).format(amount / 100);
+    }).format(amount / 100); // Assuming prices are stored in cents
 };
 exports.formatPrice = formatPrice;
 const calculateTax = (amount, taxRate) => {

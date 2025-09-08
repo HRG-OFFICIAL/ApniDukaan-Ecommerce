@@ -22,21 +22,69 @@ export declare class JWTService {
     private accessTokenExpiry;
     private refreshTokenExpiry;
     constructor();
+    /**
+     * Generate access token from user data
+     */
     generateAccessToken(user: IUser | JWTPayload): string;
+    /**
+     * Generate refresh token
+     */
     generateRefreshToken(userId: string, tokenVersion?: number): string;
+    /**
+     * Generate both access and refresh tokens
+     */
     generateTokenPair(user: IUser | JWTPayload, tokenVersion?: number): TokenPair;
+    /**
+     * Verify access token and return payload
+     */
     verifyAccessToken(token: string): JWTPayload;
+    /**
+     * Verify refresh token and return payload
+     */
     verifyRefreshToken(token: string): RefreshTokenPayload;
+    /**
+     * Decode token without verification (useful for expired tokens)
+     */
     decodeToken(token: string): any;
+    /**
+     * Check if token is expired without verification
+     */
     isTokenExpired(token: string): boolean;
+    /**
+     * Get token expiration date
+     */
     getTokenExpiration(token: string): Date | null;
+    /**
+     * Get remaining token lifetime in seconds
+     */
     getTokenRemainingLife(token: string): number;
+    /**
+     * Extract user ID from token without full verification
+     */
     extractUserIdFromToken(token: string): string | null;
+    /**
+     * Generate API key for service-to-service communication
+     */
     generateApiKey(serviceId: string, permissions?: string[]): string;
+    /**
+     * Verify API key for service-to-service communication
+     */
     verifyApiKey(token: string): any;
+    /**
+     * Generate password reset token
+     */
     generatePasswordResetToken(userId: string, currentPassword: string): string;
+    /**
+     * Verify password reset token
+     */
     verifyPasswordResetToken(token: string): any;
+    /**
+     * Generate email verification token
+     */
     generateEmailVerificationToken(userId: string, email: string): string;
+    /**
+     * Verify email verification token
+     */
     verifyEmailVerificationToken(token: string): any;
 }
 export declare const jwtService: JWTService;

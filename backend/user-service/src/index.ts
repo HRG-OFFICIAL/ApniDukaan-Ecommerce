@@ -1,52 +1,14 @@
 import express from 'express';
-import { ApolloServer } from 'apollo-server-express';
-import { buildFederatedSchema } from '@apollo/federation';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import session from 'express-session';
-import MongoStore from 'connect-mongo';
-import passport from 'passport';
-import { connectDatabase, connectRedis, logger } from '@shopsphere/shared';
-import { userTypeDefs } from './schemas/userSchema';
-import { userResolvers } from './resolvers/userResolver';
-import authRoutes from './routes/authRoutes';
-import { GraphQLScalarType } from 'graphql';
-import { Kind } from 'graphql/language';
-
-// Custom DateTime scalar
-const DateTimeScalar = new GraphQLScalarType({
-  name: 'DateTime',
-  description: 'DateTime custom scalar type',
-  serialize(value: any) {
-    return value instanceof Date ? value.toISOString() : null;
-  },
-  parseValue(value: any) {
-    return new Date(value);
-  },
-  parseLiteral(ast) {
-    if (ast.kind === Kind.STRING) {
-      return new Date(ast.value);
-    }
-    return null;
-  }
-});
-
-// Merge resolvers with DateTime scalar
-const resolvers = {
-  ...userResolvers,
-  DateTime: DateTimeScalar
-};
+import { logger } from '@shopsphere/shared';
 
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 4002;
 
   try {
-    // Connect to databases
-    await connectDatabase(process.env.MONGODB_URI!, 'users_db');
-    await connectRedis(process.env.REDIS_URL!);
-
     // Security middleware
     app.use(helmet({
       contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false
@@ -57,7 +19,7 @@ async function startServer() {
       origin: process.env.FRONTEND_URL || 'http://localhost:3000',
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'x-apollo-tracing']
+      allowedHeaders: ['Content-Type', 'Authorization']
     }));
 
     // Rate limiting
@@ -68,80 +30,63 @@ async function startServer() {
       standardHeaders: true,
       legacyHeaders: false
     });
-    app.use('/auth', limiter);
+    app.use('/api', limiter);
 
     // Body parsing middleware
     app.use(express.json({ limit: '10mb' }));
     app.use(express.urlencoded({ extended: true }));
 
-    // Session configuration for OAuth
-    app.use(session({
-      secret: process.env.SESSION_SECRET || 'your-session-secret',
-      resave: false,
-      saveUninitialized: false,
-      store: MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI,
-        touchAfter: 24 * 3600 // lazy session update
-      }),
-      cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-      }
-    }));
-
-    // Passport middleware
-    app.use(passport.initialize());
-    app.use(passport.session());
-
-    // REST routes (for OAuth and health checks)
-    app.use('/auth', authRoutes);
-
-    // Create Apollo Server with Federation
-    const server = new ApolloServer({
-      schema: buildFederatedSchema([{
-        typeDefs: userTypeDefs,
-        resolvers
-      }]),
-      context: ({ req }) => {
-        return {
-          req,
-          user: req.user || null
-        };
-      },
-      introspection: process.env.NODE_ENV !== 'production',
-      playground: process.env.NODE_ENV !== 'production',
-      formatError: (error) => {
-        logger.error('GraphQL Error', {
-          message: error.message,
-          path: error.path,
-          source: error.source?.body,
-          action: 'graphql_error'
-        });
-
-        // Don't expose internal errors in production
-        if (process.env.NODE_ENV === 'production' && error.message.includes('Internal')) {
-          return new Error('Internal server error');
-        }
-
-        return error;
-      },
-      formatResponse: (response, { request }) => {
-        logger.info('GraphQL Request', {
-          query: request.query,
-          variables: request.variables,
-          operationName: request.operationName,
-          action: 'graphql_request'
-        });
-        return response;
-      }
+    // Health check endpoint
+    app.get('/health', (req, res) => {
+      res.status(200).json({
+        status: 'healthy',
+        service: 'user-service',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+      });
     });
 
-    await server.start();
-    server.applyMiddleware({ 
-      app, 
-      path: '/graphql',
-      cors: false // We handle CORS above
+    // API routes
+    app.get('/api/users', (req, res) => {
+      res.json({
+        success: true,
+        data: [
+          { id: 1, email: 'user1@example.com', name: 'John Doe' },
+          { id: 2, email: 'user2@example.com', name: 'Jane Smith' }
+        ]
+      });
+    });
+
+    app.get('/api/users/:id', (req, res) => {
+      const { id } = req.params;
+      res.json({
+        success: true,
+        data: { id: parseInt(id), email: 'user@example.com', name: 'User Name' }
+      });
+    });
+
+    app.post('/api/auth/login', (req, res) => {
+      const { email, password } = req.body;
+      // Mock authentication
+      res.json({
+        success: true,
+        data: {
+          token: 'mock-jwt-token',
+          user: { id: 1, email, name: 'User Name' }
+        }
+      });
+    });
+
+    app.post('/api/auth/register', (req, res) => {
+      const { email, password, name } = req.body;
+      // Mock registration
+      res.json({
+        success: true,
+        data: {
+          token: 'mock-jwt-token',
+          user: { id: 1, email, name }
+        }
+      });
     });
 
     // Global error handler
@@ -170,29 +115,27 @@ async function startServer() {
     app.listen(PORT, () => {
       logger.info('User Service started successfully', {
         port: PORT,
-        graphqlPath: server.graphqlPath,
         environment: process.env.NODE_ENV || 'development',
         action: 'server_start'
       });
       
       console.log(`🚀 User Service ready at http://localhost:${PORT}`);
-      console.log(`📊 GraphQL endpoint: http://localhost:${PORT}${server.graphqlPath}`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+      console.log(`👤 API endpoints: http://localhost:${PORT}/api`);
     });
 
     // Graceful shutdown
-    process.on('SIGTERM', async () => {
+    process.on('SIGTERM', () => {
       logger.info('SIGTERM received, shutting down gracefully');
-      await server.stop();
       process.exit(0);
     });
 
-    process.on('SIGINT', async () => {
+    process.on('SIGINT', () => {
       logger.info('SIGINT received, shutting down gracefully');
-      await server.stop();
       process.exit(0);
     });
 
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Failed to start User Service', {
       error: error.message,
       stack: error.stack,

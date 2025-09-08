@@ -16,6 +16,9 @@ class JWTService {
             logger_1.logger.warn('JWT secrets not set in environment variables. Using defaults (not secure for production)');
         }
     }
+    /**
+     * Generate access token from user data
+     */
     generateAccessToken(user) {
         const payload = {
             userId: 'userId' in user ? user.userId : user._id?.toString() || user.id,
@@ -35,6 +38,9 @@ class JWTService {
             throw new Error('Failed to generate access token');
         }
     }
+    /**
+     * Generate refresh token
+     */
     generateRefreshToken(userId, tokenVersion = 0) {
         const payload = {
             userId,
@@ -53,6 +59,9 @@ class JWTService {
             throw new Error('Failed to generate refresh token');
         }
     }
+    /**
+     * Generate both access and refresh tokens
+     */
     generateTokenPair(user, tokenVersion = 0) {
         const userId = 'userId' in user ? user.userId : user._id?.toString() || user.id;
         return {
@@ -60,6 +69,9 @@ class JWTService {
             refreshToken: this.generateRefreshToken(userId, tokenVersion)
         };
     }
+    /**
+     * Verify access token and return payload
+     */
     verifyAccessToken(token) {
         try {
             const decoded = jsonwebtoken_1.default.verify(token, this.accessTokenSecret, {
@@ -81,6 +93,9 @@ class JWTService {
             }
         }
     }
+    /**
+     * Verify refresh token and return payload
+     */
     verifyRefreshToken(token) {
         try {
             const decoded = jsonwebtoken_1.default.verify(token, this.refreshTokenSecret, {
@@ -102,6 +117,9 @@ class JWTService {
             }
         }
     }
+    /**
+     * Decode token without verification (useful for expired tokens)
+     */
     decodeToken(token) {
         try {
             return jsonwebtoken_1.default.decode(token);
@@ -111,6 +129,9 @@ class JWTService {
             return null;
         }
     }
+    /**
+     * Check if token is expired without verification
+     */
     isTokenExpired(token) {
         try {
             const decoded = this.decodeToken(token);
@@ -124,6 +145,9 @@ class JWTService {
             return true;
         }
     }
+    /**
+     * Get token expiration date
+     */
     getTokenExpiration(token) {
         try {
             const decoded = this.decodeToken(token);
@@ -136,6 +160,9 @@ class JWTService {
             return null;
         }
     }
+    /**
+     * Get remaining token lifetime in seconds
+     */
     getTokenRemainingLife(token) {
         try {
             const decoded = this.decodeToken(token);
@@ -150,6 +177,9 @@ class JWTService {
             return 0;
         }
     }
+    /**
+     * Extract user ID from token without full verification
+     */
     extractUserIdFromToken(token) {
         try {
             const decoded = this.decodeToken(token);
@@ -159,6 +189,9 @@ class JWTService {
             return null;
         }
     }
+    /**
+     * Generate API key for service-to-service communication
+     */
     generateApiKey(serviceId, permissions = []) {
         const payload = {
             serviceId,
@@ -167,7 +200,7 @@ class JWTService {
         };
         try {
             return jsonwebtoken_1.default.sign(payload, this.accessTokenSecret, {
-                expiresIn: '1y',
+                expiresIn: '1y', // Long-lived for API keys
                 issuer: 'shopsphere',
                 audience: 'shopsphere-services'
             });
@@ -177,6 +210,9 @@ class JWTService {
             throw new Error('Failed to generate API key');
         }
     }
+    /**
+     * Verify API key for service-to-service communication
+     */
     verifyApiKey(token) {
         try {
             const decoded = jsonwebtoken_1.default.verify(token, this.accessTokenSecret, {
@@ -190,15 +226,19 @@ class JWTService {
             throw new Error('Invalid API key');
         }
     }
+    /**
+     * Generate password reset token
+     */
     generatePasswordResetToken(userId, currentPassword) {
         const payload = {
             userId,
             type: 'password_reset',
+            // Include hash of current password to invalidate token if password changes
             passwordHash: require('crypto').createHash('sha256').update(currentPassword).digest('hex').substring(0, 8)
         };
         try {
             return jsonwebtoken_1.default.sign(payload, this.accessTokenSecret, {
-                expiresIn: '1h',
+                expiresIn: '1h', // Short-lived for security
                 issuer: 'shopsphere',
                 audience: 'shopsphere-password-reset'
             });
@@ -208,6 +248,9 @@ class JWTService {
             throw new Error('Failed to generate password reset token');
         }
     }
+    /**
+     * Verify password reset token
+     */
     verifyPasswordResetToken(token) {
         try {
             const decoded = jsonwebtoken_1.default.verify(token, this.accessTokenSecret, {
@@ -229,6 +272,9 @@ class JWTService {
             }
         }
     }
+    /**
+     * Generate email verification token
+     */
     generateEmailVerificationToken(userId, email) {
         const payload = {
             userId,
@@ -247,6 +293,9 @@ class JWTService {
             throw new Error('Failed to generate email verification token');
         }
     }
+    /**
+     * Verify email verification token
+     */
     verifyEmailVerificationToken(token) {
         try {
             const decoded = jsonwebtoken_1.default.verify(token, this.accessTokenSecret, {
@@ -270,7 +319,9 @@ class JWTService {
     }
 }
 exports.JWTService = JWTService;
+// Export singleton instance
 exports.jwtService = new JWTService();
+// Utility functions
 const generateTokens = (user, tokenVersion) => {
     return exports.jwtService.generateTokenPair(user, tokenVersion);
 };

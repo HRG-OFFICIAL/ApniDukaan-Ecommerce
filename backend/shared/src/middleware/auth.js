@@ -4,6 +4,9 @@ exports.handleRefreshToken = exports.authRateLimit = exports.authenticateService
 const jwt_1 = require("../utils/jwt");
 const logger_1 = require("../utils/logger");
 const user_1 = require("../types/user");
+/**
+ * Middleware to authenticate JWT tokens
+ */
 const authenticate = (req, res, next) => {
     try {
         const token = extractTokenFromRequest(req);
@@ -58,10 +61,14 @@ const authenticate = (req, res, next) => {
     }
 };
 exports.authenticate = authenticate;
+/**
+ * Optional authentication middleware - doesn't fail if no token
+ */
 const optionalAuthenticate = (req, res, next) => {
     try {
         const token = extractTokenFromRequest(req);
         if (!token) {
+            // No token provided, continue without authentication
             next();
             return;
         }
@@ -71,16 +78,20 @@ const optionalAuthenticate = (req, res, next) => {
             req.userId = payload.userId;
         }
         catch (tokenError) {
+            // Invalid token, but continue without authentication
             logger_1.logger.debug('Optional auth failed, continuing without authentication:', tokenError?.message || 'Unknown error');
         }
         next();
     }
     catch (error) {
         logger_1.logger.error('Optional authentication middleware error:', error);
-        next();
+        next(); // Continue even if there's an error
     }
 };
 exports.optionalAuthenticate = optionalAuthenticate;
+/**
+ * Middleware to authorize based on user roles
+ */
 const authorize = (...allowedRoles) => {
     return (req, res, next) => {
         if (!req.user) {
@@ -119,6 +130,9 @@ const authorize = (...allowedRoles) => {
     };
 };
 exports.authorize = authorize;
+/**
+ * Middleware to ensure user can only access their own resources
+ */
 const authorizeOwnership = (userIdParam = 'userId') => {
     return (req, res, next) => {
         if (!req.user) {
@@ -130,6 +144,7 @@ const authorizeOwnership = (userIdParam = 'userId') => {
             return;
         }
         const targetUserId = req.params[userIdParam] || req.body[userIdParam];
+        // Admins can access any user's resources
         if (req.user.role === user_1.UserRole.ADMIN) {
             next();
             return;
@@ -152,6 +167,9 @@ const authorizeOwnership = (userIdParam = 'userId') => {
     };
 };
 exports.authorizeOwnership = authorizeOwnership;
+/**
+ * Middleware to verify API keys for service-to-service communication
+ */
 const authenticateService = (req, res, next) => {
     try {
         const apiKey = req.headers['x-api-key'];
@@ -173,7 +191,7 @@ const authenticateService = (req, res, next) => {
             req.user = {
                 userId: payload.serviceId,
                 email: `${payload.serviceId}@service.local`,
-                role: user_1.UserRole.ADMIN
+                role: user_1.UserRole.ADMIN // Services have admin privileges
             };
             logger_1.logger.debug('Service authenticated successfully', {
                 serviceId: payload.serviceId,
@@ -207,6 +225,9 @@ const authenticateService = (req, res, next) => {
     }
 };
 exports.authenticateService = authenticateService;
+/**
+ * Rate limiting middleware for authentication endpoints
+ */
 const authRateLimit = (windowMs = 15 * 60 * 1000, maxAttempts = 5) => {
     const attempts = new Map();
     return (req, res, next) => {
@@ -214,6 +235,7 @@ const authRateLimit = (windowMs = 15 * 60 * 1000, maxAttempts = 5) => {
         const now = Date.now();
         const clientAttempts = attempts.get(clientId);
         if (!clientAttempts || now > clientAttempts.resetTime) {
+            // First attempt or window expired
             attempts.set(clientId, { count: 1, resetTime: now + windowMs });
             next();
             return;
@@ -232,24 +254,34 @@ const authRateLimit = (windowMs = 15 * 60 * 1000, maxAttempts = 5) => {
             });
             return;
         }
+        // Increment attempts
         clientAttempts.count++;
         next();
     };
 };
 exports.authRateLimit = authRateLimit;
+/**
+ * Extract JWT token from request headers or cookies
+ */
 function extractTokenFromRequest(req) {
+    // Check Authorization header (Bearer token)
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
         return authHeader.substring(7);
     }
+    // Check cookies (for browser requests)
     if (req.cookies && req.cookies.accessToken) {
         return req.cookies.accessToken;
     }
+    // Check custom header
     if (req.headers['x-access-token']) {
         return req.headers['x-access-token'];
     }
     return null;
 }
+/**
+ * Middleware to handle refresh tokens
+ */
 const handleRefreshToken = async (req, res, next) => {
     try {
         const refreshToken = req.cookies?.refreshToken || req.body.refreshToken;
@@ -290,6 +322,11 @@ const handleRefreshToken = async (req, res, next) => {
     }
 };
 exports.handleRefreshToken = handleRefreshToken;
+/**
+ * Clean expired rate limit entries periodically
+ */
 setInterval(() => {
-}, 60 * 60 * 1000);
+    // This would be implemented per service instance
+    // In a real app, you'd use Redis for distributed rate limiting
+}, 60 * 60 * 1000); // Clean every hour
 //# sourceMappingURL=auth.js.map
