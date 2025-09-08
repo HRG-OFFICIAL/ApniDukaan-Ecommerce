@@ -6,7 +6,7 @@ import { logger } from '@shopsphere/shared';
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT || 4003;
+  const PORT = process.env.PORT || 4004;
 
   try {
     // Security middleware
@@ -25,7 +25,7 @@ async function startServer() {
     // Rate limiting
     const limiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 100, // limit each IP to 100 requests per windowMs
+      max: 50, // limit each IP to 50 requests per windowMs (lower for payment)
       message: 'Too many requests from this IP, please try again later.',
       standardHeaders: true,
       legacyHeaders: false
@@ -40,61 +40,76 @@ async function startServer() {
     app.get('/health', (req, res) => {
       res.status(200).json({
         status: 'healthy',
-        service: 'order-service',
+        service: 'payment-service',
         timestamp: new Date().toISOString(),
         uptime: process.uptime()
       });
     });
 
     // API routes
-    app.get('/api/orders', (req, res) => {
-      res.json({
-        success: true,
-        data: [
-          { id: 1, userId: 1, total: 99.99, status: 'completed', items: [] },
-          { id: 2, userId: 2, total: 149.99, status: 'pending', items: [] }
-        ]
-      });
-    });
-
-    app.get('/api/orders/:id', (req, res) => {
-      const { id } = req.params;
-      res.json({
-        success: true,
-        data: { 
-          id: parseInt(id), 
-          userId: 1, 
-          total: 99.99, 
-          status: 'completed',
-          items: [],
-          createdAt: new Date().toISOString()
-        }
-      });
-    });
-
-    app.post('/api/orders', (req, res) => {
-      const { userId, items, total } = req.body;
-      // Mock order creation
+    app.post('/api/payments/create', (req, res) => {
+      const { amount, currency, orderId, paymentMethod } = req.body;
+      
+      // Mock payment processing
+      const paymentId = Math.floor(Math.random() * 10000);
+      const status = Math.random() > 0.1 ? 'succeeded' : 'failed'; // 90% success rate
+      
       res.json({
         success: true,
         data: {
-          id: Math.floor(Math.random() * 1000),
-          userId,
-          items,
-          total,
-          status: 'pending',
+          id: paymentId,
+          orderId,
+          amount,
+          currency: currency || 'USD',
+          status,
+          paymentMethod,
+          transactionId: `txn_${paymentId}`,
           createdAt: new Date().toISOString()
         }
       });
     });
 
-    app.put('/api/orders/:id/status', (req, res) => {
+    app.get('/api/payments/:id', (req, res) => {
       const { id } = req.params;
-      const { status } = req.body;
       res.json({
         success: true,
-        data: { id: parseInt(id), status, updatedAt: new Date().toISOString() }
+        data: {
+          id: parseInt(id),
+          orderId: 123,
+          amount: 99.99,
+          currency: 'USD',
+          status: 'succeeded',
+          paymentMethod: 'card',
+          transactionId: `txn_${id}`,
+          createdAt: new Date().toISOString()
+        }
       });
+    });
+
+    app.post('/api/payments/:id/refund', (req, res) => {
+      const { id } = req.params;
+      const { amount } = req.body;
+      
+      res.json({
+        success: true,
+        data: {
+          id: parseInt(id),
+          refundId: Math.floor(Math.random() * 10000),
+          amount: amount || 99.99,
+          status: 'succeeded',
+          createdAt: new Date().toISOString()
+        }
+      });
+    });
+
+    // Stripe webhook endpoint (mock)
+    app.post('/api/webhooks/stripe', (req, res) => {
+      res.json({ received: true });
+    });
+
+    // PayPal webhook endpoint (mock)
+    app.post('/api/webhooks/paypal', (req, res) => {
+      res.json({ received: true });
     });
 
     // Global error handler
@@ -121,15 +136,15 @@ async function startServer() {
 
     // Start server
     app.listen(PORT, () => {
-      logger.info('Order Service started successfully', {
+      logger.info('Payment Service started successfully', {
         port: PORT,
         environment: process.env.NODE_ENV || 'development',
         action: 'server_start'
       });
       
-      console.log(`🚀 Order Service ready at http://localhost:${PORT}`);
+      console.log(`🚀 Payment Service ready at http://localhost:${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/health`);
-      console.log(`📦 API endpoints: http://localhost:${PORT}/api`);
+      console.log(`💳 API endpoints: http://localhost:${PORT}/api`);
     });
 
     // Graceful shutdown
@@ -144,7 +159,7 @@ async function startServer() {
     });
 
   } catch (error: any) {
-    logger.error('Failed to start Order Service', {
+    logger.error('Failed to start Payment Service', {
       error: error.message,
       stack: error.stack,
       action: 'server_start_error'

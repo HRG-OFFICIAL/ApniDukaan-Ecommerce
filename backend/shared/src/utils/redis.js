@@ -6,7 +6,7 @@ const logger_1 = require("./logger");
 class RedisCache {
     constructor() {
         this.isConnected = false;
-        this.defaultTTL = 3600;
+        this.defaultTTL = 3600; // 1 hour
         this.keyPrefix = 'shopsphere:';
         const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
         this.client = (0, redis_1.createClient)({
@@ -91,6 +91,7 @@ class RedisCache {
             fullKey
         };
     }
+    // Basic cache operations
     async get(key, options = {}) {
         if (!this.isConnected) {
             logger_1.logger.warn('Redis not connected, skipping cache get');
@@ -169,6 +170,7 @@ class RedisCache {
             return false;
         }
     }
+    // Specialized cache methods
     async cacheProduct(productId, product, ttl = 3600) {
         return this.set(`product:${productId}`, product, { ttl, prefix: 'catalog:' });
     }
@@ -187,6 +189,7 @@ class RedisCache {
     async getCachedSession(sessionId) {
         return this.get(`session:${sessionId}`, { prefix: 'auth:' });
     }
+    // Health check
     async healthCheck() {
         if (!this.isConnected) {
             return { status: 'disconnected', latency: -1 };
@@ -201,18 +204,22 @@ class RedisCache {
             return { status: 'error', latency: -1 };
         }
     }
+    // Get client for advanced operations
     getClient() {
         return this.client;
     }
 }
 exports.RedisCache = RedisCache;
+// Singleton instance
 const redisCache = RedisCache.getInstance();
+// Export convenience functions
 const connectRedis = () => redisCache.connect();
 exports.connectRedis = connectRedis;
 const disconnectRedis = () => redisCache.disconnect();
 exports.disconnectRedis = disconnectRedis;
 const isRedisConnected = () => redisCache.isRedisConnected();
 exports.isRedisConnected = isRedisConnected;
+// Export cache operations
 exports.cache = {
     get: (key, options) => redisCache.get(key, options),
     set: (key, value, options) => redisCache.set(key, value, options),

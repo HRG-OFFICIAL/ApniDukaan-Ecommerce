@@ -85,6 +85,7 @@ const isDatabaseConnected = () => {
     return db.isConnectedToDB();
 };
 exports.isDatabaseConnected = isDatabaseConnected;
+// Mongoose plugin for adding timestamps and common methods
 const timestampPlugin = (schema) => {
     schema.add({
         createdAt: {
@@ -105,6 +106,7 @@ const timestampPlugin = (schema) => {
     });
 };
 exports.timestampPlugin = timestampPlugin;
+// Common aggregation pipelines
 const paginationPipeline = (page = 1, limit = 20) => {
     const skip = (page - 1) * limit;
     return [
@@ -133,6 +135,7 @@ const sortPipeline = (sortBy = 'createdAt', sortOrder = 'desc') => {
     ];
 };
 exports.sortPipeline = sortPipeline;
+// Transaction helper
 const withTransaction = async (callback) => {
     const session = await mongoose_1.default.startSession();
     try {
