@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import MainLayout from '../components/layout/MainLayout'
-import ProductCard, { Product } from '../components/product/ProductCard'
+import ProductCard from '../components/product/ProductCard'
+import { Product } from '../types'
 
 // Featured products for the homepage
 const featuredProducts: Product[] = [

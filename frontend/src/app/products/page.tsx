@@ -7,7 +7,8 @@ import {
   AdjustmentsHorizontalIcon,
   MagnifyingGlassIcon 
 } from '@heroicons/react/24/outline'
-import ProductCard, { Product } from '../../components/product/ProductCard'
+import ProductCard from '../../components/product/ProductCard'
+import { Product } from '../../types'
 import MainLayout from '../../components/layout/MainLayout'
 
 // Mock data for demonstration

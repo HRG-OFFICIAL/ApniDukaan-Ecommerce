@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useState } from 'react'
 import { HeartIcon, ShoppingCartIcon, StarIcon } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartSolidIcon, StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
-import { useCartStore } from '@/contexts/CartContext'
+import { useCart } from '@/contexts/CartContext'
 import { formatCurrency } from '@/utils/format'
 import { cn } from '@/utils/cn'
 
@@ -31,7 +31,7 @@ export default function ProductCard({
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [imageError, setImageError] = useState(false)
   
-  const { addItem } = useCartStore()
+  const { addItem } = useCart()
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
