@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import { logger } from '@shopsphere/shared';
+import { logger } from '@apnidukaan/shared';
 
 async function startServer() {
   const app = express();

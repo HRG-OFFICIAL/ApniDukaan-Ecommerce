@@ -1,7 +1,7 @@
 {
   "name": "simple-catalog-service",
   "version": "1.0.0",
-  "description": "Simple Catalog Service for ShopSphere",
+  "description": "Simple Catalog Service for ApniDukaan",
   "main": "dist/app.js",
   "scripts": {
     "start": "node dist/app.js",

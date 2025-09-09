@@ -11,7 +11,7 @@ import {
   IAddWishlistItemRequest,
   IUpdateWishlistItemRequest
 } from '../types/profile.types';
-import { logger } from '@shopsphere/shared';
+import { logger } from '@apnidukaan/shared';
 
 const router = express.Router();
 const profileService = new ProfileService();

@@ -3,8 +3,9 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
-console.log('🚀 Starting ApniDukaan E-commerce Platform (Simple Mode)...\n');
-console.log('📝 Note: This version runs without databases for immediate testing\n');
+console.log('🚀 Starting ApniDukaan with MongoDB Atlas + Redis Cloud...\n');
+console.log('☁️  Using MongoDB Atlas cloud database');
+console.log('🔴 Using Redis Cloud for caching and sessions\n');
 
 // Services to start
 const services = [
@@ -62,7 +63,12 @@ services.forEach((service, index) => {
     cwd: service.cwd,
     stdio: 'pipe',
     shell: true,
-    env: { ...process.env, NODE_ENV: 'development' }
+    env: { 
+      ...process.env, 
+      NODE_ENV: 'development',
+      MONGODB_URI: 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0',
+      REDIS_URL: 'redis://default:gONuTLe4OqsID9U4BKNEJzR6qdQzpvVe@redis-11045.c274.us-east-1-3.ec2.redns.redis-cloud.com:11045'
+    }
   });
 
   // Add service info to output
@@ -108,11 +114,13 @@ process.on('SIGTERM', () => {
   process.exit(0);
 });
 
-console.log('\n✅ All services started!');
+console.log('\n✅ All services started with MongoDB Atlas + Redis Cloud!');
 console.log('📱 Frontend: http://localhost:3000');
 console.log('🌐 API Gateway: http://localhost:4000');
 console.log('🛍️  Catalog Service: http://localhost:4001');
 console.log('👤 User Service: http://localhost:4002');
 console.log('📦 Order Service: http://localhost:4003');
 console.log('💳 Payment Service: http://localhost:4004');
+console.log('☁️  Database: MongoDB Atlas (Cloud)');
+console.log('🔴 Cache: Redis Cloud (Cloud)');
 console.log('\nPress Ctrl+C to stop all services');

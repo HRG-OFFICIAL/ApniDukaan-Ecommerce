@@ -96,7 +96,7 @@ export default function Home() {
                 ))}
             </div>
             <div className="mt-12 border-t border-gray-700 pt-8 text-center text-sm">
-                <p>&copy; {new Date().getFullYear()} ShopSphere.com. All Rights Reserved.</p>
+                <p>&copy; {new Date().getFullYear()} ApniDukaan.com. All Rights Reserved.</p>
             </div>
         </div>
       </footer>

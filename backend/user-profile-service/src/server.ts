@@ -7,7 +7,7 @@ import mongoose from 'mongoose';
 import { createClient } from 'redis';
 import { config } from 'dotenv';
 import profileRoutes from './routes/profile';
-import { logger, errorHandler, notFoundHandler, requestLogger } from '@shopsphere/shared';
+import { logger, errorHandler, notFoundHandler, requestLogger } from '@apnidukaan/shared';
 
 // Load environment variables
 config();

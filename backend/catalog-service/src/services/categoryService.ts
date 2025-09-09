@@ -1,6 +1,6 @@
 import { Category, ICategory } from '../models/Category';
 import { Product } from '../models/Product';
-import { logger } from '@shopsphere/shared';
+import { logger } from '@apnidukaan/shared';
 
 export interface CategoryFilters {
   parent?: string;

@@ -1,4 +1,4 @@
-# ShopSphere E-Commerce Platform
+# ApniDukaan E-Commerce Platform
 
 A full-stack e-commerce platform built with microservices architecture, featuring a modern React frontend and Node.js backend services.
 
@@ -69,38 +69,50 @@ cd shopsphere-ecommerce
 
 ### 2. Install Dependencies
 ```bash
+# Install root dependencies
 npm install
+
+# Install frontend dependencies
+cd frontend && npm install && cd ..
+
+# Install backend dependencies
+cd backend/catalog-service && npm install && cd ../..
+cd backend/user-service && npm install && cd ../..
+cd backend/order-service && npm install && cd ../..
+cd backend/payment-service && npm install && cd ../..
+cd backend/api-gateway && npm install && cd ../..
 ```
 
-### 3. Environment Setup
+### 3. Start All Services (No Database Required!)
 ```bash
-cp env.example .env
-# Edit .env with your configuration
+# Start everything at once
+node start-simple.js
+
+# Or test individual services
+node test-services.js
 ```
 
-### 4. Start Development Servers
-
-#### Option 1: Start All Services (Recommended)
-```bash
-node start-dev.js
-```
-
-#### Option 2: Start Services Individually
-```bash
-# Terminal 1 - Frontend
-cd frontend && npm run dev
-
-# Terminal 2 - API Gateway
-cd backend/api-gateway && npm run dev
-
-# Terminal 3 - Catalog Service
-cd backend/catalog-service && npm run dev
-```
-
-### 5. Access the Application
+### 4. Access the Application
 - **Frontend**: http://localhost:3000
 - **API Gateway**: http://localhost:4000
-- **Catalog Service**: http://localhost:4001
+- **Health Check**: http://localhost:4000/health
+
+## ⚡ Immediate Setup (5 Minutes!)
+
+For the fastest setup without any database configuration:
+
+```bash
+# 1. Install dependencies
+npm install && cd frontend && npm install && cd ..
+
+# 2. Start all services
+node start-simple.js
+
+# 3. Open browser
+# http://localhost:3000
+```
+
+**That's it!** The application runs with mock data and doesn't require MongoDB or Redis.
 
 ## 📁 Project Structure
 

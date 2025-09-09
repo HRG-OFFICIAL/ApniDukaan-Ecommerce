@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { logger } from '@shopsphere/shared';
+import { logger } from '@apnidukaan/shared';
 
 async function startServer() {
   const app = express();

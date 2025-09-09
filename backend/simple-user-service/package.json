@@ -1,7 +1,7 @@
 {
   "name": "simple-user-service",
   "version": "1.0.0",
-  "description": "Simple User Authentication Service for ShopSphere",
+  "description": "Simple User Authentication Service for ApniDukaan",
   "main": "dist/app.js",
   "scripts": {
     "start": "node dist/app.js",

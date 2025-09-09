@@ -1,7 +1,7 @@
 {
   "name": "payment-service",
   "version": "1.0.0",
-  "description": "Payment processing microservice for ShopSphere",
+  "description": "Payment processing microservice for ApniDukaan",
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",
@@ -22,7 +22,7 @@
     "paypal-rest-sdk": "^1.8.1",
     "kafkajs": "^2.2.4",
     "dotenv": "^16.3.1",
-    "@shopsphere/shared": "file:../shared"
+    "@apnidukaan/shared": "file:../shared"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

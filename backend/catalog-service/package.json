@@ -1,7 +1,7 @@
 {
   "name": "catalog-service",
   "version": "1.0.0",
-  "description": "Product catalog microservice for ShopSphere",
+  "description": "Product catalog microservice for ApniDukaan",
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",
@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@apollo/federation": "^0.38.1",
-    "@shopsphere/shared": "file:../shared",
+    "@apnidukaan/shared": "file:../shared",
     "apollo-server-express": "^3.12.1",
     "aws-sdk": "^2.1506.0",
     "compression": "^1.7.4",

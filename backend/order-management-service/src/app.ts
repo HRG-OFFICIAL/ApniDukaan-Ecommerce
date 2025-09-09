@@ -13,7 +13,7 @@ import dotenv from 'dotenv';
 import orderRoutes from './routes/orders';
 
 // Import middleware
-import { logger } from '@shopsphere/shared';
+import { logger } from '@apnidukaan/shared';
 
 // Load environment variables
 dotenv.config();

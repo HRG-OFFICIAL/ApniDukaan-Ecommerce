@@ -1,7 +1,7 @@
 {
-  "name": "@shopsphere/shared",
+  "name": "@apnidukaan/shared",
   "version": "1.0.0",
-  "description": "Shared utilities and types for ShopSphere microservices",
+  "description": "Shared utilities and types for ApniDukaan microservices",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

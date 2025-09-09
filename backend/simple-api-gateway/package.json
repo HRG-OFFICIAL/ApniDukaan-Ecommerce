@@ -1,7 +1,7 @@
 {
   "name": "simple-api-gateway",
   "version": "1.0.0",
-  "description": "Simple API Gateway for ShopSphere",
+  "description": "Simple API Gateway for ApniDukaan",
   "main": "dist/app.js",
   "scripts": {
     "start": "node dist/app.js",

@@ -1,7 +1,7 @@
 import express from 'express';
 import { body, param, query, validationResult } from 'express-validator';
 import { ProductService } from '../services/productService';
-import { logger } from '@shopsphere/shared';
+import { logger } from '@apnidukaan/shared';
 
 const router = express.Router();
 const productService = new ProductService();

@@ -2,13 +2,19 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { logger } from '@shopsphere/shared';
+import { logger, connectDatabase } from '@apnidukaan/shared';
 
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 4002;
 
   try {
+    // Connect to MongoDB Atlas
+    await connectDatabase(
+                  process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_users?retryWrites=true&w=majority&appName=Cluster0',
+      'user_db'
+    );
+
     // Security middleware
     app.use(helmet({
       contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false

@@ -1,7 +1,7 @@
 import express from 'express';
 import { body, param, query, validationResult } from 'express-validator';
 import { CategoryService } from '../services/categoryService';
-import { logger } from '@shopsphere/shared';
+import { logger } from '@apnidukaan/shared';
 
 const router = express.Router();
 const categoryService = new CategoryService();

@@ -7,7 +7,7 @@ import { CartProvider } from '../contexts/CartContext'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'ShopSphere - Your Ultimate E-Commerce Destination',
+  title: 'ApniDukaan - Your Ultimate E-Commerce Destination',
   description: 'Full-stack e-commerce platform with microservices architecture, featuring product catalog, user management, order processing, and secure payments.',
   keywords: 'ecommerce, shopping, online store, products, cart, checkout',
 }

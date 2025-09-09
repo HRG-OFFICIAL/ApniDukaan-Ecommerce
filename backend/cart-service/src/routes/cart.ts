@@ -3,7 +3,7 @@ import { body, param, query, validationResult } from 'express-validator';
 import { v4 as uuidv4 } from 'uuid';
 import CartService from '../services/CartService';
 import { ICartMergeOptions } from '../types/cart.types';
-import { logger } from '@shopsphere/shared';
+import { logger } from '@apnidukaan/shared';
 
 const router = express.Router();
 const cartService = new CartService();

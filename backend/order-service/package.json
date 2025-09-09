@@ -1,7 +1,7 @@
 {
   "name": "order-service",
   "version": "1.0.0",
-  "description": "Order management microservice for ShopSphere",
+  "description": "Order management microservice for ApniDukaan",
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",
@@ -22,7 +22,7 @@
     "kafkajs": "^2.2.4",
     "node-cron": "^3.0.3",
     "dotenv": "^16.3.1",
-    "@shopsphere/shared": "file:../shared"
+    "@apnidukaan/shared": "file:../shared"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

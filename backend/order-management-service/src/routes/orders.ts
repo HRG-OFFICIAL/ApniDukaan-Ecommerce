@@ -17,7 +17,7 @@ import {
   RefundReason,
   IOrderSearchQuery
 } from '../types/order.types';
-import { logger } from '@shopsphere/shared';
+import { logger } from '@apnidukaan/shared';
 
 const router = express.Router();
 

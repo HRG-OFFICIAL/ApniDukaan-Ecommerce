@@ -7,7 +7,7 @@ import session from 'express-session';
 import connectRedis from 'connect-redis';
 import { createClient } from 'redis';
 import mongoose from 'mongoose';
-import { connectDatabase, logger } from '@shopsphere/shared';
+import { connectDatabase, logger } from '@apnidukaan/shared';
 
 // Import routes
 import cartRoutes from './routes/cart';

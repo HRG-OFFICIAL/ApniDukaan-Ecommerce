@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { connectDatabase, logger } from '@shopsphere/shared';
+import { connectDatabase, logger } from '@apnidukaan/shared';
 
 // Import routes
 import productRoutes from './routes/products';
@@ -14,8 +14,11 @@ async function startServer() {
   const PORT = process.env.PORT || 4001;
 
   try {
-    // Skip database connection for now - use mock data
-    // await connectDatabase(process.env.MONGODB_URI || 'mongodb://localhost:27017', 'catalog_db');
+    // Connect to MongoDB Atlas
+    await connectDatabase(
+                  process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_catalog?retryWrites=true&w=majority&appName=Cluster0',
+      'catalog_db'
+    );
 
     // Security middleware
     app.use(helmet({

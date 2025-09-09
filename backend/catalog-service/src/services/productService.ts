@@ -1,7 +1,7 @@
 import { Product, IProduct } from '../models/Product';
 import { Category } from '../models/Category';
 import { Review } from '../models/Review';
-import { logger } from '@shopsphere/shared';
+import { logger } from '@apnidukaan/shared';
 
 export interface ProductFilters {
   category?: string;

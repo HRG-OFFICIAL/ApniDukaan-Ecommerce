@@ -1,116 +1,87 @@
 #!/usr/bin/env node
 
-const { spawn } = require('child_process');
-const path = require('path');
+const http = require('http');
 
 console.log('🧪 Testing ShopSphere Services...\n');
 
-// Test individual services
-const testService = (serviceName, servicePath, port) => {
-  return new Promise((resolve, reject) => {
-    console.log(`🔍 Testing ${serviceName}...`);
-    
-    const child = spawn('npm', ['run', 'dev'], {
-      cwd: servicePath,
-      stdio: 'pipe',
-      shell: true,
-      env: {
-        ...process.env,
-        PORT: port.toString(),
-        NODE_ENV: 'development'
-      }
-    });
+const services = [
+  { name: 'API Gateway', url: 'http://localhost:4000/health' },
+  { name: 'Catalog Service', url: 'http://localhost:4001/health' },
+  { name: 'User Service', url: 'http://localhost:4002/health' },
+  { name: 'Order Service', url: 'http://localhost:4003/health' },
+  { name: 'Payment Service', url: 'http://localhost:4004/health' }
+];
 
-    let output = '';
-    let hasStarted = false;
-
-    child.stdout.on('data', (data) => {
-      output += data.toString();
-      if (output.includes('listening') || output.includes('started') || output.includes('Server running')) {
-        if (!hasStarted) {
-          console.log(`✅ ${serviceName} started successfully on port ${port}`);
-          hasStarted = true;
-          child.kill('SIGINT');
-          resolve(true);
+async function testService(service) {
+  return new Promise((resolve) => {
+    const req = http.get(service.url, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const response = JSON.parse(data);
+          resolve({
+            name: service.name,
+            status: 'healthy',
+            response: response
+          });
+        } catch (e) {
+          resolve({
+            name: service.name,
+            status: 'unhealthy',
+            error: 'Invalid JSON response'
+          });
         }
-      }
+      });
     });
 
-    child.stderr.on('data', (data) => {
-      output += data.toString();
+    req.on('error', (err) => {
+      resolve({
+        name: service.name,
+        status: 'unhealthy',
+        error: err.message
+      });
     });
 
-    child.on('close', (code) => {
-      if (!hasStarted) {
-        console.log(`❌ ${serviceName} failed to start (exit code: ${code})`);
-        console.log(`Output: ${output}`);
-        resolve(false);
-      }
+    req.setTimeout(5000, () => {
+      req.destroy();
+      resolve({
+        name: service.name,
+        status: 'unhealthy',
+        error: 'Timeout'
+      });
     });
-
-    // Timeout after 10 seconds
-    setTimeout(() => {
-      if (!hasStarted) {
-        child.kill('SIGINT');
-        console.log(`⏰ ${serviceName} timed out`);
-        resolve(false);
-      }
-    }, 10000);
   });
-};
+}
 
 async function runTests() {
-  const services = [
-    {
-      name: 'Catalog Service',
-      path: path.join(__dirname, 'backend', 'catalog-service'),
-      port: 4001
-    },
-    {
-      name: 'User Service',
-      path: path.join(__dirname, 'backend', 'user-service'),
-      port: 4002
-    },
-    {
-      name: 'Order Service',
-      path: path.join(__dirname, 'backend', 'order-service'),
-      port: 4003
-    },
-    {
-      name: 'Payment Service',
-      path: path.join(__dirname, 'backend', 'payment-service'),
-      port: 4004
-    },
-    {
-      name: 'API Gateway',
-      path: path.join(__dirname, 'backend', 'api-gateway'),
-      port: 4000
+  console.log('Testing all services...\n');
+  
+  const results = await Promise.all(services.map(testService));
+  
+  let healthyCount = 0;
+  let unhealthyCount = 0;
+  
+  results.forEach(result => {
+    if (result.status === 'healthy') {
+      console.log(`✅ ${result.name}: HEALTHY`);
+      healthyCount++;
+    } else {
+      console.log(`❌ ${result.name}: UNHEALTHY - ${result.error}`);
+      unhealthyCount++;
     }
-  ];
-
-  const results = [];
-  
-  for (const service of services) {
-    const result = await testService(service.name, service.path, service.port);
-    results.push({ ...service, success: result });
-    console.log(''); // Empty line for readability
-  }
-
-  console.log('📊 Test Results:');
-  console.log('================');
-  
-  results.forEach(service => {
-    const status = service.success ? '✅' : '❌';
-    console.log(`${status} ${service.name} (Port ${service.port})`);
   });
-
-  const successCount = results.filter(r => r.success).length;
-  console.log(`\n🎯 ${successCount}/${results.length} services working correctly`);
   
-  if (successCount === results.length) {
-    console.log('🎉 All services are working! You can now start the full application.');
+  console.log(`\n📊 Summary:`);
+  console.log(`   Healthy: ${healthyCount}`);
+  console.log(`   Unhealthy: ${unhealthyCount}`);
+  
+  if (unhealthyCount === 0) {
+    console.log('\n🎉 All services are running correctly!');
+    console.log('🌐 Frontend: http://localhost:3000');
+    console.log('🔗 API Gateway: http://localhost:4000');
   } else {
-    console.log('⚠️  Some services need attention before running the full application.');
+    console.log('\n⚠️  Some services are not running. Please check the logs.');
   }
 }
 

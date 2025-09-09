@@ -1,6 +1,6 @@
 import { Review, IReview } from '../models/Review';
 import { Product } from '../models/Product';
-import { logger } from '@shopsphere/shared';
+import { logger } from '@apnidukaan/shared';
 
 export interface ReviewFilters {
   product?: string;

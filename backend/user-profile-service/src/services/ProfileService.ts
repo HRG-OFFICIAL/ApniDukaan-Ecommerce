@@ -19,7 +19,7 @@ import {
   IUserPreferences,
   IAccountSettings
 } from '../types/profile.types';
-import { logger } from '@shopsphere/shared';
+import { logger } from '@apnidukaan/shared';
 
 // Mock interfaces for external services (replace with actual service calls)
 interface IProductInfo {

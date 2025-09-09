@@ -13,7 +13,7 @@ import {
   CartEventType
 } from '../types/cart.types';
 import { EventEmitter } from 'events';
-import { logger } from '@shopsphere/shared';
+import { logger } from '@apnidukaan/shared';
 
 // Product service integration (would be replaced with actual service call)
 interface IProduct {

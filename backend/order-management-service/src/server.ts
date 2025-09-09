@@ -7,7 +7,7 @@
  */
 
 import OrderManagementApp from './app';
-import { logger } from '@shopsphere/shared';
+import { logger } from '@apnidukaan/shared';
 
 // Handle uncaught exceptions before starting the application
 process.on('uncaughtException', (error: Error) => {
