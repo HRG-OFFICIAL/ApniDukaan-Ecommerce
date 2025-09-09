@@ -47,10 +47,20 @@ const nextConfig = {
   
   // Environment variables
   env: {
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'http://localhost:5000',
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'your-secret-key',
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
     NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'ShopSphere',
+  },
+  
+  // API rewrites
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:4000/api/:path*',
+      },
+    ]
   },
   
   // Security headers

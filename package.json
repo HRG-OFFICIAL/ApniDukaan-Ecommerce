@@ -28,7 +28,6 @@
     "k8s:delete": "kubectl delete -f infrastructure/k8s/",
     "setup": "npm install && npm run setup --workspaces",
     "clean": "npm run clean --workspaces && rm -rf node_modules",
-    "postinstall": "husky install"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

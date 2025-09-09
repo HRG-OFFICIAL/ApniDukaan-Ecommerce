@@ -2,7 +2,7 @@
 
 import { Fragment } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { XMarkIcon, MinusIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { X, Minus, Plus, Trash2 } from 'lucide-react'
 import { useCartStore } from '../../contexts/CartContext'
 import Link from 'next/link'
 import { formatCurrency } from '../../utils/format'
@@ -63,7 +63,7 @@ export default function CartSidebar() {
                       >
                         <span className="absolute -inset-2.5" />
                         <span className="sr-only">Close panel</span>
-                        <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                        <X className="h-6 w-6" aria-hidden="true" />
                       </button>
                     </div>
                   </Transition.Child>
@@ -126,7 +126,7 @@ export default function CartSidebar() {
                                           className="p-1 rounded-md hover:bg-gray-100 transition-colors"
                                           disabled={(item.quantity || 1) <= 1}
                                         >
-                                          <MinusIcon className="h-4 w-4 text-gray-600" />
+                                          <Minus className="h-4 w-4 text-gray-600" />
                                         </button>
                                         <span className="text-gray-500 min-w-[2rem] text-center">
                                           {item.quantity || 1}
@@ -136,7 +136,7 @@ export default function CartSidebar() {
                                           className="p-1 rounded-md hover:bg-gray-100 transition-colors"
                                           disabled={(item.quantity || 1) >= item.maxStock}
                                         >
-                                          <PlusIcon className="h-4 w-4 text-gray-600" />
+                                          <Plus className="h-4 w-4 text-gray-600" />
                                         </button>
                                       </div>
 
@@ -146,7 +146,7 @@ export default function CartSidebar() {
                                           onClick={() => removeItem(item.id)}
                                           className="font-medium text-red-600 hover:text-red-500 transition-colors"
                                         >
-                                          <TrashIcon className="h-5 w-5" />
+                                          <Trash2 className="h-5 w-5" />
                                         </button>
                                       </div>
                                     </div>
