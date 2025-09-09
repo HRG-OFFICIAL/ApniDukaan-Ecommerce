@@ -27,7 +27,7 @@
     "k8s:deploy": "kubectl apply -f infrastructure/k8s/",
     "k8s:delete": "kubectl delete -f infrastructure/k8s/",
     "setup": "npm install && npm run setup --workspaces",
-    "clean": "npm run clean --workspaces && rm -rf node_modules",
+    "clean": "npm run clean --workspaces && rm -rf node_modules"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
