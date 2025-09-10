@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { awsS3Service, ImageUploadOptions, ImageUploadResult, kafkaProducerService, EventType, createEvent } from '@apnidukaan/shared';
+import { awsS3Service, ImageUploadOptions, kafkaProducerService, EventType, createEvent } from '@apnidukaan/shared';
 import { Product } from '../models/Product';
 import { validateImageUpload } from '../middleware/validation.middleware';
 

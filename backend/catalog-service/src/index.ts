@@ -309,7 +309,7 @@ async function startServer() {
     app.use('/api/images', imageRoutes);
 
     // Global error handler
-    app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    app.use((error: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
       logger.error('Unhandled error in Catalog Service', {
         error: error.message,
         stack: error.stack,

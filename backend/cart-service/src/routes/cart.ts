@@ -652,7 +652,7 @@ router.get('/health', (req, res) => {
 });
 
 // Error handling middleware for this router
-router.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+router.use((error: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Cart router error:', {
     error: error.message,
     stack: error.stack,

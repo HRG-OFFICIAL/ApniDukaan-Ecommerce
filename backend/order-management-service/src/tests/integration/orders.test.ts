@@ -76,13 +76,24 @@ describe('Order Management Service - Integration Tests', () => {
   });
 
   afterAll(async () => {
-    // Cleanup
+    // Cleanup services first to clear intervals
+    const { inventoryService } = require('../../routes/orders');
+    if (inventoryService && typeof inventoryService.disconnect === 'function') {
+      await inventoryService.disconnect();
+    }
+    
+    // Cleanup database
     await mongoose.connection.dropDatabase();
     await mongoose.connection.close();
     await mongoServer.stop();
+    
+    // Close server
     if (server) {
       server.close();
     }
+    
+    // Clear any remaining timers
+    jest.clearAllTimers();
   });
 
   beforeEach(async () => {
@@ -345,7 +356,7 @@ describe('Order Management Service - Integration Tests', () => {
         .set('x-user-role', mockUser.userRole)
         .send(mockOrderData);
       
-      createdOrder = response.body.data?.order || { _id: 'test-order-id' };
+      createdOrder = response.body.data?.order || { _id: '507f1f77bcf86cd799439020' };
     });
 
     it('should cancel order successfully', async () => {
@@ -387,7 +398,7 @@ describe('Order Management Service - Integration Tests', () => {
         .set('x-user-role', mockUser.userRole)
         .send(mockOrderData);
       
-      createdOrder = response.body.data?.order || { _id: 'test-order-id' };
+      createdOrder = response.body.data?.order || { _id: '507f1f77bcf86cd799439021' };
     });
 
     it('should process payment successfully', async () => {
@@ -451,7 +462,7 @@ describe('Order Management Service - Integration Tests', () => {
         .set('x-user-role', mockUser.userRole)
         .send(mockOrderData);
       
-      createdOrder = response.body.data?.order || { _id: 'test-order-id' };
+      createdOrder = response.body.data?.order || { _id: '507f1f77bcf86cd799439022' };
     });
 
     it('should get shipping rates successfully', async () => {

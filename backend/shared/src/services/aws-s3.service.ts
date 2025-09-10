@@ -1,4 +1,7 @@
-import AWS from 'aws-sdk';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { CloudFrontClient, CreateInvalidationCommand } from '@aws-sdk/client-cloudfront';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Upload } from '@aws-sdk/lib-storage';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
 
@@ -25,22 +28,26 @@ export interface ImageUploadOptions {
 }
 
 export class AWSS3Service {
-  private s3: AWS.S3;
-  private cloudfront: AWS.CloudFront;
+  private s3Client: S3Client;
+  private cloudfrontClient: CloudFrontClient;
   private bucketName: string;
   private cloudfrontDomain: string;
   private apiGatewayUrl: string;
 
   constructor() {
-    // Configure AWS SDK
-    AWS.config.update({
+    // Configure AWS SDK v3 clients
+    const awsConfig = {
       region: process.env.AWS_REGION || 'us-east-1',
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    });
+      ...(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY ? {
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        }
+      } : {})
+    };
 
-    this.s3 = new AWS.S3();
-    this.cloudfront = new AWS.CloudFront();
+    this.s3Client = new S3Client(awsConfig);
+    this.cloudfrontClient = new CloudFrontClient(awsConfig);
     this.bucketName = process.env.S3_BUCKET_NAME || '';
     this.cloudfrontDomain = process.env.CLOUDFRONT_DOMAIN || '';
     this.apiGatewayUrl = process.env.IMAGE_UPLOAD_API_URL || '';
@@ -126,21 +133,27 @@ export class AWSS3Service {
       // Generate S3 key
       const s3Key = `images/${options.productId}/${fileId}_original.${fileExtension}`;
 
-      // Upload to S3
-      const uploadResult = await this.s3.upload({
-        Bucket: this.bucketName,
-        Key: s3Key,
-        Body: imageBuffer,
-        ContentType: `image/${fileExtension}`,
-        CacheControl: 'max-age=31536000', // 1 year
-        Metadata: {
-          'original-filename': options.fileName,
-          'product-id': options.productId,
-          'file-id': fileId,
+      // Upload to S3 using AWS SDK v3
+      const upload = new Upload({
+        client: this.s3Client,
+        params: {
+          Bucket: this.bucketName,
+          Key: s3Key,
+          Body: imageBuffer,
+          ContentType: `image/${fileExtension}`,
+          CacheControl: 'max-age=31536000', // 1 year
+          Metadata: {
+            'original-filename': options.fileName,
+            'product-id': options.productId,
+            'file-id': fileId,
+          },
         },
-      }).promise();
+      });
+
+      const uploadResult = await upload.done();
 
       // Create response object
+      const s3Url = `https://${this.bucketName}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${s3Key}`;
       const result: ImageUploadResult = {
         fileId,
         originalFileName: options.fileName,
@@ -149,7 +162,7 @@ export class AWSS3Service {
           original: {
             url: `https://${this.cloudfrontDomain}/${s3Key}`,
             s3Key,
-            s3Url: uploadResult.Location,
+            s3Url: s3Url,
           },
         },
         cloudfrontDomain: this.cloudfrontDomain,
@@ -181,10 +194,11 @@ export class AWSS3Service {
    */
   async deleteImage(s3Key: string): Promise<void> {
     try {
-      await this.s3.deleteObject({
+      const command = new DeleteObjectCommand({
         Bucket: this.bucketName,
         Key: s3Key,
-      }).promise();
+      });
+      await this.s3Client.send(command);
 
       logger.info('Image deleted from S3', {
         s3Key,
@@ -205,14 +219,14 @@ export class AWSS3Service {
    */
   async deleteImages(s3Keys: string[]): Promise<void> {
     try {
-      const deleteParams = {
+      const command = new DeleteObjectsCommand({
         Bucket: this.bucketName,
         Delete: {
           Objects: s3Keys.map(key => ({ Key: key })),
         },
-      };
+      });
 
-      await this.s3.deleteObjects(deleteParams).promise();
+      await this.s3Client.send(command);
 
       logger.info('Multiple images deleted from S3', {
         count: s3Keys.length,
@@ -242,16 +256,17 @@ export class AWSS3Service {
       const fileId = uuidv4();
       const s3Key = `images/${productId}/${fileId}_${fileName}`;
 
-      const signedUrl = await this.s3.getSignedUrlPromise('putObject', {
+      const command = new PutObjectCommand({
         Bucket: this.bucketName,
         Key: s3Key,
         ContentType: contentType,
-        Expires: expiresIn,
         Metadata: {
           'product-id': productId,
           'file-id': fileId,
         },
       });
+
+      const signedUrl = await getSignedUrl(this.s3Client, command, { expiresIn });
 
       logger.info('Signed upload URL generated', {
         productId,
@@ -282,11 +297,12 @@ export class AWSS3Service {
     expiresIn: number = 3600
   ): Promise<string> {
     try {
-      const signedUrl = await this.s3.getSignedUrlPromise('getObject', {
+      const command = new GetObjectCommand({
         Bucket: this.bucketName,
         Key: s3Key,
-        Expires: expiresIn,
       });
+
+      const signedUrl = await getSignedUrl(this.s3Client, command, { expiresIn });
 
       logger.info('Signed access URL generated', {
         s3Key,
@@ -310,12 +326,12 @@ export class AWSS3Service {
    */
   async listProductImages(productId: string): Promise<string[]> {
     try {
-      const params = {
+      const command = new ListObjectsV2Command({
         Bucket: this.bucketName,
         Prefix: `images/${productId}/`,
-      };
+      });
 
-      const result = await this.s3.listObjectsV2(params).promise();
+      const result = await this.s3Client.send(command);
       const s3Keys = result.Contents?.map(obj => obj.Key || '') || [];
 
       logger.info('Product images listed', {
@@ -355,7 +371,7 @@ export class AWSS3Service {
         return;
       }
 
-      await this.cloudfront.createInvalidation({
+      const command = new CreateInvalidationCommand({
         DistributionId: distributionId,
         InvalidationBatch: {
           CallerReference: `invalidation-${Date.now()}`,
@@ -364,7 +380,9 @@ export class AWSS3Service {
             Items: paths.map(path => `/${path}`),
           },
         },
-      }).promise();
+      });
+
+      await this.cloudfrontClient.send(command);
 
       logger.info('CloudFront cache invalidated', {
         distributionId,

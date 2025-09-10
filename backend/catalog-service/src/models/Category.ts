@@ -96,8 +96,7 @@ CategorySchema.virtual('productCount', {
   count: true
 });
 
-// Indexes
-CategorySchema.index({ slug: 1 });
+// Indexes (slug index is already created by unique: true in schema)
 CategorySchema.index({ parent: 1, isActive: 1 });
 CategorySchema.index({ level: 1, sortOrder: 1 });
 CategorySchema.index({ path: 1 });

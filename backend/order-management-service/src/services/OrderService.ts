@@ -640,11 +640,20 @@ export class OrderService {
       return {
         success: true,
         data: {
-          orders: orders.map(order => order.toObject()) as IOrder[],
-          total,
-          page,
-          limit,
-          totalPages
+          orders: orders.map(order => {
+            const plainOrder = JSON.parse(JSON.stringify(order));
+            return {
+              ...plainOrder,
+              _id: plainOrder._id?.toString() || plainOrder._id
+            };
+          }) as IOrder[],
+          pagination: {
+            currentPage: page,
+            page,
+            limit,
+            total,
+            totalPages
+          }
         }
       };
 
@@ -674,10 +683,13 @@ export class OrderService {
         success: true,
         data: {
           orders,
-          total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit)
+          pagination: {
+            currentPage: page,
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit)
+          }
         }
       };
 

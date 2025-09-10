@@ -2,7 +2,8 @@ import { Types } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
 import { v2 as cloudinary } from 'cloudinary';
-import AWS from 'aws-sdk';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
 import fs from 'fs';
 import path from 'path';
 import { createClient } from 'redis';
@@ -24,7 +25,7 @@ import { logger } from '../utils/logger';
 
 export class UserService implements IUserService {
   private redisClient: any;
-  private s3: AWS.S3 | null = null;
+  private s3Client: S3Client | null = null;
 
   constructor() {
     this.initializeRedis();
@@ -55,14 +56,15 @@ export class UserService implements IUserService {
       });
     }
 
-    // Initialize AWS S3
-    if (process.env.AWS_ACCESS_KEY_ID) {
-      AWS.config.update({
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        region: process.env.AWS_REGION || 'us-east-1'
+    // Initialize AWS S3 client
+    if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+      this.s3Client = new S3Client({
+        region: process.env.AWS_REGION || 'us-east-1',
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        }
       });
-      this.s3 = new AWS.S3();
     }
   }
 
@@ -857,20 +859,26 @@ export class UserService implements IUserService {
     }
 
     // Try AWS S3
-    if (this.s3 && process.env.AWS_S3_BUCKET) {
+    if (this.s3Client && process.env.AWS_S3_BUCKET) {
       try {
         const key = `users/${userId}/${filename}`;
-        const result = await this.s3.upload({
-          Bucket: process.env.AWS_S3_BUCKET,
-          Key: key,
-          Body: imageBuffer,
-          ContentType: 'image/jpeg',
-          ACL: 'public-read'
-        }).promise();
+        const upload = new Upload({
+          client: this.s3Client,
+          params: {
+            Bucket: process.env.AWS_S3_BUCKET,
+            Key: key,
+            Body: imageBuffer,
+            ContentType: 'image/jpeg',
+            ACL: 'public-read'
+          }
+        });
+        
+        const result = await upload.done();
+        const url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`;
 
         return {
           success: true,
-          url: result.Location,
+          url: url,
           publicId: key,
           provider: 'aws'
         };
@@ -919,11 +927,12 @@ export class UserService implements IUserService {
           break;
 
         case 'aws':
-          if (this.s3 && process.env.AWS_S3_BUCKET) {
-            await this.s3.deleteObject({
+          if (this.s3Client && process.env.AWS_S3_BUCKET) {
+            const command = new DeleteObjectCommand({
               Bucket: process.env.AWS_S3_BUCKET,
               Key: publicId
-            }).promise();
+            });
+            await this.s3Client.send(command);
           }
           break;
 

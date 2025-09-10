@@ -1,4 +1,4 @@
-import { Kafka, Producer, ProducerRecord, CompressionTypes } from 'kafkajs';
+import { Kafka, Producer, ProducerRecord, CompressionTypes, Partitioners } from 'kafkajs';
 import { v4 as uuidv4 } from 'uuid';
 import { Event, EventType, EventStatus } from '../events/event.types';
 import { logger } from '../utils/logger';
@@ -25,6 +25,7 @@ export class KafkaProducerService {
       maxInFlightRequests: 1,
       idempotent: true,
       transactionTimeout: 30000,
+      createPartitioner: Partitioners.LegacyPartitioner,
     });
   }
 
