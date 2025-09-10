@@ -1,177 +1,179 @@
-'use client'
+import { useQuery, useMutation } from '@apollo/client';
+import { 
+  GET_PRODUCTS, 
+  GET_PRODUCT, 
+  SEARCH_PRODUCTS, 
+  GET_CATEGORIES 
+} from '../graphql/queries';
+import { 
+  CREATE_PRODUCT, 
+  UPDATE_PRODUCT, 
+  DELETE_PRODUCT 
+} from '../graphql/mutations';
+import { 
+  ProductFilter, 
+  ProductSort, 
+  CreateProductInput, 
+  UpdateProductInput 
+} from '../graphql/types';
 
-import { useState, useEffect } from 'react'
-import { Product } from '@/types'
-
-// Mock data for development
-const mockFeaturedProducts: Product[] = [
-  {
-    id: '1',
-    name: 'Premium Wireless Headphones',
-    description: 'High-quality wireless headphones with noise cancellation',
-    price: 299.99,
-    originalPrice: 399.99,
-    images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400'],
-    category: 'Electronics',
-    rating: 4.8,
-    reviewCount: 324,
-    stock: 15,
-    isBestseller: true
-  },
-  {
-    id: '2',
-    name: 'Smart Fitness Tracker',
-    description: 'Track your fitness goals with this advanced tracker',
-    price: 149.99,
-    images: ['https://images.unsplash.com/photo-1544117519-31a4b719223d?w=400'],
-    category: 'Electronics',
-    rating: 4.5,
-    reviewCount: 189,
-    stock: 23,
-    isNew: true
-  },
-  {
-    id: '3',
-    name: 'Organic Cotton T-Shirt',
-    description: 'Comfortable and sustainable organic cotton t-shirt',
-    price: 29.99,
-    images: ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400'],
-    category: 'Clothing',
-    rating: 4.3,
-    reviewCount: 67,
-    stock: 45
-  },
-  {
-    id: '4',
-    name: 'Leather Crossbody Bag',
-    description: 'Stylish leather crossbody bag for everyday use',
-    price: 89.99,
-    originalPrice: 119.99,
-    images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400'],
-    category: 'Accessories',
-    rating: 4.7,
-    reviewCount: 145,
-    stock: 8,
-    isOnSale: true
-  }
-]
-
-export const useFeaturedProducts = () => {
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fetchFeaturedProducts = async () => {
-      try {
-        setLoading(true)
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 500))
-        
-        // In a real app, this would be an API call
-        // const response = await fetch('/api/products/featured')
-        // const data = await response.json()
-        
-        setProducts(mockFeaturedProducts)
-        setError(null)
-      } catch (err) {
-        setError('Failed to fetch featured products')
-        console.error('Error fetching featured products:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchFeaturedProducts()
-  }, [])
+// Hook for fetching products with filters
+export function useProducts(
+  filter?: ProductFilter,
+  sort?: ProductSort,
+  search?: string,
+  limit = 20,
+  offset = 0
+) {
+  const { data, loading, error, refetch, fetchMore } = useQuery(GET_PRODUCTS, {
+    variables: { filter, sort, search, limit, offset },
+    notifyOnNetworkStatusChange: true,
+  });
 
   return {
-    products,
+    products: data?.products || [],
     loading,
     error,
-    refetch: () => {
-      setProducts(mockFeaturedProducts)
-    }
-  }
+    refetch,
+    fetchMore: () => fetchMore({
+      variables: { offset: data?.products?.length || 0 }
+    }),
+    hasMore: data?.products?.length === limit
+  };
 }
 
-export const useProducts = (category?: string, search?: string) => {
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true)
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 300))
-        
-        let filteredProducts = mockFeaturedProducts
-        
-        if (category && category !== 'All Categories') {
-          filteredProducts = filteredProducts.filter(p => 
-            typeof p.category === 'string' ? p.category === category : p.category.name === category
-          )
-        }
-        
-        if (search) {
-          filteredProducts = filteredProducts.filter(p =>
-            p.name.toLowerCase().includes(search.toLowerCase()) ||
-            p.description.toLowerCase().includes(search.toLowerCase())
-          )
-        }
-        
-        setProducts(filteredProducts)
-        setError(null)
-      } catch (err) {
-        setError('Failed to fetch products')
-        console.error('Error fetching products:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchProducts()
-  }, [category, search])
-
-  const refetch = () => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true)
-        await new Promise(resolve => setTimeout(resolve, 300))
-        
-        let filteredProducts = mockFeaturedProducts
-        
-        if (category && category !== 'All Categories') {
-          filteredProducts = filteredProducts.filter(p => 
-            typeof p.category === 'string' ? p.category === category : p.category.name === category
-          )
-        }
-        
-        if (search) {
-          filteredProducts = filteredProducts.filter(p =>
-            p.name.toLowerCase().includes(search.toLowerCase()) ||
-            p.description.toLowerCase().includes(search.toLowerCase())
-          )
-        }
-        
-        setProducts(filteredProducts)
-        setError(null)
-      } catch (err) {
-        setError('Failed to fetch products')
-        console.error('Error fetching products:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchProducts()
-  }
+// Hook for fetching a single product
+export function useProduct(id: string) {
+  const { data, loading, error, refetch } = useQuery(GET_PRODUCT, {
+    variables: { id },
+    skip: !id,
+  });
 
   return {
-    products,
+    product: data?.product,
     loading,
     error,
     refetch
-  }
+  };
+}
+
+// Hook for searching products
+export function useSearchProducts(
+  query: string,
+  filter?: ProductFilter,
+  sort?: ProductSort,
+  limit = 20,
+  offset = 0
+) {
+  const { data, loading, error, refetch } = useQuery(SEARCH_PRODUCTS, {
+    variables: { query, filters: filter, sort, limit, offset },
+    skip: !query || query.length < 2,
+  });
+
+  return {
+    products: data?.searchProducts || [],
+    loading,
+    error,
+    refetch
+  };
+}
+
+// Hook for fetching categories
+export function useCategories() {
+  const { data, loading, error, refetch } = useQuery(GET_CATEGORIES);
+
+  return {
+    categories: data?.categories || [],
+    loading,
+    error,
+    refetch
+  };
+}
+
+// Hook for featured products
+export function useFeaturedProducts(limit = 8) {
+  const { data, loading, error } = useQuery(GET_PRODUCTS, {
+    variables: { 
+      filter: { isBestseller: true },
+      limit 
+    },
+  });
+
+  return {
+    products: data?.products || [],
+    loading,
+    error
+  };
+}
+
+// Hook for new products
+export function useNewProducts(limit = 8) {
+  const { data, loading, error } = useQuery(GET_PRODUCTS, {
+    variables: { 
+      filter: { isNew: true },
+      limit 
+    },
+  });
+
+  return {
+    products: data?.products || [],
+    loading,
+    error
+  };
+}
+
+// Hook for sale products
+export function useSaleProducts(limit = 8) {
+  const { data, loading, error } = useQuery(GET_PRODUCTS, {
+    variables: { 
+      filter: { isOnSale: true },
+      limit 
+    },
+  });
+
+  return {
+    products: data?.products || [],
+    loading,
+    error
+  };
+}
+
+// Admin hooks for product management
+export function useCreateProduct() {
+  const [createProduct, { loading, error }] = useMutation(CREATE_PRODUCT, {
+    refetchQueries: ['GetProducts'],
+  });
+
+  return {
+    createProduct: (input: CreateProductInput) => 
+      createProduct({ variables: { input } }),
+    loading,
+    error
+  };
+}
+
+export function useUpdateProduct() {
+  const [updateProduct, { loading, error }] = useMutation(UPDATE_PRODUCT, {
+    refetchQueries: ['GetProducts', 'GetProduct'],
+  });
+
+  return {
+    updateProduct: (id: string, input: UpdateProductInput) => 
+      updateProduct({ variables: { id, input } }),
+    loading,
+    error
+  };
+}
+
+export function useDeleteProduct() {
+  const [deleteProduct, { loading, error }] = useMutation(DELETE_PRODUCT, {
+    refetchQueries: ['GetProducts'],
+  });
+
+  return {
+    deleteProduct: (id: string) => 
+      deleteProduct({ variables: { id } }),
+    loading,
+    error
+  };
 }

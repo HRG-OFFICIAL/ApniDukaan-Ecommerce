@@ -5,10 +5,10 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import reviewsRouter from '../../routes/reviews';
 import { ReviewModel } from '../../models/Review';
 import { ProductModel } from '../../models/Product';
-import { authenticate, authorize } from '@shopsphere/shared';
+import { authenticate, authorize } from '@apnidukaan/shared';
 
 // Mock authentication middleware
-jest.mock('@shopsphere/shared', () => ({
+jest.mock('@apnidukaan/shared', () => ({
   authenticate: (req: any, res: any, next: any) => {
     req.user = {
       userId: 'user123',
@@ -17,8 +17,8 @@ jest.mock('@shopsphere/shared', () => ({
     };
     next();
   },
-  authorize: ({ roles }: { roles: string[] }) => (req: any, res: any, next: any) => {
-    if (roles.includes(req.user?.role)) {
+  authorize: (options: { roles: string[] }) => (req: any, res: any, next: any) => {
+    if (options.roles.includes(req.user?.role)) {
       next();
     } else {
       res.status(403).json({ success: false, error: 'Access denied' });
@@ -439,7 +439,7 @@ describe('Reviews Routes', () => {
     beforeAll(() => {
       // Mock admin user
       jest.clearAllMocks();
-      jest.mock('@shopsphere/shared', () => ({
+      jest.mock('@apnidukaan/shared', () => ({
         authenticate: (req: any, res: any, next: any) => {
           req.user = {
             userId: 'admin123',
@@ -448,8 +448,8 @@ describe('Reviews Routes', () => {
           };
           next();
         },
-        authorize: ({ roles }: { roles: string[] }) => (req: any, res: any, next: any) => {
-          if (roles.includes(req.user?.role)) {
+        authorize: (options: { roles: string[] }) => (req: any, res: any, next: any) => {
+          if (options.roles.includes(req.user?.role)) {
             next();
           } else {
             res.status(403).json({ success: false, error: 'Access denied' });

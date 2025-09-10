@@ -37,9 +37,22 @@ export interface IUserProfile extends Document {
     isEmailVerified: boolean;
     isPhoneVerified: boolean;
   };
+  isActive: boolean;
+  isVerified: boolean;
   status: 'active' | 'inactive' | 'suspended' | 'deleted';
   createdAt: Date;
   updatedAt: Date;
+  
+  // Instance methods
+  calculateProfileCompletion(): number;
+  addAddress(addressData: Omit<IAddress, '_id' | 'createdAt' | 'updatedAt'>): Promise<boolean>;
+  updateAddress(addressId: string, updateData: Partial<IAddress>): Promise<boolean>;
+  removeAddress(addressId: string): Promise<boolean>;
+  addToWishlist(wishlistData: Omit<IWishlistItem, '_id' | 'addedAt'>): Promise<boolean>;
+  updateWishlistItem(itemId: string, updateData: Partial<IWishlistItem>): Promise<boolean>;
+  removeFromWishlist(itemId: string): Promise<boolean>;
+  addLoyaltyPoints(points: number): Promise<boolean>;
+  setDefaultAddress(addressId: string): Promise<boolean>;
 }
 
 // Address Interface
@@ -351,7 +364,7 @@ export interface IProfileEvent {
 // Search and Filter Types
 export interface IProfileSearchFilters {
   status?: IUserProfile['status'];
-  loyaltyTier?: IUserProfile['loyaltyProgram']['tier'];
+  loyaltyTier?: 'bronze' | 'silver' | 'gold' | 'platinum';
   registrationDateFrom?: Date;
   registrationDateTo?: Date;
   lastLoginFrom?: Date;

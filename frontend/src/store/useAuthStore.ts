@@ -1,5 +1,5 @@
 // Custom implementation to replace zustand dependency using React hooks
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 // Create a context-like system without using React Context
 // This allows components to subscribe to state changes
@@ -7,7 +7,7 @@ type Listener = () => void;
 type Store<T> = { getState: () => T; setState: (value: Partial<T>) => void; subscribe: (listener: Listener) => () => void };
 
 // Global store instance that lives outside of React components
-const createStore = <T extends Record<string, any>>(initialState: T): Store<T> => {
+const createStore = <T extends Record<string, unknown>>(initialState: T): Store<T> => {
   let state = { ...initialState };
   const listeners = new Set<Listener>();
 
@@ -38,7 +38,7 @@ const loadPersistedState = (key: string) => {
 };
 
 // Save state to localStorage
-const persistState = (key: string, state: any) => {
+const persistState = (key: string, state: unknown) => {
   if (typeof window === 'undefined') return;
   
   try {
@@ -49,65 +49,65 @@ const persistState = (key: string, state: any) => {
 };
 
 // Create a hook factory that will connect to our store
-function createStoreHook<T extends Record<string, any>>(initialState: T, persistKey?: string) {
-  // Initialize with persisted state if available
-  const persistedState = persistKey ? loadPersistedState(persistKey) : null;
-  const store = createStore<T>(persistedState ? { ...initialState, ...persistedState } : initialState);
+// function createStoreHook<T extends Record<string, unknown>>(initialState: T, persistKey?: string) {
+//   // Initialize with persisted state if available
+//   const persistedState = persistKey ? loadPersistedState(persistKey) : null;
+//   const store = createStore<T>(persistedState ? { ...initialState, ...persistedState } : initialState);
 
-  // Create the hook function
-  const useStore = <K extends keyof T | undefined = undefined>(
-    selector?: K
-  ): K extends keyof T ? T[K] : T => {
-    // Get current state value
-    const getValue = useCallback(() => {
-      return selector ? store.getState()[selector as keyof T] : store.getState();
-    }, [selector]);
+//   // Create the hook function
+//   const useStore = <K extends keyof T | undefined = undefined>(
+//     selector?: K
+//   ): K extends keyof T ? T[K] : T => {
+//     // Get current state value
+//     const getValue = useCallback(() => {
+//       return selector ? store.getState()[selector as keyof T] : store.getState();
+//     }, [selector]);
 
-    // State that will trigger re-renders
-    const [value, setValue] = useState(getValue);
+//     // State that will trigger re-renders
+//     const [value, setValue] = useState(getValue);
     
-    // Keep track of mounted state to prevent updates after unmount
-    const mountedRef = useRef(true);
+//     // Keep track of mounted state to prevent updates after unmount
+//     const mountedRef = useRef(true);
     
-    // Subscribe to store updates
-    useEffect(() => {
-      const unsubscribe = store.subscribe(() => {
-        if (mountedRef.current) {
-          setValue(getValue());
-        }
-      });
+//     // Subscribe to store updates
+//     useEffect(() => {
+//       const unsubscribe = store.subscribe(() => {
+//         if (mountedRef.current) {
+//           setValue(getValue());
+//         }
+//       });
       
-      return () => {
-        mountedRef.current = false;
-        unsubscribe();
-      };
-    }, [getValue]);
+//       return () => {
+//         mountedRef.current = false;
+//         unsubscribe();
+//       };
+//     }, [getValue]);
 
-    // Persist state changes if persistKey is provided
-    useEffect(() => {
-      if (persistKey) {
-        persistState(persistKey, store.getState());
-      }
-    }, [value, persistKey]);
+//     // Persist state changes if persistKey is provided
+//     useEffect(() => {
+//       if (persistKey) {
+//         persistState(persistKey, store.getState());
+//       }
+//     }, [value]);
 
-    // Expose the setState method
-    const storeValue = useMemo(() => {
-      const result = selector ? value : { ...value };
-      if (typeof result === 'object' && result !== null) {
-        (result as any).setState = store.setState;
-      }
-      return result;
-    }, [value, selector]);
+//     // Expose the setState method
+//     const storeValue = useMemo(() => {
+//       const result = selector ? value : { ...value };
+//       if (typeof result === 'object' && result !== null) {
+//         (result as Record<string, unknown>).setState = store.setState;
+//       }
+//       return result;
+//     }, [value, selector]);
 
-    return storeValue as any;
-  };
+//     return storeValue as T;
+//   };
   
-  // Add store methods to the hook function
-  useStore.getState = store.getState;
-  useStore.setState = store.setState;
+//   // Add store methods to the hook function
+//   useStore.getState = store.getState;
+//   useStore.setState = store.setState;
   
-  return useStore;
-}
+//   return useStore;
+// }
 
 export interface User {
   id: string
@@ -123,6 +123,7 @@ interface AuthState {
   token: string | null
   isAuthenticated: boolean
   isLoading: boolean
+  [key: string]: unknown
 }
 
 // Create actions separately from state

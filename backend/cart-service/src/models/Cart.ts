@@ -1,16 +1,14 @@
 import mongoose, { Schema, Model } from 'mongoose';
-import { ICart, ICartItem, ICartDiscount, ICartTotals } from '../types/cart.types';
+import { ICart, ICartItem, ICartDiscount, ICartTotals, ICartModel } from '../types/cart.types';
 
 // Cart Item Schema
 const CartItemSchema = new Schema<ICartItem>({
   productId: {
     type: String,
-    required: true,
-    index: true
+    required: true
   },
   variantId: {
-    type: String,
-    index: true
+    type: String
   },
   quantity: {
     type: Number,
@@ -202,8 +200,7 @@ const CartSchema = new Schema<ICart>({
     campaign: String
   },
   expiresAt: {
-    type: Date,
-    index: { expireAfterSeconds: 0 } // TTL index
+    type: Date
   }
 }, {
   timestamps: true,
@@ -211,7 +208,7 @@ const CartSchema = new Schema<ICart>({
   toObject: { virtuals: true }
 });
 
-// Indexes for performance
+// Indexes for performance (removed duplicates that are already defined in schema)
 CartSchema.index({ userId: 1, status: 1 });
 CartSchema.index({ sessionId: 1, status: 1 });
 CartSchema.index({ createdAt: -1 });
@@ -465,7 +462,7 @@ CartSchema.statics.cleanupExpiredCarts = function() {
 };
 
 // Create and export the model
-const Cart: Model<ICart> = mongoose.model<ICart>('Cart', CartSchema);
+const Cart: ICartModel = mongoose.model<ICart, ICartModel>('Cart', CartSchema);
 
 export default Cart;
 export { CartSchema };

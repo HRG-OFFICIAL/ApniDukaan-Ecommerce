@@ -22,7 +22,7 @@ export class JWTService {
 
   generateAccessToken(user: IUser): string {
     const payload: JWTPayload = {
-      userId: user._id.toString(),
+      userId: (user._id as any).toString(),
       email: user.email,
       role: user.role
     };
@@ -30,18 +30,18 @@ export class JWTService {
     return jwt.sign(payload, this.accessSecret, {
       expiresIn: this.accessExpiry,
       issuer: 'shopsphere'
-    });
+    } as jwt.SignOptions);
   }
 
   generateRefreshToken(user: IUser): string {
     const payload = {
-      userId: user._id.toString()
+      userId: (user._id as any).toString()
     };
 
     return jwt.sign(payload, this.refreshSecret, {
       expiresIn: this.refreshExpiry,
       issuer: 'shopsphere'
-    });
+    } as jwt.SignOptions);
   }
 
   verifyAccessToken(token: string): JWTPayload {

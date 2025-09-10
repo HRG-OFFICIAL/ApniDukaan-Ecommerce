@@ -17,6 +17,7 @@ interface ProductCardProps {
   showRating?: boolean
   showBrand?: boolean
   className?: string
+  viewMode?: 'grid' | 'list'
 }
 
 export default function ProductCard({ 
@@ -25,7 +26,8 @@ export default function ProductCard({
   showComparePrice = true,
   showRating = true,
   showBrand = true,
-  className 
+  className,
+  viewMode = 'grid'
 }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [imageError, setImageError] = useState(false)
@@ -87,6 +89,108 @@ export default function ProductCard({
 
   const categoryName = typeof product.category === 'string' ? product.category : product.category.name
   const ratingCount = typeof product.rating === 'number' ? product.reviewCount : product.rating.count
+
+  if (viewMode === 'list') {
+    return (
+      <div className={cn('group relative bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200', className)}>
+        <Link href={`/products/${product.slug || product.id}`} className="flex">
+          {/* Product Image */}
+          <div className="w-32 h-32 flex-shrink-0 overflow-hidden rounded-l-lg bg-gray-200 group-hover:opacity-75 transition-opacity">
+            {!imageError ? (
+              <Image
+                src={typeof product.images[0] === 'string' 
+                  ? product.images[0] as string 
+                  : (product.images[0] as {url: string})?.url || '/placeholder-product.jpg'}
+                alt={product.name}
+                width={128}
+                height={128}
+                className="h-full w-full object-cover object-center"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <div className="h-full w-full flex items-center justify-center bg-gray-100">
+                <svg className="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+            )}
+          </div>
+
+          {/* Product Info */}
+          <div className="flex-1 p-4">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <h3 className="text-lg font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                  {product.name}
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">{categoryName}</p>
+                
+                {/* Rating */}
+                {showRating && (
+                  <div className="flex items-center mt-2">
+                    <div className="flex items-center space-x-1">
+                      {renderStars(product.rating)}
+                    </div>
+                    <span className="text-sm text-gray-500 ml-2">({ratingCount})</span>
+                  </div>
+                )}
+
+                <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                  {product.description}
+                </p>
+              </div>
+
+              <div className="ml-4 text-right">
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-xl font-semibold text-gray-900">
+                    {formatCurrency(product.price)}
+                  </span>
+                  {showComparePrice && (product.originalPrice && product.originalPrice > product.price) && (
+                    <span className="text-sm text-gray-500 line-through">
+                      {formatCurrency(product.originalPrice)}
+                    </span>
+                  )}
+                </div>
+                
+                {product.stock <= 5 && product.stock > 0 && (
+                  <span className="text-sm text-orange-600 font-medium">
+                    Only {product.stock} left
+                  </span>
+                )}
+
+                <div className="mt-4 flex space-x-2">
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={product.stock === 0}
+                    className={cn(
+                      'px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                      product.stock > 0
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    )}
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2 inline" />
+                    {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                  </button>
+                  
+                  <button
+                    onClick={handleToggleWishlist}
+                    className="p-2 rounded-md border border-gray-300 hover:bg-gray-50 transition-colors"
+                  >
+                    {isWishlisted ? (
+                      <Heart className="h-4 w-4 text-red-500" fill="currentColor" />
+                    ) : (
+                      <Heart className="h-4 w-4 text-gray-600" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className={cn('group relative bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200', className)}>

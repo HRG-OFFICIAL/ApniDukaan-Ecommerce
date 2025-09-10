@@ -1,6 +1,7 @@
 import express from 'express';
 import { body, param, query, validationResult } from 'express-validator';
 import rateLimit from 'express-rate-limit';
+import { Types } from 'mongoose';
 
 import AuthService from '../services/AuthService';
 import UserService from '../services/UserService';
@@ -8,6 +9,7 @@ import RoleService from '../services/RoleService';
 
 import {
   IUser,
+  IRole,
   IRoleRequest,
   IRoleUpdateRequest,
   IUserSearchRequest,
@@ -148,7 +150,7 @@ router.get('/users',
     query('sortBy').optional().isIn(['createdAt', 'lastLoginAt', 'email', 'firstName', 'lastName']),
     query('sortOrder').optional().isIn(['asc', 'desc'])
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -162,7 +164,7 @@ router.get('/users',
       const searchParams: IUserSearchRequest = {
         page: parseInt(req.query.page) || 1,
         limit: parseInt(req.query.limit) || 20,
-        search: req.query.search,
+        search: req.query.search as string,
         status: req.query.status as UserStatus,
         role: req.query.role as UserRole,
         sortBy: req.query.sortBy || 'createdAt',
@@ -200,7 +202,7 @@ router.get('/users/:userId',
   authenticate,
   requireAdminRole([UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MODERATOR]),
   param('userId').isMongoId().withMessage('Valid user ID is required'),
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -211,7 +213,7 @@ router.get('/users/:userId',
         });
       }
 
-      const result = await userService.getUserById(req.params.userId, true); // Include sensitive data
+      const result = await userService.getUserById(req.params.userId); // Include sensitive data
       
       if (!result.success) {
         return res.status(404).json({
@@ -247,7 +249,7 @@ router.put('/users/:userId',
   requireAdminRole([UserRole.SUPER_ADMIN, UserRole.ADMIN]),
   requirePermission('users.update'),
   param('userId').isMongoId().withMessage('Valid user ID is required'),
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -287,7 +289,7 @@ router.post('/users/:userId/activate',
   requireAdminRole([UserRole.SUPER_ADMIN, UserRole.ADMIN]),
   requirePermission('users.activate'),
   param('userId').isMongoId().withMessage('Valid user ID is required'),
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -298,7 +300,7 @@ router.post('/users/:userId/activate',
         });
       }
 
-      const result = await userService.reactivateUser(req.params.userId, req.user.id);
+      const result = await userService.reactivateUser(req.params.userId);
       
       const statusCode = result.success ? 200 : 400;
       res.status(statusCode).json({
@@ -331,7 +333,7 @@ router.post('/users/:userId/suspend',
     body('reason').notEmpty().withMessage('Suspension reason is required'),
     body('duration').optional().isInt({ min: 1 }).withMessage('Duration must be positive number of days')
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -380,7 +382,7 @@ router.delete('/users/:userId',
     body('reason').notEmpty().withMessage('Deletion reason is required'),
     body('confirmation').equals('DELETE').withMessage('Confirmation must be "DELETE"')
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -434,7 +436,7 @@ router.post('/users/bulk-action',
     body('userIds.*').isMongoId().withMessage('Valid user IDs are required'),
     body('reason').optional().isString().withMessage('Reason must be a string')
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -495,7 +497,7 @@ router.get('/roles',
     query('limit').optional().isInt({ min: 1, max: 100 }),
     query('type').optional().isIn(Object.values(RoleType))
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -546,7 +548,7 @@ router.post('/roles',
     body('permissions.*').isString().withMessage('Each permission must be a string'),
     body('isActive').optional().isBoolean().withMessage('isActive must be boolean')
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -557,17 +559,16 @@ router.post('/roles',
         });
       }
 
-      const roleData: IRoleRequest = {
+      const roleData: Partial<IRole> = {
         name: req.body.name,
-        displayName: req.body.displayName,
         description: req.body.description,
-        type: req.body.type,
-        permissions: req.body.permissions,
+        permissions: req.body.permissions.map((p: string) => new Types.ObjectId(p)),
         isActive: req.body.isActive !== false,
-        metadata: req.body.metadata
+        metadata: req.body.metadata,
+        createdBy: req.user.id
       };
 
-      const result = await roleService.createRole(roleData, req.user.id);
+      const result = await roleService.createRole(roleData);
       
       const statusCode = result.success ? 201 : 400;
       res.status(statusCode).json({
@@ -596,7 +597,7 @@ router.put('/roles/:roleId',
   requireAdminRole([UserRole.SUPER_ADMIN]),
   requirePermission('roles.update'),
   param('roleId').isMongoId().withMessage('Valid role ID is required'),
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -607,15 +608,15 @@ router.put('/roles/:roleId',
         });
       }
 
-      const updateData: IRoleUpdateRequest = {
-        displayName: req.body.displayName,
+      const updateData: Partial<IRole> = {
         description: req.body.description,
-        permissions: req.body.permissions,
+        permissions: req.body.permissions ? req.body.permissions.map((p: string) => new Types.ObjectId(p)) : undefined,
         isActive: req.body.isActive,
-        metadata: req.body.metadata
+        metadata: req.body.metadata,
+        updatedBy: req.user.id
       };
 
-      const result = await roleService.updateRole(req.params.roleId, updateData, req.user.id);
+      const result = await roleService.updateRole(req.params.roleId, updateData);
       
       const statusCode = result.success ? 200 : 400;
       res.status(statusCode).json({
@@ -647,7 +648,7 @@ router.delete('/roles/:roleId',
     param('roleId').isMongoId().withMessage('Valid role ID is required'),
     body('confirmation').equals('DELETE').withMessage('Confirmation must be "DELETE"')
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -658,7 +659,7 @@ router.delete('/roles/:roleId',
         });
       }
 
-      const result = await roleService.deleteRole(req.params.roleId, req.user.id);
+      const result = await roleService.deleteRole(req.params.roleId);
       
       const statusCode = result.success ? 200 : 400;
       res.status(statusCode).json({
@@ -692,7 +693,7 @@ router.post('/users/:userId/roles/:roleId',
     param('userId').isMongoId().withMessage('Valid user ID is required'),
     param('roleId').isMongoId().withMessage('Valid role ID is required')
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -715,8 +716,7 @@ router.post('/users/:userId/roles/:roleId',
 
       const result = await roleService.assignRole(
         req.params.userId,
-        req.params.roleId,
-        req.user.id
+        req.params.roleId
       );
       
       const statusCode = result.success ? 200 : 400;
@@ -749,7 +749,7 @@ router.delete('/users/:userId/roles/:roleId',
     param('userId').isMongoId().withMessage('Valid user ID is required'),
     param('roleId').isMongoId().withMessage('Valid role ID is required')
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -762,8 +762,7 @@ router.delete('/users/:userId/roles/:roleId',
 
       const result = await roleService.removeRole(
         req.params.userId,
-        req.params.roleId,
-        req.user.id
+        req.params.roleId
       );
       
       const statusCode = result.success ? 200 : 400;
@@ -799,7 +798,7 @@ router.get('/analytics/users',
     query('startDate').optional().isISO8601().withMessage('Valid start date is required'),
     query('endDate').optional().isISO8601().withMessage('Valid end date is required')
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -851,7 +850,7 @@ router.get('/audit/logs',
     query('startDate').optional().isISO8601(),
     query('endDate').optional().isISO8601()
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -899,9 +898,9 @@ router.get('/audit/logs',
 router.get('/system/permissions',
   authenticate,
   requireAdminRole([UserRole.SUPER_ADMIN, UserRole.ADMIN]),
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
-      const result = await roleService.getAvailablePermissions();
+      const result = await (roleService as any).getAvailablePermissions();
       
       res.json({
         success: true,
@@ -929,7 +928,7 @@ router.post('/system/cache/clear',
   authenticate,
   requireAdminRole([UserRole.SUPER_ADMIN]),
   requirePermission('system.cache_clear'),
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const result = await userService.clearSystemCache(req.user.id);
       

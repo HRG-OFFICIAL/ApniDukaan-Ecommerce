@@ -54,7 +54,7 @@ class ProfileService extends EventEmitter {
   async createProfile(profileData: ICreateProfileRequest): Promise<IProfileResponse> {
     try {
       // Check if profile already exists
-      const existingProfile = await UserProfile.findByUserId(profileData.userId);
+      const existingProfile = await (UserProfile as any).findByUserId(profileData.userId);
       if (existingProfile) {
         return {
           success: false,
@@ -64,11 +64,11 @@ class ProfileService extends EventEmitter {
       }
 
       // Check if email is already in use
-      const existingEmail = await UserProfile.findByEmail(profileData.personalInfo.email);
+      const existingEmail = await (UserProfile as any).findByEmail(profileData.personalInfo.email);
       if (existingEmail) {
         return {
           success: false,
-          error: 'Email address is already in use',
+          error: 'Email already registered with another profile',
           code: 'EMAIL_EXISTS'
         };
       }
@@ -109,6 +109,16 @@ class ProfileService extends EventEmitter {
       };
     } catch (error) {
       logger.error('Error creating profile:', error);
+      
+      // Check if it's a validation error
+      if (error instanceof Error && error.name === 'ValidationError') {
+        return {
+          success: false,
+          error: 'Validation failed',
+          code: 'VALIDATION_ERROR'
+        };
+      }
+      
       return {
         success: false,
         error: 'Failed to create profile',
@@ -122,7 +132,7 @@ class ProfileService extends EventEmitter {
    */
   async getProfile(userId: string): Promise<IProfileResponse> {
     try {
-      const profile = await UserProfile.findByUserId(userId);
+      const profile = await (UserProfile as any).findByUserId(userId);
 
       if (!profile) {
         return {
@@ -134,6 +144,7 @@ class ProfileService extends EventEmitter {
 
       return {
         success: true,
+        message: 'Profile retrieved successfully',
         data: { profile }
       };
     } catch (error) {
@@ -154,7 +165,7 @@ class ProfileService extends EventEmitter {
     updateData: IUpdateProfileRequest
   ): Promise<IProfileResponse> {
     try {
-      const profile = await UserProfile.findByUserId(userId);
+      const profile = await (UserProfile as any).findByUserId(userId);
       if (!profile) {
         return {
           success: false,
@@ -166,11 +177,11 @@ class ProfileService extends EventEmitter {
       // Check if email is being changed and if it's already in use
       if (updateData.personalInfo?.email && 
           updateData.personalInfo.email !== profile.personalInfo.email) {
-        const existingEmail = await UserProfile.findByEmail(updateData.personalInfo.email);
+        const existingEmail = await (UserProfile as any).findByEmail(updateData.personalInfo.email);
         if (existingEmail) {
           return {
             success: false,
-            error: 'Email address is already in use',
+            error: 'Email already registered with another profile',
             code: 'EMAIL_EXISTS'
           };
         }
@@ -221,7 +232,7 @@ class ProfileService extends EventEmitter {
    */
   async deleteProfile(userId: string): Promise<IProfileResponse> {
     try {
-      const profile = await UserProfile.findByUserId(userId);
+      const profile = await (UserProfile as any).findByUserId(userId);
       if (!profile) {
         return {
           success: false,
@@ -260,7 +271,7 @@ class ProfileService extends EventEmitter {
    */
   async addAddress(userId: string, addressData: IAddAddressRequest): Promise<IAddressResponse> {
     try {
-      const profile = await UserProfile.findByUserId(userId);
+      const profile = await (UserProfile as any).findByUserId(userId);
       if (!profile) {
         return {
           success: false,
@@ -299,11 +310,11 @@ class ProfileService extends EventEmitter {
 
       return {
         success: true,
+        message: 'Address added successfully',
         data: { 
           address: addedAddress,
           addresses: profile.addresses
-        },
-        message: 'Address added successfully'
+        }
       };
     } catch (error) {
       logger.error('Error adding address:', error);
@@ -324,7 +335,7 @@ class ProfileService extends EventEmitter {
     updateData: IUpdateAddressRequest
   ): Promise<IAddressResponse> {
     try {
-      const profile = await UserProfile.findByUserId(userId);
+      const profile = await (UserProfile as any).findByUserId(userId);
       if (!profile) {
         return {
           success: false,
@@ -351,17 +362,17 @@ class ProfileService extends EventEmitter {
 
       return {
         success: true,
+        message: 'Address updated successfully',
         data: { 
           address: updatedAddress!,
           addresses: profile.addresses
-        },
-        message: 'Address updated successfully'
+        }
       };
     } catch (error) {
       logger.error('Error updating address:', error);
       return {
         success: false,
-        error: error.message || 'Failed to update address',
+        error: (error as Error).message || 'Failed to update address',
         code: 'UPDATE_ADDRESS_ERROR'
       };
     }
@@ -372,7 +383,7 @@ class ProfileService extends EventEmitter {
    */
   async removeAddress(userId: string, addressId: string): Promise<IAddressResponse> {
     try {
-      const profile = await UserProfile.findByUserId(userId);
+      const profile = await (UserProfile as any).findByUserId(userId);
       if (!profile) {
         return {
           success: false,
@@ -393,14 +404,17 @@ class ProfileService extends EventEmitter {
 
       return {
         success: true,
-        data: { addresses: profile.addresses },
-        message: 'Address removed successfully'
+        message: 'Address removed successfully',
+        data: { 
+          addresses: profile.addresses,
+          address: profile.addresses.find((addr: any) => addr.isDefault) || profile.addresses[0]
+        }
       };
     } catch (error) {
       logger.error('Error removing address:', error);
       return {
         success: false,
-        error: error.message || 'Failed to remove address',
+        error: (error as Error).message || 'Failed to remove address',
         code: 'REMOVE_ADDRESS_ERROR'
       };
     }
@@ -411,7 +425,7 @@ class ProfileService extends EventEmitter {
    */
   async setDefaultAddress(userId: string, addressId: string): Promise<IAddressResponse> {
     try {
-      const profile = await UserProfile.findByUserId(userId);
+      const profile = await (UserProfile as any).findByUserId(userId);
       if (!profile) {
         return {
           success: false,
@@ -445,11 +459,11 @@ class ProfileService extends EventEmitter {
 
       return {
         success: true,
+        message: 'Default address set successfully',
         data: { 
           address: profile.addresses.id(addressId)!,
           addresses: profile.addresses
-        },
-        message: 'Default address set successfully'
+        }
       };
     } catch (error) {
       logger.error('Error setting default address:', error);
@@ -469,7 +483,7 @@ class ProfileService extends EventEmitter {
     wishlistData: IAddWishlistItemRequest
   ): Promise<IWishlistResponse> {
     try {
-      const profile = await UserProfile.findByUserId(userId);
+      const profile = await (UserProfile as any).findByUserId(userId);
       if (!profile) {
         return {
           success: false,
@@ -514,18 +528,18 @@ class ProfileService extends EventEmitter {
 
       return {
         success: true,
+        message: 'Item added to wishlist successfully',
         data: { 
           item: addedItem,
           wishlist: profile.wishlist,
           totalItems: profile.wishlist.length
-        },
-        message: 'Item added to wishlist successfully'
+        }
       };
     } catch (error) {
       logger.error('Error adding to wishlist:', error);
       return {
         success: false,
-        error: error.message || 'Failed to add item to wishlist',
+        error: (error as Error).message || 'Failed to add item to wishlist',
         code: 'ADD_TO_WISHLIST_ERROR'
       };
     }
@@ -540,7 +554,7 @@ class ProfileService extends EventEmitter {
     updateData: IUpdateWishlistItemRequest
   ): Promise<IWishlistResponse> {
     try {
-      const profile = await UserProfile.findByUserId(userId);
+      const profile = await (UserProfile as any).findByUserId(userId);
       if (!profile) {
         return {
           success: false,
@@ -567,18 +581,18 @@ class ProfileService extends EventEmitter {
 
       return {
         success: true,
+        message: 'Wishlist item updated successfully',
         data: { 
           item: updatedItem!,
           wishlist: profile.wishlist,
           totalItems: profile.wishlist.length
-        },
-        message: 'Wishlist item updated successfully'
+        }
       };
     } catch (error) {
       logger.error('Error updating wishlist item:', error);
       return {
         success: false,
-        error: error.message || 'Failed to update wishlist item',
+        error: (error as Error).message || 'Failed to update wishlist item',
         code: 'UPDATE_WISHLIST_ITEM_ERROR'
       };
     }
@@ -589,7 +603,7 @@ class ProfileService extends EventEmitter {
    */
   async removeFromWishlist(userId: string, itemId: string): Promise<IWishlistResponse> {
     try {
-      const profile = await UserProfile.findByUserId(userId);
+      const profile = await (UserProfile as any).findByUserId(userId);
       if (!profile) {
         return {
           success: false,
@@ -628,17 +642,17 @@ class ProfileService extends EventEmitter {
 
       return {
         success: true,
+        message: 'Item removed from wishlist successfully',
         data: { 
           wishlist: profile.wishlist,
           totalItems: profile.wishlist.length
-        },
-        message: 'Item removed from wishlist successfully'
+        }
       };
     } catch (error) {
       logger.error('Error removing from wishlist:', error);
       return {
         success: false,
-        error: error.message || 'Failed to remove item from wishlist',
+        error: (error as Error).message || 'Failed to remove item from wishlist',
         code: 'REMOVE_FROM_WISHLIST_ERROR'
       };
     }
@@ -649,7 +663,7 @@ class ProfileService extends EventEmitter {
    */
   async getWishlistWithDetails(userId: string): Promise<IWishlistResponse> {
     try {
-      const profile = await UserProfile.findByUserId(userId);
+      const profile = await (UserProfile as any).findByUserId(userId);
       if (!profile) {
         return {
           success: false,
@@ -660,7 +674,7 @@ class ProfileService extends EventEmitter {
 
       // In a real implementation, this would fetch product details for each wishlist item
       const wishlistWithDetails = await Promise.all(
-        profile.wishlist.map(async (item) => {
+        profile.wishlist.map(async (item: any) => {
           const productInfo = await this.getProductInfo(item.productId);
           return {
             ...item.toObject(),
@@ -671,6 +685,7 @@ class ProfileService extends EventEmitter {
 
       return {
         success: true,
+        message: 'Wishlist with details retrieved successfully',
         data: { 
           wishlist: wishlistWithDetails as any,
           totalItems: profile.wishlist.length
@@ -694,7 +709,7 @@ class ProfileService extends EventEmitter {
     preferences: Partial<IUserPreferences>
   ): Promise<IProfileResponse> {
     try {
-      const profile = await UserProfile.findByUserId(userId);
+      const profile = await (UserProfile as any).findByUserId(userId);
       if (!profile) {
         return {
           success: false,
@@ -739,7 +754,7 @@ class ProfileService extends EventEmitter {
     settings: Partial<IAccountSettings>
   ): Promise<IProfileResponse> {
     try {
-      const profile = await UserProfile.findByUserId(userId);
+      const profile = await (UserProfile as any).findByUserId(userId);
       if (!profile) {
         return {
           success: false,
@@ -781,7 +796,7 @@ class ProfileService extends EventEmitter {
    */
   async getProfileStatistics(userId: string): Promise<IProfileStatistics | null> {
     try {
-      const profile = await UserProfile.findByUserId(userId);
+      const profile = await (UserProfile as any).findByUserId(userId);
       if (!profile) {
         return null;
       }
@@ -809,7 +824,7 @@ class ProfileService extends EventEmitter {
    */
   async addLoyaltyPoints(userId: string, points: number, reason: string): Promise<IProfileResponse> {
     try {
-      const profile = await UserProfile.findByUserId(userId);
+      const profile = await (UserProfile as any).findByUserId(userId);
       if (!profile) {
         return {
           success: false,
@@ -842,7 +857,7 @@ class ProfileService extends EventEmitter {
       return {
         success: true,
         data: { profile },
-        message: `${points} loyalty points added successfully`
+        message: 'Loyalty points added successfully'
       };
     } catch (error) {
       logger.error('Error adding loyalty points:', error);

@@ -1,264 +1,303 @@
-import winston from 'winston';
+import winston, { Logger, format, transports } from 'winston';
 import path from 'path';
+import fs from 'fs';
 
-// Custom log levels
-const customLevels = {
-  levels: {
-    error: 0,
-    warn: 1,
-    info: 2,
-    http: 3,
-    verbose: 4,
-    debug: 5,
-    silly: 6
-  },
-  colors: {
-    error: 'red',
-    warn: 'yellow',
-    info: 'green',
-    http: 'magenta',
-    verbose: 'cyan',
-    debug: 'blue',
-    silly: 'grey'
-  }
-};
+// Log levels
+export enum LogLevel {
+  ERROR = 'error',
+  WARN = 'warn',
+  INFO = 'info',
+  HTTP = 'http',
+  VERBOSE = 'verbose',
+  DEBUG = 'debug',
+  SILLY = 'silly'
+}
 
-// Add colors to winston
-winston.addColors(customLevels.colors);
+// Log context interface
+export interface LogContext {
+  [key: string]: any;
+  action?: string;
+  userId?: string;
+  requestId?: string;
+  correlationId?: string;
+  service?: string;
+  version?: string;
+  environment?: string;
+  timestamp?: string;
+  duration?: number;
+  statusCode?: number;
+  method?: string;
+  url?: string;
+  userAgent?: string;
+  ip?: string;
+  error?: any;
+  stack?: string;
+}
 
-// Custom format for console output
-const consoleFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  winston.format.colorize({ all: true }),
-  winston.format.printf(({ timestamp, level, message, service, ...metadata }) => {
-    let msg = `[${timestamp}] [${service || 'APP'}] ${level}: ${message}`;
-    
-    // Add metadata if present
-    const metadataKeys = Object.keys(metadata);
-    if (metadataKeys.length > 0) {
-      msg += ` ${JSON.stringify(metadata)}`;
-    }
-    
-    return msg;
+// Custom log format
+const customFormat = format.combine(
+  format.timestamp({
+    format: 'YYYY-MM-DD HH:mm:ss.SSS'
+  }),
+  format.errors({ stack: true }),
+  format.json(),
+  format.printf(({ timestamp, level, message, ...meta }) => {
+    const logEntry = {
+      timestamp,
+      level,
+      message,
+      ...meta
+    };
+    return JSON.stringify(logEntry);
   })
 );
 
-// Custom format for file output
-const fileFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  winston.format.errors({ stack: true }),
-  winston.format.json()
+// Console format for development
+const consoleFormat = format.combine(
+  format.timestamp({
+    format: 'HH:mm:ss.SSS'
+  }),
+  format.colorize(),
+  format.printf(({ timestamp, level, message, ...meta }) => {
+    const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
+    return `${timestamp} [${level}]: ${message}${metaStr}`;
+  })
 );
 
-// Create logger instance
-const createLogger = (serviceName: string = 'APP') => {
-  const logLevel = process.env.LOG_LEVEL || 'info';
-  const logDir = process.env.LOG_DIR || 'logs';
+// Create logs directory if it doesn't exist
+const logsDir = path.join(process.cwd(), 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
 
-  const transports: winston.transport[] = [
-    // Console transport
-    new winston.transports.Console({
-      level: logLevel,
-      format: consoleFormat
+// Logger configuration
+const loggerConfig = {
+  level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
+  format: customFormat,
+  defaultMeta: {
+    service: process.env.SERVICE_NAME || 'apnidukaan-service',
+    environment: process.env.NODE_ENV || 'development',
+    version: process.env.SERVICE_VERSION || '1.0.0'
+  },
+  transports: [
+    new transports.Console({
+      format: consoleFormat,
+      level: process.env.NODE_ENV === 'production' ? 'info' : 'debug'
     })
-  ];
+  ]
+};
 
-  // Add file transports in production
-  if (process.env.NODE_ENV === 'production') {
-    transports.push(
-      // Combined log file
-      new winston.transports.File({
-        filename: path.join(logDir, 'combined.log'),
-        level: 'info',
-        format: fileFormat,
-        maxsize: 5242880, // 5MB
-        maxFiles: 5
-      }),
-      
-      // Error log file
-      new winston.transports.File({
-        filename: path.join(logDir, 'error.log'),
-        level: 'error',
-        format: fileFormat,
-        maxsize: 5242880, // 5MB
-        maxFiles: 5
-      })
-    );
+// Create the logger
+export const logger: Logger = winston.createLogger(loggerConfig);
+
+// Add file transports for production
+if (process.env.NODE_ENV === 'production') {
+  // Error log file
+  logger.add(new transports.File({
+    filename: path.join(logsDir, 'error.log'),
+    level: 'error',
+    format: customFormat,
+    maxsize: 5242880, // 5MB
+    maxFiles: 5,
+    tailable: true
+  }));
+
+  // Combined log file
+  logger.add(new transports.File({
+    filename: path.join(logsDir, 'combined.log'),
+    format: customFormat,
+    maxsize: 5242880, // 5MB
+    maxFiles: 5,
+    tailable: true
+  }));
+
+  // Access log file for HTTP requests
+  logger.add(new transports.File({
+    filename: path.join(logsDir, 'access.log'),
+    level: 'http',
+    format: customFormat,
+    maxsize: 5242880, // 5MB
+    maxFiles: 10,
+    tailable: true
+  }));
+}
+
+// Enhanced logging methods
+export class EnhancedLogger {
+  private logger: Logger;
+  private defaultContext: LogContext;
+
+  constructor(logger: Logger, defaultContext: LogContext = {}) {
+    this.logger = logger;
+    this.defaultContext = defaultContext;
   }
 
-  return winston.createLogger({
-    levels: customLevels.levels,
-    level: logLevel,
-    defaultMeta: { service: serviceName },
-    transports,
-    exitOnError: false
-  });
-};
+  private mergeContext(context: LogContext = {}): LogContext {
+    return {
+      ...this.defaultContext,
+      ...context,
+      timestamp: new Date().toISOString()
+    };
+  }
 
-// Default logger instance
-export const logger = createLogger();
+  error(message: string, context: LogContext = {}): void {
+    this.logger.error(message, this.mergeContext(context));
+  }
 
-// Logger factory for different services
-export const createServiceLogger = (serviceName: string) => {
-  return createLogger(serviceName);
-};
+  warn(message: string, context: LogContext = {}): void {
+    this.logger.warn(message, this.mergeContext(context));
+  }
 
-// Request logging middleware for Express
-export const requestLogger = (serviceName?: string) => {
-  const requestLog = serviceName ? createServiceLogger(serviceName) : logger;
-  
-  return (req: any, res: any, next: any) => {
-    const start = Date.now();
-    const { method, url, ip, headers } = req;
-    
-    // Log request
-    requestLog.http('Incoming request', {
+  info(message: string, context: LogContext = {}): void {
+    this.logger.info(message, this.mergeContext(context));
+  }
+
+  http(message: string, context: LogContext = {}): void {
+    this.logger.http(message, this.mergeContext(context));
+  }
+
+  verbose(message: string, context: LogContext = {}): void {
+    this.logger.verbose(message, this.mergeContext(context));
+  }
+
+  debug(message: string, context: LogContext = {}): void {
+    this.logger.debug(message, this.mergeContext(context));
+  }
+
+  silly(message: string, context: LogContext = {}): void {
+    this.logger.silly(message, this.mergeContext(context));
+  }
+
+  // Specialized logging methods
+  logRequest(method: string, url: string, statusCode: number, duration: number, context: LogContext = {}): void {
+    this.http('HTTP Request', {
       method,
       url,
-      ip: ip || headers['x-forwarded-for'] || 'unknown',
-      userAgent: headers['user-agent']
+      statusCode,
+      duration,
+      action: 'http_request',
+      ...context
     });
+  }
 
-    // Override res.end to capture response
-    const originalEnd = res.end;
-    res.end = function(chunk: any, encoding: any) {
-      res.end = originalEnd;
-      res.end(chunk, encoding);
-      
-      const duration = Date.now() - start;
-      const { statusCode } = res;
-      
-      // Log response
-      requestLog.http('Request completed', {
-        method,
-        url,
-        statusCode,
-        duration: `${duration}ms`,
-        contentLength: res.get('content-length') || 0
-      });
-    };
-    
-    next();
-  };
-};
-
-// Error logging helper
-export const logError = (error: Error, context?: any) => {
-  logger.error('Error occurred', {
-    message: error.message,
-    stack: error.stack,
-    context
-  });
-};
-
-// Database operation logging
-export const logDatabaseOperation = (operation: string, collection: string, query?: any, duration?: number) => {
-  logger.debug('Database operation', {
-    operation,
-    collection,
-    query: query ? JSON.stringify(query) : undefined,
-    duration: duration ? `${duration}ms` : undefined
-  });
-};
-
-// External API call logging
-export const logApiCall = (method: string, url: string, statusCode?: number, duration?: number, error?: Error) => {
-  const logData = {
-    method,
-    url,
-    statusCode,
-    duration: duration ? `${duration}ms` : undefined
-  };
-
-  if (error) {
-    logger.warn('External API call failed', {
-      ...logData,
-      error: error.message
+  logError(error: Error, context: LogContext = {}): void {
+    this.error('Error occurred', {
+      error: error.message,
+      stack: error.stack,
+      action: 'error_occurred',
+      ...context
     });
-  } else {
-    logger.info('External API call completed', logData);
+  }
+
+  logDatabaseOperation(operation: string, collection: string, duration: number, context: LogContext = {}): void {
+    this.info('Database operation', {
+      operation,
+      collection,
+      duration,
+      action: 'database_operation',
+      ...context
+    });
+  }
+
+  logAuthEvent(event: string, userId?: string, context: LogContext = {}): void {
+    this.info('Authentication event', {
+      event,
+      userId,
+      action: 'auth_event',
+      ...context
+    });
+  }
+
+  logBusinessEvent(event: string, entityType: string, entityId: string, context: LogContext = {}): void {
+    this.info('Business event', {
+      event,
+      entityType,
+      entityId,
+      action: 'business_event',
+      ...context
+    });
+  }
+
+  logPerformance(operation: string, duration: number, context: LogContext = {}): void {
+    this.info('Performance metric', {
+      operation,
+      duration,
+      action: 'performance_metric',
+      ...context
+    });
+  }
+
+  logSecurity(event: string, severity: 'low' | 'medium' | 'high' | 'critical', context: LogContext = {}): void {
+    const level = severity === 'critical' || severity === 'high' ? 'error' : 'warn';
+    this.logger[level]('Security event', {
+      event,
+      severity,
+      action: 'security_event',
+      ...this.mergeContext(context)
+    });
+  }
+}
+
+// Create enhanced logger instance
+export const enhancedLogger = new EnhancedLogger(logger);
+
+// Utility functions
+export const createChildLogger = (defaultContext: LogContext): EnhancedLogger => {
+  return new EnhancedLogger(logger, defaultContext);
+};
+
+export const setLogLevel = (level: LogLevel): void => {
+  logger.level = level;
+};
+
+export const getLogLevel = (): string => {
+  return logger.level;
+};
+
+// Log rotation utility
+export const rotateLogs = async (): Promise<void> => {
+  try {
+    // This would typically be handled by winston's built-in rotation
+    // or external tools like logrotate
+    logger.info('Log rotation requested', {
+      action: 'log_rotation'
+    });
+  } catch (error: any) {
+    logger.error('Log rotation failed', {
+      error: error.message,
+      action: 'log_rotation_error'
+    });
+    throw error;
   }
 };
 
-// Performance logging
-export const logPerformance = (operation: string, duration: number, metadata?: any) => {
-  logger.info('Performance metric', {
-    operation,
-    duration: `${duration}ms`,
-    ...metadata
-  });
-};
+// Log cleanup utility
+export const cleanupOldLogs = async (daysToKeep: number = 30): Promise<void> => {
+  try {
+    const files = fs.readdirSync(logsDir);
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
-// User action logging
-export const logUserAction = (userId: string, action: string, details?: any) => {
-  logger.info('User action', {
-    userId,
-    action,
-    details
-  });
-};
-
-// Security event logging
-export const logSecurityEvent = (event: string, details: any, severity: 'low' | 'medium' | 'high' = 'medium') => {
-  logger.warn('Security event', {
-    event,
-    severity,
-    details,
-    timestamp: new Date().toISOString()
-  });
-};
-
-// Business logic logging
-export const logBusinessEvent = (event: string, details: any) => {
-  logger.info('Business event', {
-    event,
-    details,
-    timestamp: new Date().toISOString()
-  });
-};
-
-// Utility function to create child loggers with additional context
-export const createChildLogger = (parentLogger: winston.Logger, context: any) => {
-  return parentLogger.child(context);
-};
-
-// Stream for Morgan HTTP request logging
-export const stream = {
-  write: (message: string) => {
-    logger.http(message.trim());
-  }
-};
-
-// Health check logging
-export const logHealthCheck = (serviceName: string, status: 'healthy' | 'unhealthy', details?: any) => {
-  const logLevel = status === 'healthy' ? 'info' : 'error';
-  logger.log(logLevel, 'Health check', {
-    service: serviceName,
-    status,
-    details
-  });
-};
-
-// Configuration logging (be careful not to log sensitive data)
-export const logConfiguration = (config: any, serviceName?: string) => {
-  // Remove sensitive keys
-  const sensitiveKeys = ['password', 'secret', 'key', 'token', 'api_key', 'private'];
-  const sanitizedConfig = { ...config };
-  
-  const sanitizeObject = (obj: any) => {
-    Object.keys(obj).forEach(key => {
-      if (sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))) {
-        obj[key] = '[REDACTED]';
-      } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-        sanitizeObject(obj[key]);
+    for (const file of files) {
+      const filePath = path.join(logsDir, file);
+      const stats = fs.statSync(filePath);
+      
+      if (stats.isFile() && stats.mtime < cutoffDate) {
+        fs.unlinkSync(filePath);
+        logger.info('Old log file deleted', {
+          file,
+          action: 'log_cleanup'
+        });
       }
+    }
+  } catch (error: any) {
+    logger.error('Log cleanup failed', {
+      error: error.message,
+      action: 'log_cleanup_error'
     });
-  };
-  
-  sanitizeObject(sanitizedConfig);
-  
-  logger.info('Service configuration', {
-    service: serviceName,
-    config: sanitizedConfig
-  });
+    throw error;
+  }
 };
+
+// Export the default logger as well
+export default logger;

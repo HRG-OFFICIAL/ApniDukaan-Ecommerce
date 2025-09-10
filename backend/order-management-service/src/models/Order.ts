@@ -1,5 +1,5 @@
-import mongoose, { Schema, Model } from 'mongoose';
-import { v4 as uuidv4 } from 'uuid';
+import mongoose, { Schema, Model, Document, Types } from 'mongoose';
+// import { v4 as uuidv4 } from 'uuid'; // Not used currently
 import ShortUniqueId from 'short-unique-id';
 import Decimal from 'decimal.js';
 import {
@@ -24,6 +24,49 @@ import {
   RefundReason,
   DiscountType
 } from '../types/order.types';
+
+// ==================== DOCUMENT INTERFACE ====================
+
+export interface IOrderDocument extends IOrder, Document {
+  // Instance methods
+  calculateTotals(): Promise<IOrderTotals>;
+  addItem(item: Partial<IOrderItem>): Promise<void>;
+  updateItem(itemId: string, updates: Partial<IOrderItem>): Promise<void>;
+  removeItem(itemId: string): Promise<void>;
+  updateStatus(status: OrderStatus, reason?: string, updatedBy?: string): Promise<void>;
+  addPayment(payment: Partial<IPayment>): Promise<void>;
+  processRefund(paymentId: string, amount: number, reason: RefundReason): Promise<IRefund>;
+  addNote(note: Partial<IOrderNote>): Promise<void>;
+  reserveInventory(): Promise<boolean>;
+  releaseInventory(): Promise<void>;
+  generateInvoice(): Promise<Buffer>;
+  canCancel(): boolean;
+  canRefund(): boolean;
+  getShippingLabel(): Promise<Buffer>;
+  
+  // Virtual properties
+  customerFullName: string;
+  orderAge: number;
+  isCancellable: boolean;
+  isRefundable: boolean;
+  totalQuantity: number;
+  paymentStatus: string;
+  
+  // Subdocument arrays with proper typing
+  payments: Types.DocumentArray<IPayment & Document>;
+  items: Types.DocumentArray<IOrderItem & Document>;
+  notes: Types.DocumentArray<IOrderNote & Document>;
+  discounts: Types.DocumentArray<IDiscount & Document>;
+  statusHistory: Types.DocumentArray<IOrderStatusHistory & Document>;
+}
+
+// Static methods interface
+export interface IOrderModel extends Model<IOrderDocument> {
+  findByCustomer(customerId: string, options?: any): Promise<IOrderDocument[]>;
+  searchOrders(query: string): Promise<IOrderDocument[]>;
+  findByStatus(status: OrderStatus | OrderStatus[]): Promise<IOrderDocument[]>;
+  findByDateRange(startDate: Date, endDate: Date): Promise<IOrderDocument[]>;
+}
 
 const uid = new ShortUniqueId({ length: 10 });
 
@@ -364,9 +407,7 @@ const PaymentSchema = new Schema<IPayment>({
   },
   transactionId: {
     type: String,
-    trim: true,
-    unique: true,
-    sparse: true
+    trim: true
   },
   amount: {
     type: Number,
@@ -623,28 +664,25 @@ const OrderStatusHistorySchema = new Schema<IOrderStatusHistory>({
 
 // ==================== MAIN ORDER SCHEMA ====================
 
-const OrderSchema = new Schema<IOrder>({
+const OrderSchema = new Schema<IOrderDocument>({
   // Basic Order Info
   orderNumber: {
     type: String,
     required: [true, 'Order number is required'],
-    unique: true,
     trim: true,
     uppercase: true,
-    default: () => `ORD-${uid()}`
+    default: () => `ORD-${uid.randomUUID()}`
   },
   customerId: {
     type: String,
     required: [true, 'Customer ID is required'],
-    trim: true,
-    index: true
+    trim: true
   },
   customerEmail: {
     type: String,
     required: [true, 'Customer email is required'],
     trim: true,
     lowercase: true,
-    index: true,
     validate: {
       validator: function(email: string) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -656,8 +694,7 @@ const OrderSchema = new Schema<IOrder>({
     type: String,
     enum: Object.values(OrderStatus),
     required: [true, 'Order status is required'],
-    default: OrderStatus.DRAFT,
-    index: true
+    default: OrderStatus.DRAFT
   },
 
   // Order Items
@@ -802,24 +839,19 @@ const OrderSchema = new Schema<IOrder>({
   placedAt: {
     type: Date,
     required: [true, 'Placed at timestamp is required'],
-    default: Date.now,
-    index: true
+    default: Date.now
   },
   confirmedAt: {
-    type: Date,
-    index: true
+    type: Date
   },
   shippedAt: {
-    type: Date,
-    index: true
+    type: Date
   },
   deliveredAt: {
-    type: Date,
-    index: true
+    type: Date
   },
   cancelledAt: {
-    type: Date,
-    index: true
+    type: Date
   },
 
   // Relations
@@ -1041,9 +1073,9 @@ OrderSchema.methods.updateStatus = async function(
 ): Promise<void> {
   const historyEntry: IOrderStatusHistory = {
     status,
-    reason,
+    reason: reason || '',
     timestamp: new Date(),
-    updatedBy,
+    updatedBy: updatedBy || '',
     metadata: {}
   };
 
@@ -1143,7 +1175,7 @@ OrderSchema.methods.canRefund = function(): boolean {
     OrderStatus.DELIVERED
   ];
   return refundableStatuses.includes(this.status) && 
-         this.payments.some(p => p.status === PaymentStatus.COMPLETED);
+         this.payments.some((p: any) => p.status === PaymentStatus.COMPLETED);
 };
 
 // Get shipping label (placeholder)
@@ -1191,6 +1223,6 @@ OrderSchema.statics.findByDateRange = function(startDate: Date, endDate: Date) {
 
 // ==================== MODEL CREATION ====================
 
-export const Order: Model<IOrder> = mongoose.model<IOrder>('Order', OrderSchema);
+export const Order: IOrderModel = mongoose.model<IOrderDocument, IOrderModel>('Order', OrderSchema);
 
 export default Order;

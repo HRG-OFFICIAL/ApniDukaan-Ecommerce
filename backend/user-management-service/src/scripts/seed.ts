@@ -1,10 +1,11 @@
 #!/usr/bin/env ts-node
 
 import dotenv from 'dotenv';
+import { Types } from 'mongoose';
 import { connectDB } from '../config/database';
 import { initializeRedis } from '../config/redis';
 import User from '../models/User';
-import Role from '../models/Role';
+import { Role } from '../models/Role';
 import { 
   UserRole, 
   RoleType, 
@@ -96,7 +97,7 @@ const DEFAULT_ROLES = [
     name: 'admin',
     displayName: 'Administrator',
     description: 'Administrative access with user and content management',
-    type: RoleType.ADMINISTRATIVE,
+    type: RoleType.SYSTEM,
     permissions: [
       ...PERMISSIONS.USER_MANAGEMENT,
       ...PERMISSIONS.CONTENT_MANAGEMENT,
@@ -112,7 +113,7 @@ const DEFAULT_ROLES = [
     name: 'moderator',
     displayName: 'Moderator',
     description: 'Content moderation and user support',
-    type: RoleType.ADMINISTRATIVE,
+    type: RoleType.SYSTEM,
     permissions: [
       'users.view',
       'users.suspend',
@@ -128,7 +129,7 @@ const DEFAULT_ROLES = [
     name: 'support',
     displayName: 'Support Agent',
     description: 'Customer support and basic user assistance',
-    type: RoleType.FUNCTIONAL,
+    type: RoleType.SYSTEM,
     permissions: [
       'users.view',
       'users.profile_view',
@@ -142,7 +143,7 @@ const DEFAULT_ROLES = [
     name: 'customer',
     displayName: 'Customer',
     description: 'Standard customer account with basic permissions',
-    type: RoleType.USER,
+    type: RoleType.CUSTOM,
     permissions: [
       'profile.view',
       'profile.update',
@@ -159,7 +160,7 @@ const DEFAULT_ROLES = [
     name: 'vendor',
     displayName: 'Vendor',
     description: 'Vendor account with product and order management',
-    type: RoleType.BUSINESS,
+    type: RoleType.CUSTOM,
     permissions: [
       'profile.view',
       'profile.update',
@@ -178,7 +179,7 @@ const DEFAULT_ROLES = [
     name: 'guest',
     displayName: 'Guest',
     description: 'Limited access for non-registered users',
-    type: RoleType.USER,
+    type: RoleType.CUSTOM,
     permissions: [
       'products.view',
       'categories.view'
@@ -221,7 +222,7 @@ class DatabaseSeeder {
           logger.info(`⚠️  Role '${roleData.name}' already exists, updating...`);
           
           // Update existing role with new permissions
-          existingRole.permissions = roleData.permissions;
+          existingRole.permissions = roleData.permissions.map((p: string) => new Types.ObjectId(p));
           existingRole.description = roleData.description;
           existingRole.isActive = roleData.isActive;
           existingRole.updatedAt = new Date();
@@ -231,6 +232,7 @@ class DatabaseSeeder {
         } else {
           const role = new Role({
             ...roleData,
+            permissions: roleData.permissions.map((p: string) => new Types.ObjectId(p)),
             createdBy: 'system_seeder',
             createdAt: new Date(),
             updatedAt: new Date()

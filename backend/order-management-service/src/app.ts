@@ -78,7 +78,7 @@ class OrderManagementApp {
     // Body parsing middleware
     this.app.use(express.json({ 
       limit: '10mb',
-      verify: (req: any, res, buf) => {
+      verify: (req: any, _res, buf) => {
         // Store raw body for webhook signature verification
         if (req.originalUrl.includes('/webhooks/')) {
           req.rawBody = buf;
@@ -139,7 +139,7 @@ class OrderManagementApp {
       
       // Override res.end to calculate response time
       const originalEnd = res.end;
-      res.end = function(...args: any[]) {
+      (res as any).end = function(...args: any[]) {
         const responseTime = Date.now() - req.startTime;
         res.setHeader('X-Response-Time', `${responseTime}ms`);
         
@@ -153,7 +153,7 @@ class OrderManagementApp {
           });
         }
         
-        originalEnd.apply(res, args);
+        (originalEnd as any).apply(res, args);
       };
       
       next();
@@ -162,7 +162,7 @@ class OrderManagementApp {
 
   private initializeRoutes(): void {
     // Health check route
-    this.app.get('/health', (req: Request, res: Response) => {
+    this.app.get('/health', (_req: Request, res: Response) => {
       res.status(200).json({
         success: true,
         service: 'order-management-service',
@@ -183,7 +183,7 @@ class OrderManagementApp {
     });
 
     // Readiness probe for Kubernetes
-    this.app.get('/ready', (req: Request, res: Response) => {
+    this.app.get('/ready', (_req: Request, res: Response) => {
       const isReady = mongoose.connection.readyState === 1 && 
                      (this.redisClient?.isReady || false);
       
@@ -207,7 +207,7 @@ class OrderManagementApp {
     });
 
     // Liveness probe for Kubernetes
-    this.app.get('/live', (req: Request, res: Response) => {
+    this.app.get('/live', (_req: Request, res: Response) => {
       res.status(200).json({
         success: true,
         message: 'Service is alive',
@@ -219,7 +219,7 @@ class OrderManagementApp {
     this.app.use('/api/orders', orderRoutes);
 
     // Root route
-    this.app.get('/', (req: Request, res: Response) => {
+    this.app.get('/', (_req: Request, res: Response) => {
       res.json({
         success: true,
         message: 'ShopSphere Order Management Service API',
@@ -245,7 +245,7 @@ class OrderManagementApp {
 
   private initializeErrorHandling(): void {
     // Global error handler
-    this.app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    this.app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
       // Log the error
       logger.error('Unhandled error in request:', {
         error: err.message,
@@ -314,7 +314,7 @@ class OrderManagementApp {
 
     // Handle uncaught exceptions
     process.on('uncaughtException', (err: Error) => {
-      logger.fatal('Uncaught Exception:', err);
+      logger.error('Uncaught Exception:', err);
       // Give server time to finish pending requests
       setTimeout(() => {
         process.exit(1);
@@ -323,7 +323,7 @@ class OrderManagementApp {
 
     // Handle unhandled promise rejections
     process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
-      logger.fatal('Unhandled Rejection at:', promise, 'reason:', reason);
+      logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
       // Give server time to finish pending requests
       setTimeout(() => {
         process.exit(1);
@@ -339,14 +339,14 @@ class OrderManagementApp {
         maxPoolSize: parseInt(process.env.MONGODB_MAX_POOL_SIZE || '10'),
         serverSelectionTimeoutMS: parseInt(process.env.MONGODB_SERVER_SELECTION_TIMEOUT || '5000'),
         socketTimeoutMS: parseInt(process.env.MONGODB_SOCKET_TIMEOUT || '45000'),
-        bufferMaxEntries: 0,
+        // bufferMaxEntries: 0, // Deprecated option
         retryWrites: true,
         w: 'majority'
       });
 
       logger.info('Connected to MongoDB successfully', {
         uri: mongoUri.replace(/\/\/.*@/, '//***:***@'), // Hide credentials in logs
-        database: mongoose.connection.db.databaseName
+        database: mongoose.connection.db?.databaseName || 'unknown'
       });
 
       // Handle MongoDB connection events
@@ -363,7 +363,7 @@ class OrderManagementApp {
       });
 
     } catch (error) {
-      logger.fatal('Failed to connect to MongoDB:', error);
+      logger.error('Failed to connect to MongoDB:', error);
       process.exit(1);
     }
   }
@@ -376,7 +376,7 @@ class OrderManagementApp {
         url: redisUrl,
         socket: {
           connectTimeout: parseInt(process.env.REDIS_CONNECT_TIMEOUT || '5000'),
-          lazyConnect: true,
+          // lazyConnect: true, // Deprecated option
           reconnectStrategy: (retries) => {
             if (retries > 10) {
               return new Error('Redis connection retry limit exceeded');

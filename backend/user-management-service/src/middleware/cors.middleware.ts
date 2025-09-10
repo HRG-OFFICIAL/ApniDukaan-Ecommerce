@@ -96,8 +96,8 @@ export const handleCORSPreflight = (req: any, res: any, next: any) => {
     res.header('Access-Control-Allow-Origin', req.headers.origin);
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.header('Access-Control-Allow-Headers', corsOptions.allowedHeaders?.join(', '));
-    res.header('Access-Control-Expose-Headers', corsOptions.exposedHeaders?.join(', '));
+    res.header('Access-Control-Allow-Headers', Array.isArray(corsOptions.allowedHeaders) ? corsOptions.allowedHeaders.join(', ') : corsOptions.allowedHeaders);
+    res.header('Access-Control-Expose-Headers', Array.isArray(corsOptions.exposedHeaders) ? corsOptions.exposedHeaders.join(', ') : corsOptions.exposedHeaders);
     res.header('Access-Control-Max-Age', corsOptions.maxAge?.toString());
     
     return res.status(204).end();

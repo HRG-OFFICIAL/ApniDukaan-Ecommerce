@@ -1,6 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import { jwtService, JWTPayload } from '../utils/jwt';
 
+// Extend the Express Request interface globally
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JWTPayload;
+    }
+  }
+}
+
 export interface AuthRequest extends Request {
   user?: JWTPayload;
 }

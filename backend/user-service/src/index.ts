@@ -10,10 +10,10 @@ async function startServer() {
 
   try {
     // Connect to MongoDB Atlas
-    await connectDatabase(
-                  process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_users?retryWrites=true&w=majority&appName=Cluster0',
-      'user_db'
-    );
+    await connectDatabase({
+      uri: process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_users?retryWrites=true&w=majority&appName=Cluster0',
+      dbName: 'user_db'
+    });
 
     // Security middleware
     app.use(helmet({

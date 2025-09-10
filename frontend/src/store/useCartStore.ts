@@ -1,5 +1,5 @@
 // Custom implementation to replace zustand dependency using React hooks
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 // Create a context-like system without using React Context
 // This allows components to subscribe to state changes
@@ -7,7 +7,7 @@ type Listener = () => void;
 type Store<T> = { getState: () => T; setState: (value: Partial<T>) => void; subscribe: (listener: Listener) => () => void };
 
 // Global store instance that lives outside of React components
-const createStore = <T extends Record<string, any>>(initialState: T): Store<T> => {
+const createStore = <T extends Record<string, unknown>>(initialState: T): Store<T> => {
   let state = { ...initialState };
   const listeners = new Set<Listener>();
 
@@ -38,7 +38,7 @@ const loadPersistedState = (key: string) => {
 };
 
 // Save state to localStorage
-const persistState = (key: string, state: any) => {
+const persistState = (key: string, state: unknown) => {
   if (typeof window === 'undefined') return;
   
   try {
@@ -63,6 +63,7 @@ interface CartState {
   total: number
   itemCount: number
   isOpen: boolean
+  [key: string]: unknown
 }
 
 // Create actions separately from state

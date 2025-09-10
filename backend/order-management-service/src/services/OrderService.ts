@@ -1,7 +1,7 @@
-import { Types } from 'mongoose';
+import { startSession, ClientSession } from 'mongoose';
 import Decimal from 'decimal.js';
 import { createClient, RedisClientType } from 'redis';
-import { Order } from '../models/Order';
+import { Order, IOrderDocument } from '../models/Order';
 import {
   IOrder,
   ICreateOrderRequest,
@@ -10,22 +10,27 @@ import {
   IOrderListResponse,
   IOrderFilters,
   IOrderSearchQuery,
-  IOrderTotals,
   IOrderItem,
-  IPayment,
-  IRefund,
-  IShipping,
-  IOrderNote,
   OrderStatus,
   PaymentStatus,
   PaymentMethod,
   ShippingStatus,
   RefundReason,
   IOrderEvent,
-  IInventoryReservation,
   IShippingCalculation,
-  IOrderValidation
+  IOrderValidation,
+  IRefund
 } from '../types/order.types';
+import { orderConfig } from '../config/order.config';
+import { 
+  OrderError, 
+  // OrderNotFoundError, // Not used currently
+  OrderValidationError, 
+  InventoryInsufficientError, 
+  // PaymentProcessingError, // Not used currently
+  // OrderStateError // Not used currently 
+} from '../errors/OrderErrors';
+import { IdempotencyService } from './IdempotencyService';
 
 // Mock external service interfaces
 interface ICatalogService {
@@ -62,10 +67,11 @@ interface IEventBus {
   on(eventType: string, handler: (data: any) => void): void;
 }
 
-class OrderService {
-  private redisClient: RedisClientType;
+export class OrderService {
+  private redisClient: RedisClientType<any, any>;
+  private idempotencyService: IdempotencyService;
   
-  // Mock external services (in production these would be actual service instances)
+  // External services injected via constructor
   private catalogService: ICatalogService;
   private paymentService: IPaymentService;
   private shippingService: IShippingService;
@@ -73,23 +79,39 @@ class OrderService {
   private taxService: ITaxService;
   private eventBus: IEventBus;
 
-  constructor() {
+  constructor(
+    catalogService: ICatalogService,
+    paymentService: IPaymentService,
+    shippingService: IShippingService,
+    notificationService: INotificationService,
+    taxService: ITaxService,
+    eventBus: IEventBus,
+    redisClient?: RedisClientType
+  ) {
     // Initialize Redis client
-    this.redisClient = createClient({
-      url: process.env.REDIS_URI || 'redis://localhost:6379'
+    this.redisClient = redisClient || createClient({
+      url: orderConfig.redis.uri
     });
     
     this.redisClient.on('error', (err) => {
       console.error('Redis Client Error:', err);
     });
 
-    // Initialize mock services
-    this.initializeMockServices();
+    // Initialize idempotency service
+    this.idempotencyService = new IdempotencyService(this.redisClient as RedisClientType);
+
+    // Set injected services
+    this.catalogService = catalogService;
+    this.paymentService = paymentService;
+    this.shippingService = shippingService;
+    this.notificationService = notificationService;
+    this.taxService = taxService;
+    this.eventBus = eventBus;
   }
 
-  private initializeMockServices() {
-    // Mock Catalog Service
-    this.catalogService = {
+  // Static factory method for creating OrderService with mock services (for testing/development)
+  static createWithMockServices(redisClient?: RedisClientType): OrderService {
+    const mockCatalogService: ICatalogService = {
       getProduct: async (productId: string) => ({
         id: productId,
         name: 'Sample Product',
@@ -100,34 +122,32 @@ class OrderService {
         stockLevel: 100
       }),
       
-      validateProduct: async (productId: string, variantId?: string) => true,
+      validateProduct: async (_productId: string, _variantId?: string) => true,
       
-      updateInventory: async (productId: string, quantity: number, operation: 'reserve' | 'release' | 'reduce') => true,
+      updateInventory: async (_productId: string, _quantity: number, _operation: 'reserve' | 'release' | 'reduce') => true,
       
-      checkStock: async (productId: string, variantId?: string) => ({
+      checkStock: async (_productId: string, _variantId?: string) => ({
         available: 100,
         reserved: 5
       })
     };
 
-    // Mock Payment Service
-    this.paymentService = {
-      processPayment: async (paymentData: any) => ({
+    const mockPaymentService: IPaymentService = {
+      processPayment: async (_paymentData: any) => ({
         success: true,
         transactionId: `txn_${Date.now()}`
       }),
       
-      refundPayment: async (transactionId: string, amount: number) => ({
+      refundPayment: async (_transactionId: string, _amount: number) => ({
         success: true,
         refundId: `ref_${Date.now()}`
       }),
       
-      validatePaymentMethod: async (method: PaymentMethod, data: any) => true
+      validatePaymentMethod: async (_method: PaymentMethod, _data: any) => true
     };
 
-    // Mock Shipping Service
-    this.shippingService = {
-      calculateShipping: async (items: IOrderItem[], address: any, method: string) => ({
+    const mockShippingService: IShippingService = {
+      calculateShipping: async (_items: IOrderItem[], _address: any, method: string) => ({
         method: method as any,
         carrier: 'UPS',
         service: 'Ground',
@@ -136,20 +156,19 @@ class OrderService {
         transitTime: '7-10 business days'
       }),
       
-      createShipment: async (order: IOrder) => ({
+      createShipment: async (_order: IOrder) => ({
         trackingNumber: `1Z${Date.now()}`,
         labelUrl: 'https://example.com/shipping-label.pdf'
       }),
       
-      trackShipment: async (trackingNumber: string) => ({
+      trackShipment: async (_trackingNumber: string) => ({
         status: 'in_transit',
         location: 'New York, NY',
         estimatedDelivery: new Date()
       })
     };
 
-    // Mock Notification Service
-    this.notificationService = {
+    const mockNotificationService: INotificationService = {
       sendOrderConfirmation: async (order: IOrder) => {
         console.log(`Order confirmation sent for ${order.orderNumber}`);
       },
@@ -158,13 +177,12 @@ class OrderService {
         console.log(`Order ${order.orderNumber} status updated to ${status}`);
       },
       
-      sendShippingUpdate: async (order: IOrder, trackingInfo: any) => {
+      sendShippingUpdate: async (order: IOrder, _trackingInfo: any) => {
         console.log(`Shipping update sent for ${order.orderNumber}`);
       }
     };
 
-    // Mock Tax Service
-    this.taxService = {
+    const mockTaxService: ITaxService = {
       calculateTax: async (items: IOrderItem[], shippingAddress: any) => {
         const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
         const taxRate = 0.08; // 8% tax rate
@@ -183,16 +201,25 @@ class OrderService {
       }
     };
 
-    // Mock Event Bus
-    this.eventBus = {
+    const mockEventBus: IEventBus = {
       emit: async (eventType: string, data: any) => {
         console.log(`Event emitted: ${eventType}`, data);
       },
       
-      on: (eventType: string, handler: (data: any) => void) => {
+      on: (_eventType: string, _handler: (data: any) => void) => {
         // Mock event listener registration
       }
     };
+
+    return new OrderService(
+      mockCatalogService,
+      mockPaymentService,
+      mockShippingService,
+      mockNotificationService,
+      mockTaxService,
+      mockEventBus,
+      redisClient
+    );
   }
 
   async connect(): Promise<void> {
@@ -204,40 +231,51 @@ class OrderService {
   // ==================== CORE ORDER OPERATIONS ====================
 
   /**
-   * Create a new order
+   * Create a new order with transaction support
    */
-  async createOrder(orderData: ICreateOrderRequest): Promise<IOrderResponse> {
+  async createOrder(orderData: ICreateOrderRequest, idempotencyKey?: string): Promise<IOrderResponse> {
+    const session = await startSession();
+    
     try {
+      // Check idempotency if key provided
+      if (idempotencyKey) {
+        const existingResult = await this.idempotencyService.getProcessedResult(idempotencyKey);
+        if (existingResult) {
+          return existingResult;
+        }
+      }
+
+      session.startTransaction();
+
       // Validate order data
       const validation = await this.validateOrderData(orderData);
       if (!validation.isValid) {
-        return {
-          success: false,
-          error: 'Validation failed',
-          code: 'VALIDATION_ERROR'
-        };
+        throw new OrderValidationError('Order validation failed', { errors: validation.errors });
       }
 
       // Check inventory availability
       const inventoryCheck = await this.checkInventoryAvailability(orderData.items);
       if (!inventoryCheck.available) {
-        return {
-          success: false,
-          error: 'Insufficient inventory',
-          code: 'INVENTORY_UNAVAILABLE'
-        };
+        throw new InventoryInsufficientError(
+          'unknown',
+          0,
+          0
+        );
       }
+
+      // Process items first to ensure they have totalPrice
+      const processedItems = await this.processOrderItems(orderData.items);
 
       // Calculate shipping
       const shippingCalculation = await this.shippingService.calculateShipping(
-        orderData.items,
+        processedItems,
         orderData.shippingAddress,
         orderData.shippingMethod
       );
 
       // Calculate taxes
       const taxCalculation = await this.taxService.calculateTax(
-        orderData.items,
+        processedItems,
         orderData.shippingAddress
       );
 
@@ -246,8 +284,8 @@ class OrderService {
         customerId: orderData.customerId || 'guest',
         customerEmail: orderData.customerEmail,
         status: OrderStatus.DRAFT,
-        items: await this.processOrderItems(orderData.items),
-        currency: 'USD',
+        items: processedItems,
+        currency: orderConfig.currency,
         customer: {
           id: orderData.customerId || 'guest',
           email: orderData.customerEmail,
@@ -286,38 +324,62 @@ class OrderService {
           taxAmount: taxCalculation.taxAmount,
           shippingAmount: shippingCalculation.cost,
           total: 0,
-          currency: 'USD'
+          currency: orderConfig.currency
         }
       });
 
       // Calculate totals
       order.totals = await order.calculateTotals();
 
-      // Save order
-      const savedOrder = await order.save();
+      // Save order within transaction
+      const savedOrder = await order.save({ session });
 
-      // Reserve inventory
-      await this.reserveInventory(savedOrder);
+      // Reserve inventory within transaction
+      await this.reserveInventory(savedOrder, session);
 
-      // Cache order
+      // Commit transaction
+      await session.commitTransaction();
+
+      // Cache order (non-transactional)
       await this.cacheOrder(savedOrder);
 
-      // Emit order created event
+      // Emit order created event (non-transactional)
       await this.emitOrderEvent('order.created', savedOrder);
 
-      return {
+      const result = {
         success: true,
         message: 'Order created successfully',
         data: { order: savedOrder }
       };
 
+      // Store result for idempotency if key provided
+      if (idempotencyKey) {
+        await this.idempotencyService.markAsProcessed(idempotencyKey, result);
+      }
+
+      return result;
+
     } catch (error) {
+      await session.abortTransaction();
+      
+      if (error instanceof OrderError) {
+        return {
+          success: false,
+          error: error.message,
+          code: error.code,
+          message: error.message
+        };
+      }
+
       console.error('Error creating order:', error);
       return {
         success: false,
         error: 'Failed to create order',
-        code: 'ORDER_CREATION_FAILED'
+        code: 'ORDER_CREATION_FAILED',
+        message: 'Failed to create order'
       };
+    } finally {
+      session.endSession();
     }
   }
 
@@ -342,7 +404,8 @@ class OrderService {
         return {
           success: false,
           error: 'Order not found',
-          code: 'ORDER_NOT_FOUND'
+          code: 'ORDER_NOT_FOUND',
+          message: 'Order not found'
         };
       }
 
@@ -360,7 +423,8 @@ class OrderService {
       return {
         success: false,
         error: 'Failed to retrieve order',
-        code: 'ORDER_RETRIEVAL_FAILED'
+        code: 'ORDER_RETRIEVAL_FAILED',
+        message: 'Failed to retrieve order'
       };
     }
   }
@@ -375,7 +439,8 @@ class OrderService {
         return {
           success: false,
           error: 'Order not found',
-          code: 'ORDER_NOT_FOUND'
+          code: 'ORDER_NOT_FOUND',
+          message: 'Order not found'
         };
       }
 
@@ -390,7 +455,8 @@ class OrderService {
       return {
         success: false,
         error: 'Failed to retrieve order',
-        code: 'ORDER_RETRIEVAL_FAILED'
+        code: 'ORDER_RETRIEVAL_FAILED',
+        message: 'Failed to retrieve order'
       };
     }
   }
@@ -405,7 +471,8 @@ class OrderService {
         return {
           success: false,
           error: 'Order not found',
-          code: 'ORDER_NOT_FOUND'
+          code: 'ORDER_NOT_FOUND',
+          message: 'Order not found'
         };
       }
 
@@ -414,13 +481,15 @@ class OrderService {
         return {
           success: false,
           error: 'Order cannot be updated in current status',
-          code: 'ORDER_NOT_UPDATABLE'
+          code: 'ORDER_NOT_UPDATABLE',
+          message: 'Order cannot be updated in current status'
         };
       }
 
       // Update order fields
       if (updateData.items) {
-        order.items = await this.processOrderItems(updateData.items);
+        const processedItems = await this.processOrderItems(updateData.items);
+        order.items = processedItems as any; // Type assertion for DocumentArray
         order.totals = await order.calculateTotals();
       }
 
@@ -464,7 +533,8 @@ class OrderService {
       return {
         success: false,
         error: 'Failed to update order',
-        code: 'ORDER_UPDATE_FAILED'
+        code: 'ORDER_UPDATE_FAILED',
+        message: 'Failed to update order'
       };
     }
   }
@@ -479,7 +549,8 @@ class OrderService {
         return {
           success: false,
           error: 'Order not found',
-          code: 'ORDER_NOT_FOUND'
+          code: 'ORDER_NOT_FOUND',
+          message: 'Order not found'
         };
       }
 
@@ -488,7 +559,8 @@ class OrderService {
         return {
           success: false,
           error: 'Order cannot be cancelled in current status',
-          code: 'ORDER_NOT_CANCELLABLE'
+          code: 'ORDER_NOT_CANCELLABLE',
+          message: 'Order cannot be cancelled in current status'
         };
       }
 
@@ -529,7 +601,8 @@ class OrderService {
       return {
         success: false,
         error: 'Failed to cancel order',
-        code: 'ORDER_CANCELLATION_FAILED'
+        code: 'ORDER_CANCELLATION_FAILED',
+        message: 'Failed to cancel order'
       };
     }
   }
@@ -567,7 +640,7 @@ class OrderService {
       return {
         success: true,
         data: {
-          orders: orders as IOrder[],
+          orders: orders.map(order => order.toObject()) as IOrder[],
           total,
           page,
           limit,
@@ -630,7 +703,8 @@ class OrderService {
         return {
           success: false,
           error: 'Order not found',
-          code: 'ORDER_NOT_FOUND'
+          code: 'ORDER_NOT_FOUND',
+          message: 'Order not found'
         };
       }
 
@@ -644,7 +718,8 @@ class OrderService {
         return {
           success: false,
           error: 'Invalid payment method',
-          code: 'INVALID_PAYMENT_METHOD'
+          code: 'INVALID_PAYMENT_METHOD',
+          message: 'Invalid payment method'
         };
       }
 
@@ -659,14 +734,15 @@ class OrderService {
           amount: paymentData.amount,
           currency: paymentData.currency || 'USD',
           status: PaymentStatus.FAILED,
-          failureReason: paymentResult.error,
+          ...(paymentResult.error && { failureReason: paymentResult.error }),
           metadata: paymentData.metadata || {}
         });
 
         return {
           success: false,
           error: paymentResult.error || 'Payment processing failed',
-          code: 'PAYMENT_FAILED'
+          code: 'PAYMENT_FAILED',
+          message: paymentResult.error || 'Payment processing failed'
         };
       }
 
@@ -674,7 +750,7 @@ class OrderService {
       await order.addPayment({
         method: paymentData.method,
         provider: paymentData.provider || 'unknown',
-        transactionId: paymentResult.transactionId,
+        ...(paymentResult.transactionId && { transactionId: paymentResult.transactionId }),
         amount: paymentData.amount,
         currency: paymentData.currency || 'USD',
         status: PaymentStatus.COMPLETED,
@@ -714,7 +790,8 @@ class OrderService {
       return {
         success: false,
         error: 'Failed to process payment',
-        code: 'PAYMENT_PROCESSING_FAILED'
+        code: 'PAYMENT_PROCESSING_FAILED',
+        message: 'Failed to process payment'
       };
     }
   }
@@ -750,7 +827,7 @@ class OrderService {
 
     // Create refund record
     const refund = await order.processRefund(paymentId, amount, reason);
-    refund.refundId = refundResult.refundId;
+    refund.refundId = refundResult.refundId || '';
     refund.status = 'completed';
     refund.processedAt = new Date();
 
@@ -764,7 +841,7 @@ class OrderService {
   /**
    * Reserve inventory for order
    */
-  private async reserveInventory(order: IOrder): Promise<boolean> {
+  private async reserveInventory(order: IOrderDocument, session?: ClientSession): Promise<boolean> {
     try {
       const reservationPromises = order.items.map(item =>
         this.catalogService.updateInventory(item.productId, item.quantity, 'reserve')
@@ -775,11 +852,13 @@ class OrderService {
 
       if (allReserved) {
         order.inventoryReserved = true;
-        order.reservationExpiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
-        await order.save();
+        order.reservationExpiresAt = new Date(Date.now() + orderConfig.inventory.reservationExpiryMs);
+        await order.save({ session: session || null });
 
-        // Emit inventory reserved event
-        await this.emitOrderEvent('inventory.reserved', order);
+        // Emit inventory reserved event (non-transactional)
+        if (!session) {
+          await this.emitOrderEvent('inventory.reserved', order);
+        }
       }
 
       return allReserved;
@@ -869,23 +948,25 @@ class OrderService {
       for (let i = 0; i < orderData.items.length; i++) {
         const item = orderData.items[i];
         
-        if (!item.productId) {
+        if (!item || !item.productId) {
           errors.push(`Item ${i + 1}: Product ID is required`);
         }
         
-        if (!item.quantity || item.quantity <= 0) {
+        if (!item || !item.quantity || item.quantity <= 0) {
           errors.push(`Item ${i + 1}: Valid quantity is required`);
         }
         
-        if (!item.unitPrice || item.unitPrice < 0) {
+        if (!item || !item.unitPrice || item.unitPrice < 0) {
           errors.push(`Item ${i + 1}: Valid unit price is required`);
         }
 
         // Check if product exists
         try {
-          const productExists = await this.catalogService.validateProduct(item.productId, item.variantId);
-          if (!productExists) {
-            errors.push(`Item ${i + 1}: Product not found`);
+          if (item) {
+            const productExists = await this.catalogService.validateProduct(item.productId, item.variantId);
+            if (!productExists) {
+              errors.push(`Item ${i + 1}: Product not found`);
+            }
           }
         } catch (error) {
           warnings.push(`Item ${i + 1}: Could not validate product`);
@@ -907,13 +988,17 @@ class OrderService {
     const processedItems: IOrderItem[] = [];
 
     for (const item of items) {
+      if (!item || !item.productId) {
+        throw new Error('Product ID is required for all items');
+      }
+
       try {
         // Get product details from catalog
-        const product = await this.catalogService.getProduct(item.productId!);
+        const product = await this.catalogService.getProduct(item.productId);
         
         const processedItem: IOrderItem = {
-          productId: item.productId!,
-          variantId: item.variantId,
+          productId: item.productId,
+          variantId: item.variantId || '',
           name: item.name || product.name,
           description: item.description || product.description,
           sku: item.sku || product.sku,
@@ -937,8 +1022,8 @@ class OrderService {
         console.error(`Error processing item ${item.productId}:`, error);
         // Use provided data as fallback
         const fallbackItem: IOrderItem = {
-          productId: item.productId!,
-          variantId: item.variantId,
+          productId: item.productId,
+          variantId: item.variantId || '',
           name: item.name || 'Unknown Product',
           sku: item.sku || 'UNKNOWN',
           quantity: item.quantity!,
@@ -1017,12 +1102,12 @@ class OrderService {
   /**
    * Cache order in Redis
    */
-  private async cacheOrder(order: IOrder): Promise<void> {
+  private async cacheOrder(order: IOrderDocument): Promise<void> {
     try {
       await this.redisClient.setEx(
         `order:${order._id}`,
-        1800, // 30 minutes
-        JSON.stringify(order)
+        orderConfig.cache.orderTtlSeconds,
+        JSON.stringify(order.toObject())
       );
     } catch (error) {
       console.error('Error caching order:', error);
@@ -1045,13 +1130,13 @@ class OrderService {
   /**
    * Clear order cache
    */
-  private async clearOrderCache(orderId: string): Promise<void> {
-    try {
-      await this.redisClient.del(`order:${orderId}`);
-    } catch (error) {
-      console.error('Error clearing order cache:', error);
-    }
-  }
+  // private async clearOrderCache(orderId: string): Promise<void> { // Not used currently
+  //   try {
+  //     await this.redisClient.del(`order:${orderId}`);
+  //   } catch (error) {
+  //     console.error('Error clearing order cache:', error);
+  //   }
+  // }
 
   /**
    * Emit order event
@@ -1060,7 +1145,7 @@ class OrderService {
     try {
       const event: IOrderEvent = {
         type: eventType as any,
-        orderId: order._id.toString(),
+        orderId: (order._id as any).toString(),
         customerId: order.customerId,
         data: order,
         timestamp: new Date(),

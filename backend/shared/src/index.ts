@@ -10,6 +10,17 @@ export * from './utils/redis';
 export * from './utils/logger';
 export * from './utils/jwt';
 
+// Export services
+export * from './services/kafka-producer.service';
+export * from './services/kafka-consumer.service';
+export * from './services/aws-s3.service';
+
+// Export events
+export * from './events/event.types';
+
+// Export image types
+export type { ImageUploadOptions, ImageUploadResult } from './services/aws-s3.service';
+
 // Export middleware
 export * from './middleware/auth';
 

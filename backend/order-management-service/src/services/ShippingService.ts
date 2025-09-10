@@ -1,12 +1,12 @@
 import axios, { AxiosInstance } from 'axios';
-import Decimal from 'decimal.js';
+// import Decimal from 'decimal.js'; // Not used currently
 import {
   ShippingMethod,
   ShippingStatus,
   IOrder,
   IOrderItem,
   IShippingAddress,
-  IShipping,
+  // IShipping, // Not used currently
   IShippingUpdate,
   IShippingCalculation,
   IShippingUpdateRequest
@@ -486,7 +486,7 @@ class ShippingService {
       return {
         isValid: errors.length === 0,
         errors,
-        correctedAddress: errors.length === 0 ? address : undefined
+        correctedAddress: errors.length === 0 ? address : address
       };
 
     } catch (error) {
@@ -505,10 +505,10 @@ class ShippingService {
    */
   private async getCarrierRates(
     carrier: string,
-    packageInfo: any,
-    fromAddress: IShippingAddress,
-    toAddress: IShippingAddress,
-    options: any
+    _packageInfo: any,
+    _fromAddress: IShippingAddress,
+    _toAddress: IShippingAddress,
+    _options: any
   ): Promise<IShippingRate[]> {
     // Mock rates for development
     const baseRates = {
@@ -580,7 +580,7 @@ class ShippingService {
   /**
    * Create UPS shipment
    */
-  private async createUPSShipment(order: IOrder, packageInfo: any): Promise<IShipmentLabel> {
+  private async createUPSShipment(order: IOrder, _packageInfo: any): Promise<IShipmentLabel> {
     // Mock UPS shipment creation
     return {
       labelUrl: 'https://example.com/ups-label.pdf',
@@ -594,7 +594,7 @@ class ShippingService {
   /**
    * Create FedEx shipment
    */
-  private async createFedExShipment(order: IOrder, packageInfo: any): Promise<IShipmentLabel> {
+  private async createFedExShipment(order: IOrder, _packageInfo: any): Promise<IShipmentLabel> {
     // Mock FedEx shipment creation
     return {
       labelUrl: 'https://example.com/fedex-label.pdf',
@@ -608,7 +608,7 @@ class ShippingService {
   /**
    * Create USPS shipment
    */
-  private async createUSPSShipment(order: IOrder, packageInfo: any): Promise<IShipmentLabel> {
+  private async createUSPSShipment(order: IOrder, _packageInfo: any): Promise<IShipmentLabel> {
     // Mock USPS shipment creation
     return {
       labelUrl: 'https://example.com/usps-label.pdf',
@@ -622,7 +622,7 @@ class ShippingService {
   /**
    * Create DHL shipment
    */
-  private async createDHLShipment(order: IOrder, packageInfo: any): Promise<IShipmentLabel> {
+  private async createDHLShipment(order: IOrder, _packageInfo: any): Promise<IShipmentLabel> {
     // Mock DHL shipment creation
     return {
       labelUrl: 'https://example.com/dhl-label.pdf',

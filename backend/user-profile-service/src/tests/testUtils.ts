@@ -3,7 +3,7 @@ import {
   IUserProfile,
   IAddress,
   IWishlistItem,
-  IPreferences,
+  IUserPreferences,
   IAccountSettings,
   ICreateProfileRequest,
   IUpdateProfileRequest
@@ -18,6 +18,7 @@ export const generateObjectId = () => new Types.ObjectId().toString();
  * Create mock user profile data
  */
 export const createMockUserProfile = (overrides: Partial<IUserProfile> = {}): IUserProfile => ({
+  _id: generateObjectId(),
   userId: generateObjectId(),
   personalInfo: {
     firstName: 'John',
@@ -33,27 +34,25 @@ export const createMockUserProfile = (overrides: Partial<IUserProfile> = {}): IU
   wishlist: [],
   preferences: createMockPreferences(),
   accountSettings: createMockAccountSettings(),
-  loyaltyPoints: {
-    total: 0,
-    available: 0,
-    tier: 'bronze',
-    history: []
+  metadata: {
+    lastLoginAt: new Date(),
+    loginCount: 0,
+    registrationSource: 'web',
+    referralCode: 'TEST123',
+    isEmailVerified: true,
+    isPhoneVerified: false
   },
-  registrationSource: 'web',
-  referralCode: 'TEST123',
-  isActive: true,
-  isVerified: true,
-  lastLoginAt: new Date(),
+  status: 'active' as const,
   createdAt: new Date(),
   updatedAt: new Date(),
   ...overrides
-});
+} as IUserProfile);
 
 /**
  * Create mock address data
  */
 export const createMockAddress = (overrides: Partial<IAddress> = {}): IAddress => ({
-  _id: new Types.ObjectId(),
+  _id: new Types.ObjectId().toString(),
   type: 'home',
   firstName: 'John',
   lastName: 'Doe',
@@ -75,56 +74,64 @@ export const createMockAddress = (overrides: Partial<IAddress> = {}): IAddress =
  * Create mock wishlist item data
  */
 export const createMockWishlistItem = (overrides: Partial<IWishlistItem> = {}): IWishlistItem => ({
-  _id: new Types.ObjectId(),
+  _id: new Types.ObjectId().toString(),
   productId: generateObjectId(),
   variantId: generateObjectId(),
   priority: 'medium',
   notes: 'Test wishlist item',
   addedAt: new Date(),
+  notifyOnSale: true,
+  notifyOnRestock: false,
   ...overrides
 });
 
 /**
  * Create mock preferences data
  */
-export const createMockPreferences = (overrides: Partial<IPreferences> = {}): IPreferences => ({
+export const createMockPreferences = (overrides: Partial<IUserPreferences> = {}): IUserPreferences => ({
   notifications: {
     email: {
       orderUpdates: true,
       promotions: true,
       newsletter: false,
-      recommendations: true
+      recommendations: true,
+      reviews: true,
+      wishlistAlerts: true
     },
     push: {
       orderUpdates: true,
       promotions: false,
-      newsletter: false,
-      recommendations: false
+      recommendations: false,
+      abandonedCart: false
     },
     sms: {
       orderUpdates: false,
       promotions: false,
-      newsletter: false,
-      recommendations: false
+      deliveryUpdates: false
     }
   },
   privacy: {
     profileVisibility: 'private',
-    dataSharing: false,
-    analyticsTracking: true,
-    personalizedAds: false
+    showPurchaseHistory: false,
+    shareWishlist: false,
+    allowRecommendations: true,
+    allowDataCollection: true
   },
   display: {
     language: 'en',
     currency: 'USD',
     timezone: 'UTC',
-    theme: 'light'
+    theme: 'light' as const,
+    itemsPerPage: 20,
+    defaultView: 'grid' as const
   },
   shopping: {
-    defaultShippingAddress: null,
-    defaultBillingAddress: null,
+    defaultShippingAddress: undefined,
+    defaultBillingAddress: undefined,
     savePaymentMethods: true,
-    autoApplyCoupons: true
+    autoApplyCoupons: true,
+    preferredCategories: [],
+    excludedCategories: []
   },
   ...overrides
 });
@@ -133,11 +140,24 @@ export const createMockPreferences = (overrides: Partial<IPreferences> = {}): IP
  * Create mock account settings data
  */
 export const createMockAccountSettings = (overrides: Partial<IAccountSettings> = {}): IAccountSettings => ({
-  twoFactorEnabled: false,
-  loginNotifications: true,
-  sessionTimeout: 30,
-  passwordLastChanged: new Date(),
-  securityQuestions: [],
+  twoFactorAuth: {
+    enabled: false,
+    method: 'sms',
+    backupCodes: []
+  },
+  security: {
+    lastPasswordChange: new Date(),
+    sessionTimeout: 30,
+    loginAlerts: true
+  },
+  communication: {
+    preferredContactMethod: 'email',
+    bestTimeToContact: {
+      start: '09:00',
+      end: '17:00',
+      timezone: 'UTC'
+    }
+  },
   ...overrides
 });
 
@@ -172,7 +192,11 @@ export const createMockUpdateProfileRequest = (overrides: Partial<IUpdateProfile
   preferences: {
     display: {
       language: 'es',
-      theme: 'dark'
+      currency: 'USD',
+      timezone: 'UTC',
+      theme: 'dark' as const,
+      itemsPerPage: 20,
+      defaultView: 'grid' as const
     }
   },
   ...overrides
@@ -277,7 +301,7 @@ export const assertErrorResponse = (response: any, expectedCode?: string) => {
 /**
  * Clean test data - removes non-essential fields for comparison
  */
-export const cleanTestData = (data: any) => {
+export const cleanTestData = (data: any): any => {
   if (Array.isArray(data)) {
     return data.map(cleanTestData);
   }

@@ -32,7 +32,7 @@ module.exports = {
   clearMocks: true,
   restoreMocks: true,
   resetMocks: true,
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@tests/(.*)$': '<rootDir>/src/tests/$1'
   },

@@ -438,7 +438,7 @@ class CartService extends EventEmitter {
           errors.push({
             itemId: `${item.productId}-${item.variantId || 'default'}`,
             productId: item.productId,
-            error: error.message || 'Product not available',
+            error: (error as any).message || 'Product not available',
             code: 'PRODUCT_UNAVAILABLE'
           });
         }

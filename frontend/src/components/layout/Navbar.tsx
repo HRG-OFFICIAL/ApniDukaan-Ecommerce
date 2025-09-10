@@ -1,22 +1,19 @@
 'use client'
 
-import { useState, Fragment } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Dialog, Disclosure, Menu, Transition } from '@headlessui/react'
 import {
   Search,
   ShoppingCart,
   User,
   Menu as MenuIcon,
   X,
-  ChevronDown,
   Heart,
   Bell
 } from 'lucide-react'
 import { useAuthStore } from '../../contexts/AuthContext'
 import { useCartStore } from '../../contexts/CartContext'
-import { cn } from '../../utils/cn'
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -44,7 +41,7 @@ export default function Navbar() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`)
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
       setSearchQuery('')
     }
   }
@@ -61,10 +58,10 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded bg-gradient-to-r from-primary-600 to-accent-600 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">S</span>
+              <div className="h-8 w-8 rounded bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+                <span className="text-white font-bold text-sm">A</span>
               </div>
-              <span className="font-bold text-xl text-gray-900">ShopSphere</span>
+              <span className="text-xl font-bold text-gray-900">ApniDukaan</span>
             </Link>
           </div>
 
@@ -74,7 +71,7 @@ export default function Navbar() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+                className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
               >
                 {item.name}
               </Link>
@@ -82,124 +79,92 @@ export default function Navbar() {
           </div>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-lg mx-8 hidden md:block">
+          <div className="flex-1 max-w-lg mx-4 hidden md:block">
             <form onSubmit={handleSearch} className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <Search className="h-5 w-5 text-gray-400" aria-hidden="true" />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 type="text"
-                className="block w-full rounded-md border-0 py-2 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               />
             </form>
           </div>
 
-          {/* Right side actions */}
+          {/* Right side icons */}
           <div className="flex items-center space-x-4">
             {/* Wishlist */}
-            {isAuthenticated && (
-              <Link href="/wishlist" className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                <Heart className="h-6 w-6" />
-              </Link>
-            )}
+            <Link
+              href="/wishlist"
+              className="p-2 text-gray-400 hover:text-gray-500 relative"
+            >
+              <Heart className="h-6 w-6" />
+            </Link>
 
             {/* Notifications */}
-            {isAuthenticated && (
-              <button className="p-2 text-gray-400 hover:text-primary-600 transition-colors relative">
-                <Bell className="h-6 w-6" />
-                <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                  3
-                </span>
-              </button>
-            )}
+            <button className="p-2 text-gray-400 hover:text-gray-500 relative">
+              <Bell className="h-6 w-6" />
+              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                3
+              </span>
+            </button>
 
-            {/* Shopping Cart */}
+            {/* Cart */}
             <button
               onClick={toggleCart}
-              className="p-2 text-gray-400 hover:text-primary-600 transition-colors relative"
+              className="p-2 text-gray-400 hover:text-gray-500 relative"
             >
               <ShoppingCart className="h-6 w-6" />
               {itemCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 w-5 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center">
-                  {itemCount > 99 ? '99+' : itemCount}
+                <span className="absolute -top-1 -right-1 h-5 w-5 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center">
+                  {itemCount}
                 </span>
               )}
             </button>
 
-            {/* User menu */}
+            {/* User Menu */}
             {isAuthenticated ? (
-              <MenuIcon as="div" className="relative">
-                <div>
-                  <Menu.Button className="flex items-center space-x-2 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                    <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                      {user?.avatar ? (
-                        <img className="h-8 w-8 rounded-full" src={user.avatar} alt="" />
-                      ) : (
-                        <User className="h-5 w-5 text-gray-600" />
-                      )}
-                    </div>
-                    <ChevronDown className="h-4 w-4 text-gray-500" />
-                  </Menu.Button>
+              <div className="relative">
+                <button className="flex items-center space-x-2 text-gray-700 hover:text-gray-900">
+                  <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <span className="hidden md:block text-sm font-medium">{user?.name}</span>
+                </button>
+                
+                {/* Dropdown Menu */}
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                  {userNavigation.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Sign out
+                  </button>
                 </div>
-                <Transition
-                  as={Fragment}
-                  enter="transition ease-out duration-100"
-                  enterFrom="transform opacity-0 scale-95"
-                  enterTo="transform opacity-100 scale-100"
-                  leave="transition ease-in duration-75"
-                  leaveFrom="transform opacity-100 scale-100"
-                  leaveTo="transform opacity-0 scale-95"
-                >
-                  <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                    <div className="px-4 py-3 border-b border-gray-200">
-                      <p className="text-sm text-gray-700">Signed in as</p>
-                      <p className="text-sm font-medium text-gray-900 truncate">{user?.email}</p>
-                    </div>
-                    {userNavigation.map((item) => (
-                      <Menu.Item key={item.name}>
-                        {({ active }) => (
-                          <Link
-                            href={item.href}
-                            className={cn(
-                              active ? 'bg-gray-100' : '',
-                              'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-                            )}
-                          >
-                            {item.name}
-                          </Link>
-                        )}
-                      </Menu.Item>
-                    ))}
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button
-                          onClick={handleLogout}
-                          className={cn(
-                            active ? 'bg-gray-100' : '',
-                            'block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-                          )}
-                        >
-                          Sign out
-                        </button>
-                      )}
-                    </Menu.Item>
-                  </Menu.Items>
-                </Transition>
-              </Menu>
+              </div>
             ) : (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
                 <Link
                   href="/auth/login"
-                  className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium"
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
                 >
                   Sign in
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
                 >
                   Sign up
                 </Link>
@@ -210,117 +175,94 @@ export default function Navbar() {
             <button
               type="button"
               className="md:hidden p-2 text-gray-400 hover:text-gray-500"
-              onClick={() => setMobileMenuOpen(true)}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              <MenuIcon className="h-6 w-6" aria-hidden="true" />
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <MenuIcon className="h-6 w-6" />
+              )}
             </button>
           </div>
         </div>
-      </nav>
 
-      {/* Mobile menu */}
-      <Dialog as="div" className="md:hidden" open={mobileMenuOpen} onClose={setMobileMenuOpen}>
-        <div className="fixed inset-0 z-50" />
-        <Dialog.Panel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded bg-gradient-to-r from-primary-600 to-accent-600 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">S</span>
-              </div>
-              <span className="font-bold text-xl text-gray-900">ShopSphere</span>
-            </Link>
-            <button
-              type="button"
-              className="p-2 text-gray-400 hover:text-gray-500"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <X className="h-6 w-6" aria-hidden="true" />
-            </button>
-          </div>
-          <div className="mt-6 flow-root">
-            <div className="-my-6 divide-y divide-gray-500/10">
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50">
               {/* Mobile Search */}
-              <div className="py-6">
-                <form onSubmit={handleSearch} className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Search className="h-5 w-5 text-gray-400" aria-hidden="true" />
+              <form onSubmit={handleSearch} className="mb-4">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     type="text"
-                    className="block w-full rounded-md border-0 py-2 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
                     placeholder="Search products..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                   />
-                </form>
-              </div>
-              
+                </div>
+              </form>
+
               {/* Mobile Navigation */}
-              <div className="space-y-2 py-6">
-                {navigation.map((item) => (
+              {navigation.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              ))}
+
+              {/* Mobile User Menu */}
+              {isAuthenticated ? (
+                <div className="pt-4 border-t border-gray-200">
+                  {userNavigation.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                  <button
+                    onClick={() => {
+                      handleLogout()
+                      setMobileMenuOpen(false)
+                    }}
+                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              ) : (
+                <div className="pt-4 border-t border-gray-200 space-y-2">
                   <Link
-                    key={item.name}
-                    href={item.href}
-                    className="block px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50 rounded-md"
+                    href="/auth/login"
+                    className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    {item.name}
+                    Sign in
                   </Link>
-                ))}
-              </div>
-              
-              {/* Mobile User Actions */}
-              <div className="py-6">
-                {isAuthenticated ? (
-                  <div className="space-y-2">
-                    <div className="px-3 py-2 border-b border-gray-200">
-                      <p className="text-base font-semibold text-gray-900">{user?.name}</p>
-                      <p className="text-sm text-gray-500">{user?.email}</p>
-                    </div>
-                    {userNavigation.map((item) => (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className="block px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50 rounded-md"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        {item.name}
-                      </Link>
-                    ))}
-                    <button
-                      onClick={() => {
-                        handleLogout()
-                        setMobileMenuOpen(false)
-                      }}
-                      className="block w-full text-left px-3 py-2 text-base font-semibold leading-7 text-red-600 hover:bg-gray-50 rounded-md"
-                    >
-                      Sign out
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Link
-                      href="/auth/login"
-                      className="block px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50 rounded-md"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Sign in
-                    </Link>
-                    <Link
-                      href="/auth/register"
-                      className="block px-3 py-2 text-base font-semibold leading-7 text-white bg-primary-600 hover:bg-primary-700 rounded-md"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Sign up
-                    </Link>
-                  </div>
-                )}
-              </div>
+                  <Link
+                    href="/auth/register"
+                    className="block px-3 py-2 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Sign up
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
-        </Dialog.Panel>
-      </Dialog>
+        )}
+      </nav>
     </header>
   )
 }
-

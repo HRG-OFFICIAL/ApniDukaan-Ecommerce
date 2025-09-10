@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model, Model } from 'mongoose';
 import { ISession, SessionStatus } from '../types/user.types';
 
 // ==================== SESSION SCHEMA ====================
@@ -119,9 +119,9 @@ const SessionSchema = new Schema<ISession>({
   toJSON: {
     transform: function(doc, ret) {
       ret.id = ret._id;
-      delete ret._id;
-      delete ret.__v;
-      delete ret.accessToken; // Don't expose tokens in JSON
+      delete (ret as any)._id;
+      delete (ret as any).__v;
+      delete (ret as any).accessToken; // Don't expose tokens in JSON
       delete ret.refreshToken;
       return ret;
     }
@@ -129,8 +129,8 @@ const SessionSchema = new Schema<ISession>({
   toObject: {
     transform: function(doc, ret) {
       ret.id = ret._id;
-      delete ret._id;
-      delete ret.__v;
+      delete (ret as any)._id;
+      delete (ret as any).__v;
       return ret;
     }
   }
@@ -438,4 +438,19 @@ SessionSchema.post('save', async function(doc) {
   }
 });
 
-export default model<ISession>('Session', SessionSchema);
+// Define the Session model interface with methods
+interface ISessionModel extends Model<ISession> {
+  findBySessionId(sessionId: string): Promise<ISession | null>;
+  findByAccessToken(accessToken: string): Promise<ISession | null>;
+  findByRefreshToken(refreshToken: string): Promise<ISession | null>;
+  findActiveByUserId(userId: string): Promise<ISession[]>;
+  findByUserAndDevice(userId: string, deviceType: string, browser: string): Promise<ISession | null>;
+  revokeAllByUserId(userId: string, revokedBy?: string): Promise<void>;
+  revokeAllExceptCurrent(userId: string, currentSessionId: string, revokedBy?: string): Promise<void>;
+  cleanupExpiredSessions(): Promise<number>;
+  getActiveSessionsCount(userId?: string): Promise<number>;
+  getSessionStats(): Promise<any>;
+  findSuspiciousSessions(userId: string): Promise<ISession[]>;
+}
+
+export default model<ISession, ISessionModel>('Session', SessionSchema);

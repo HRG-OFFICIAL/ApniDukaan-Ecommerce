@@ -224,7 +224,7 @@ export class SocialAuthService implements ISocialAuthService {
       }
 
       // Check if this social account is already linked to another user
-      const existingUser = await User.findBySocialProvider(provider, data.providerId);
+      const existingUser = await User.findBySocialProvider(provider, data.providerId) as any;
       if (existingUser && existingUser._id.toString() !== userId) {
         return {
           success: false,
@@ -246,10 +246,10 @@ export class SocialAuthService implements ISocialAuthService {
         isVerified: data.emailVerified || false
       };
 
-      user.addSocialAccount(socialAccount);
+      (user as any).addSocialAccount(socialAccount);
 
       // Log social account linking
-      user.addActivity({
+      (user as any).addActivity({
         action: AccountAction.PROFILE_UPDATE,
         timestamp: new Date(),
         success: true,
@@ -286,7 +286,7 @@ export class SocialAuthService implements ISocialAuthService {
         };
       }
 
-      const socialAccount = user.getSocialAccount(provider);
+      const socialAccount = (user as any).getSocialAccount(provider);
       if (!socialAccount) {
         return {
           success: false,
@@ -306,10 +306,10 @@ export class SocialAuthService implements ISocialAuthService {
       }
 
       // Remove social account
-      user.removeSocialAccount(provider);
+      (user as any).removeSocialAccount(provider);
 
       // Log social account unlinking
-      user.addActivity({
+      (user as any).addActivity({
         action: AccountAction.PROFILE_UPDATE,
         timestamp: new Date(),
         success: true,
@@ -341,11 +341,11 @@ export class SocialAuthService implements ISocialAuthService {
   private async handleSocialLogin(provider: AuthProvider, userInfo: any): Promise<ILoginResponse> {
     try {
       // First, try to find user by social provider
-      let user = await User.findBySocialProvider(provider, userInfo.id);
+      let user = await User.findBySocialProvider(provider, userInfo.id) as any;
 
       if (!user && userInfo.email) {
         // Try to find user by email
-        user = await User.findByEmail(userInfo.email);
+        user = await User.findByEmail(userInfo.email) as any;
         
         if (user) {
           // Link this social account to existing user
@@ -360,7 +360,7 @@ export class SocialAuthService implements ISocialAuthService {
             isVerified: userInfo.emailVerified || false
           };
 
-          user.addSocialAccount(socialAccount);
+          (user as any).addSocialAccount(socialAccount);
         }
       }
 
@@ -370,7 +370,7 @@ export class SocialAuthService implements ISocialAuthService {
       }
 
       // Update social account info
-      const socialAccount = user.getSocialAccount(provider);
+      const socialAccount = (user as any).getSocialAccount(provider);
       if (socialAccount) {
         socialAccount.lastUsed = new Date();
         socialAccount.name = userInfo.name;
@@ -407,7 +407,7 @@ export class SocialAuthService implements ISocialAuthService {
       user.isOnline = true;
 
       // Log social login
-      user.addActivity({
+      (user as any).addActivity({
         action: AccountAction.LOGIN,
         timestamp: new Date(),
         success: true,
@@ -536,7 +536,7 @@ export class SocialAuthService implements ISocialAuthService {
     });
 
     // Generate referral code
-    user.generateReferralCode();
+    (user as any).generateReferralCode();
 
     await user.save();
 

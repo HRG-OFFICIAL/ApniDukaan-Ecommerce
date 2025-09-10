@@ -9,7 +9,7 @@ import geoip from 'geoip-lite';
 import UAParser from 'ua-parser-js';
 import { createClient } from 'redis';
 
-import User from '../models/User';
+import User, { IUserDocument } from '../models/User';
 import Session from '../models/Session';
 import { Role } from '../models/Role';
 
@@ -55,7 +55,7 @@ export class AuthService implements IAuthService {
 
   private initializeEmailTransporter(): void {
     if (process.env.SMTP_HOST) {
-      this.emailTransporter = nodemailer.createTransporter({
+      this.emailTransporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: parseInt(process.env.SMTP_PORT || '587'),
         secure: process.env.SMTP_SECURE === 'true',
@@ -76,6 +76,7 @@ export class AuthService implements IAuthService {
       if (existingUser) {
         return {
           success: false,
+          message: 'User already exists with this email address',
           error: 'User already exists with this email address'
         };
       }
@@ -86,6 +87,7 @@ export class AuthService implements IAuthService {
         if (existingUsername) {
           return {
             success: false,
+            message: 'Username is already taken',
             error: 'Username is already taken'
           };
         }
@@ -96,6 +98,7 @@ export class AuthService implements IAuthService {
       if (!passwordValidation.isValid) {
         return {
           success: false,
+          message: `Password validation failed: ${passwordValidation.errors.join(', ')}`,
           error: `Password validation failed: ${passwordValidation.errors.join(', ')}`
         };
       }
@@ -178,16 +181,16 @@ export class AuthService implements IAuthService {
       });
 
       // Generate referral code
-      newUser.generateReferralCode();
+      (newUser as any).generateReferralCode();
 
       // Generate email verification token
-      const verificationToken = newUser.generateEmailVerificationToken();
+      const verificationToken = (newUser as any).generateEmailVerificationToken();
 
       // Save user
       await newUser.save();
 
       // Log registration activity
-      newUser.addActivity({
+      (newUser as any).addActivity({
         action: AccountAction.REGISTER,
         timestamp: new Date(),
         success: true,
@@ -235,6 +238,7 @@ export class AuthService implements IAuthService {
       logger.error('Registration failed:', error);
       return {
         success: false,
+        message: 'Registration failed. Please try again.',
         error: 'Registration failed. Please try again.'
       };
     }
@@ -247,9 +251,9 @@ export class AuthService implements IAuthService {
       // Find user by email or username
       let user;
       if (credentials.email) {
-        user = await User.findByEmail(credentials.email);
+        user = await User.findByEmail(credentials.email) as IUserDocument;
       } else if (credentials.username) {
-        user = await User.findByUsername(credentials.username);
+        user = await User.findByUsername(credentials.username) as IUserDocument;
       }
 
       if (!user) {
@@ -260,8 +264,8 @@ export class AuthService implements IAuthService {
       }
 
       // Check if account is locked
-      if (user.isLocked) {
-        await user.addActivity({
+      if ((user as any).isLocked) {
+        await (user as any).addActivity({
           action: AccountAction.LOGIN,
           ipAddress: req.ip,
           userAgent: req.get('User-Agent'),
@@ -279,7 +283,7 @@ export class AuthService implements IAuthService {
       const isPasswordValid = await user.comparePassword(credentials.password);
       if (!isPasswordValid) {
         await user.incrementLoginAttempts();
-        await user.addActivity({
+        await (user as any).addActivity({
           action: AccountAction.LOGIN,
           ipAddress: req.ip,
           userAgent: req.get('User-Agent'),
@@ -346,7 +350,7 @@ export class AuthService implements IAuthService {
       if (user.security.mfaSettings.isEnabled && credentials.mfaToken) {
         const mfaValid = await this.verifyMfaToken(user, credentials.mfaToken);
         if (!mfaValid) {
-          await user.addActivity({
+          await (user as any).addActivity({
             action: AccountAction.LOGIN,
             ipAddress: req.ip,
             userAgent: req.get('User-Agent'),
@@ -464,13 +468,13 @@ export class AuthService implements IAuthService {
       }
 
       // Revoke session
-      await session.revoke();
+      await (session as any).revoke();
 
       // Update user status
       const user = await User.findById(session.userId);
       if (user) {
         user.isOnline = false;
-        await user.addActivity({
+        await (user as any).addActivity({
           action: AccountAction.LOGOUT,
           timestamp: new Date(),
           success: true
@@ -505,7 +509,7 @@ export class AuthService implements IAuthService {
   async refreshToken(refreshToken: string): Promise<{ success: boolean; tokens?: any; error?: string }> {
     try {
       const session = await Session.findByRefreshToken(refreshToken);
-      if (!session || !session.isValid()) {
+      if (!session || !(session as any).isValid()) {
         return {
           success: false,
           error: 'Invalid or expired refresh token'
@@ -521,13 +525,13 @@ export class AuthService implements IAuthService {
       }
 
       // Generate new tokens
-      const newAccessToken = user.generateAccessToken(session.sessionId);
-      const newRefreshToken = user.generateRefreshToken();
+      const newAccessToken = (user as any).generateAccessToken(session.sessionId);
+      const newRefreshToken = (user as any).generateRefreshToken();
 
       // Update session
       session.accessToken = newAccessToken;
       session.refreshToken = newRefreshToken;
-      await session.updateLastAccessed();
+      await (session as any).updateLastAccessed();
       await session.save();
 
       // Update cache
@@ -558,7 +562,7 @@ export class AuthService implements IAuthService {
 
   async verifyEmail(token: string): Promise<{ success: boolean; message: string }> {
     try {
-      const user = await User.findByEmailVerificationToken(token);
+      const user = await User.findByEmailVerificationToken(token) as IUserDocument;
       if (!user) {
         return {
           success: false,
@@ -574,7 +578,7 @@ export class AuthService implements IAuthService {
       user.status = UserStatus.ACTIVE;
 
       // Log verification activity
-      user.addActivity({
+      (user as any).addActivity({
         action: AccountAction.EMAIL_VERIFICATION,
         timestamp: new Date(),
         success: true
@@ -605,7 +609,7 @@ export class AuthService implements IAuthService {
 
   async resendVerification(email: string): Promise<{ success: boolean; message: string }> {
     try {
-      const user = await User.findByEmail(email);
+      const user = await User.findByEmail(email) as IUserDocument;
       if (!user) {
         return {
           success: false,
@@ -657,7 +661,7 @@ export class AuthService implements IAuthService {
       }
 
       // Generate reset token
-      const resetToken = user.generatePasswordResetToken();
+      const resetToken = (user as any).generatePasswordResetToken();
       await user.save();
 
       // Send reset email
@@ -666,7 +670,7 @@ export class AuthService implements IAuthService {
       }
 
       // Log password reset request
-      user.addActivity({
+      (user as any).addActivity({
         action: AccountAction.PASSWORD_RESET,
         timestamp: new Date(),
         success: true,
@@ -699,7 +703,7 @@ export class AuthService implements IAuthService {
         };
       }
 
-      const user = await User.findByPasswordResetToken(data.resetToken);
+      const user = await User.findByPasswordResetToken(data.resetToken) as IUserDocument;
       if (!user) {
         return {
           success: false,
@@ -726,7 +730,7 @@ export class AuthService implements IAuthService {
       await Session.revokeAllByUserId(user._id.toString());
 
       // Log password change
-      user.addActivity({
+      (user as any).addActivity({
         action: AccountAction.PASSWORD_CHANGE,
         timestamp: new Date(),
         success: true,
@@ -763,7 +767,7 @@ export class AuthService implements IAuthService {
 
       // Verify current password
       if (data.currentPassword) {
-        const isCurrentPasswordValid = await user.comparePassword(data.currentPassword);
+        const isCurrentPasswordValid = await (user as any).comparePassword(data.currentPassword);
         if (!isCurrentPasswordValid) {
           return {
             success: false,
@@ -786,7 +790,7 @@ export class AuthService implements IAuthService {
       user.security.passwordChangedAt = new Date();
 
       // Log password change
-      user.addActivity({
+      (user as any).addActivity({
         action: AccountAction.PASSWORD_CHANGE,
         timestamp: new Date(),
         success: true,
@@ -831,7 +835,7 @@ export class AuthService implements IAuthService {
       }
 
       const session = await Session.findBySessionId(sessionId);
-      if (!session || !session.isValid()) {
+      if (!session || !(session as any).isValid()) {
         return { valid: false };
       }
 
@@ -841,7 +845,7 @@ export class AuthService implements IAuthService {
       }
 
       // Update last accessed
-      await session.updateLastAccessed();
+      await (session as any).updateLastAccessed();
 
       // Cache the session
       if (this.redisClient) {
@@ -962,7 +966,7 @@ export class AuthService implements IAuthService {
       user.profile.preferences.twoFactorAuth = user.security.mfaSettings;
 
       // Log MFA enablement
-      user.addActivity({
+      (user as any).addActivity({
         action: AccountAction.MFA_ENABLE,
         timestamp: new Date(),
         success: true,
@@ -1021,7 +1025,7 @@ export class AuthService implements IAuthService {
       user.profile.preferences.twoFactorAuth = user.security.mfaSettings;
 
       // Log MFA disablement
-      user.addActivity({
+      (user as any).addActivity({
         action: AccountAction.MFA_DISABLE,
         timestamp: new Date(),
         success: true
@@ -1084,7 +1088,7 @@ export class AuthService implements IAuthService {
         const isBackupCodeValid = backupCodes.includes(backupCode.toUpperCase());
         if (isBackupCodeValid) {
           // Remove used backup code
-          user.security.mfaSettings.backupCodes = backupCodes.filter(code => code !== backupCode.toUpperCase());
+          user.security.mfaSettings.backupCodes = backupCodes.filter((code: string) => code !== backupCode.toUpperCase());
           await user.save();
           return true;
         }
@@ -1109,7 +1113,7 @@ export class AuthService implements IAuthService {
   }
 
   private parseDeviceInfo(userAgent: string): any {
-    const parser = new UAParser(userAgent);
+    const parser = new (UAParser as any)(userAgent);
     const result = parser.getResult();
 
     let deviceType = 'unknown';
@@ -1150,7 +1154,7 @@ export class AuthService implements IAuthService {
         referrer.loyaltyPoints = (referrer.loyaltyPoints || 0) + 100;
         
         // Log referral activity
-        referrer.addActivity({
+        (referrer as any).addActivity({
           action: AccountAction.REGISTER,
           timestamp: new Date(),
           success: true,

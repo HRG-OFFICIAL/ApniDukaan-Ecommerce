@@ -1,4 +1,4 @@
-import { Schema, model, Document, Types } from 'mongoose';
+import { Schema, model, Document, Types, Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
@@ -493,22 +493,22 @@ const UserSchema = new Schema<IUser>({
   toJSON: {
     transform: function(doc, ret) {
       ret.id = ret._id;
-      delete ret._id;
-      delete ret.__v;
-      delete ret.security.passwordHash;
-      delete ret.security.passwordSalt;
-      delete ret.security.passwordResetToken;
-      delete ret.security.emailVerificationToken;
-      delete ret.security.mfaSettings.secret;
-      delete ret.security.mfaSettings.backupCodes;
+      delete (ret as any)._id;
+      delete (ret as any).__v;
+      delete (ret as any).security.passwordHash;
+      delete (ret as any).security.passwordSalt;
+      delete (ret as any).security.passwordResetToken;
+      delete (ret as any).security.emailVerificationToken;
+      delete (ret as any).security.mfaSettings.secret;
+      delete (ret as any).security.mfaSettings.backupCodes;
       return ret;
     }
   },
   toObject: {
     transform: function(doc, ret) {
       ret.id = ret._id;
-      delete ret._id;
-      delete ret.__v;
+      delete (ret as any)._id;
+      delete (ret as any).__v;
       return ret;
     }
   }
@@ -675,7 +675,7 @@ UserSchema.methods.addRole = function(role: string): void {
 };
 
 UserSchema.methods.removeRole = function(role: string): void {
-  this.roles = this.roles.filter(r => r !== role);
+  this.roles = this.roles.filter((r: string) => r !== role);
 };
 
 UserSchema.methods.generateReferralCode = function(): string {
@@ -687,12 +687,12 @@ UserSchema.methods.generateReferralCode = function(): string {
 };
 
 UserSchema.methods.getSocialAccount = function(provider: AuthProvider): ISocialAccount | undefined {
-  return this.authProviders.find(account => account.provider === provider);
+  return this.authProviders.find((account: ISocialAccount) => account.provider === provider);
 };
 
 UserSchema.methods.addSocialAccount = function(socialAccount: ISocialAccount): void {
   const existingIndex = this.authProviders.findIndex(
-    account => account.provider === socialAccount.provider
+    (account: ISocialAccount) => account.provider === socialAccount.provider
   );
   
   if (existingIndex >= 0) {
@@ -703,7 +703,7 @@ UserSchema.methods.addSocialAccount = function(socialAccount: ISocialAccount): v
 };
 
 UserSchema.methods.removeSocialAccount = function(provider: AuthProvider): void {
-  this.authProviders = this.authProviders.filter(account => account.provider !== provider);
+  this.authProviders = this.authProviders.filter((account: ISocialAccount) => account.provider !== provider);
 };
 
 // ==================== STATIC METHODS ====================
@@ -770,7 +770,7 @@ UserSchema.pre('save', async function(next) {
 // Generate referral code if not exists
 UserSchema.pre('save', function(next) {
   if (this.isNew && !this.referralCode) {
-    this.generateReferralCode();
+    (this as any).generateReferralCode();
   }
   next();
 });
@@ -807,4 +807,35 @@ UserSchema.pre(['updateOne', 'findOneAndUpdate'], function(next) {
   next();
 });
 
-export default model<IUser>('User', UserSchema);
+// Define the User model interface with methods
+interface IUserModel extends Model<IUser> {
+  findByEmail(email: string): Promise<IUser | null>;
+  findByUsername(username: string): Promise<IUser | null>;
+  findByPasswordResetToken(token: string): Promise<IUser | null>;
+  findByEmailVerificationToken(token: string): Promise<IUser | null>;
+  findBySocialProvider(provider: AuthProvider, providerId: string): Promise<IUser | null>;
+  findActiveUsers(limit?: number): Promise<IUser[]>;
+}
+
+// Define the User document interface with methods
+export interface IUserDocument extends IUser {
+  comparePassword(candidatePassword: string): Promise<boolean>;
+  generatePasswordResetToken(): string;
+  generateEmailVerificationToken(): string;
+  generateAccessToken(sessionId: string): string;
+  generateRefreshToken(): string;
+  incrementLoginAttempts(): Promise<IUser>;
+  resetLoginAttempts(): Promise<IUser>;
+  updateLastLogin(ipAddress: string, userAgent: string): Promise<IUser>;
+  addActivity(activity: Partial<IUserActivity>): void;
+  hasRole(role: string): boolean;
+  hasAnyRole(roles: string[]): boolean;
+  addRole(role: string): void;
+  removeRole(role: string): void;
+  generateReferralCode(): string;
+  getSocialAccount(provider: AuthProvider): ISocialAccount | undefined;
+  addSocialAccount(socialAccount: ISocialAccount): void;
+  removeSocialAccount(provider: AuthProvider): void;
+}
+
+export default model<IUser, IUserModel>('User', UserSchema);

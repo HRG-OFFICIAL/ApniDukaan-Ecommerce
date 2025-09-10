@@ -16,7 +16,7 @@ jest.mock('redis', () => ({
 }));
 
 // Mock shared logger
-jest.mock('@shopsphere/shared', () => ({
+jest.mock('@apnidukaan/shared', () => ({
   logger: {
     info: jest.fn(),
     error: jest.fn(),
