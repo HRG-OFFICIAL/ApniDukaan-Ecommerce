@@ -7,6 +7,7 @@
     "start": "node dist/app.js",
     "dev": "nodemon src/app.ts",
     "build": "tsc",
+    "test": "echo \"No tests specified for simple-api-gateway\" && exit 0",
     "type-check": "tsc --noEmit",
     "lint": "eslint src/**/*.ts",
     "clean": "rimraf dist"

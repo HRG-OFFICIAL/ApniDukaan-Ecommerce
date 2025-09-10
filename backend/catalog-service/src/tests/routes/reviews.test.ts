@@ -3,8 +3,8 @@ import express from 'express';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import reviewsRouter from '../../routes/reviews';
-import { ReviewModel } from '../../models/Review';
-import { ProductModel } from '../../models/Product';
+import { Review } from '../../models/Review';
+import { Product } from '../../models/Product';
 // Imports are mocked below
 
 // Mock authentication middleware
@@ -17,7 +17,7 @@ jest.mock('@apnidukaan/shared', () => ({
     };
     next();
   }),
-  authorize: jest.fn((options) => (req, res, next) => {
+  authorize: jest.fn((options: any) => (req: any, res: any, next: any) => {
     if (options.roles && options.roles.includes(req.user?.role)) {
       next();
     } else {
@@ -49,7 +49,7 @@ describe('Reviews Routes', () => {
 
   beforeEach(async () => {
     // Create test product
-    testProduct = await ProductModel.create({
+    testProduct = await Product.create({
       name: 'Test Product',
       slug: 'test-product',
       description: 'Test product description',
@@ -57,28 +57,21 @@ describe('Reviews Routes', () => {
       price: 99.99,
       currency: 'USD',
       images: ['test-image.jpg'],
-      category: new mongoose.Types.ObjectId(),
+      category: {
+        id: new mongoose.Types.ObjectId().toString(),
+        name: 'Test Category',
+        slug: 'test-category'
+      },
+      tags: ['test', 'product'],
       inventory: {
-        stock: 100,
+        quantity: 100,
         lowStockThreshold: 10,
-        inStock: true,
-        trackInventory: true
+        trackQuantity: true,
+        allowBackorder: false,
+        sku: 'TEST001'
       },
-      shipping: {
-        weight: 1.0,
-        dimensions: {
-          length: 10,
-          width: 10,
-          height: 10
-        },
-        freeShipping: false
-      },
-      seo: {
-        keywords: []
-      },
-      status: 'active',
-      featured: false,
-      visibility: 'public',
+      hasVariants: false,
+      reviews: [],
       rating: {
         average: 0,
         count: 0,
@@ -86,15 +79,28 @@ describe('Reviews Routes', () => {
       },
       sales: {
         totalSold: 0,
-        totalRevenue: 0
+        revenue: 0
       },
-      isOnSale: false
+      isOnSale: false,
+      featured: false,
+      status: 'published',
+      visibility: 'public',
+      isDigital: false,
+      isSubscription: false,
+      isBundle: false,
+      analytics: {
+        views: 0,
+        clicks: 0,
+        addToCart: 0,
+        wishlist: 0,
+        share: 0
+      }
     });
 
     // Create test review
-    testReview = await ReviewModel.create({
+    testReview = await Review.create({
       product: testProduct._id,
-      user: new mongoose.Types.ObjectId('user123'),
+      user: new mongoose.Types.ObjectId(),
       userEmail: 'test@example.com',
       rating: 5,
       title: 'Great product!',
@@ -104,8 +110,8 @@ describe('Reviews Routes', () => {
   });
 
   afterEach(async () => {
-    await ReviewModel.deleteMany({});
-    await ProductModel.deleteMany({});
+    await Review.deleteMany({});
+    await Product.deleteMany({});
   });
 
   afterAll(async () => {
@@ -380,7 +386,7 @@ describe('Reviews Routes', () => {
     });
 
     it('should return empty summary for product with no reviews', async () => {
-      const newProduct = await ProductModel.create({
+      const newProduct = await Product.create({
         name: 'Product Without Reviews',
         slug: 'no-reviews',
         description: 'Test product',
@@ -388,29 +394,44 @@ describe('Reviews Routes', () => {
         price: 49.99,
         currency: 'USD',
         images: ['test.jpg'],
-        category: new mongoose.Types.ObjectId(),
+        category: {
+          id: new mongoose.Types.ObjectId().toString(),
+          name: 'Test Category 2',
+          slug: 'test-category-2'
+        },
+        tags: ['test', 'no-reviews'],
         inventory: {
-          stock: 50,
+          quantity: 50,
           lowStockThreshold: 5,
-          inStock: true,
-          trackInventory: true
+          trackQuantity: true,
+          allowBackorder: false,
+          sku: 'TEST002'
         },
-        shipping: {
-          weight: 0.5,
-          dimensions: { length: 5, width: 5, height: 5 },
-          freeShipping: true
-        },
-        seo: { keywords: [] },
-        status: 'active',
-        featured: false,
-        visibility: 'public',
+        hasVariants: false,
+        reviews: [],
         rating: {
           average: 0,
           count: 0,
           distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
         },
-        sales: { totalSold: 0, totalRevenue: 0 },
-        isOnSale: false
+        sales: {
+          totalSold: 0,
+          revenue: 0
+        },
+        isOnSale: false,
+        featured: false,
+        status: 'published',
+        visibility: 'public',
+        isDigital: false,
+        isSubscription: false,
+        isBundle: false,
+        analytics: {
+          views: 0,
+          clicks: 0,
+          addToCart: 0,
+          wishlist: 0,
+          share: 0
+        }
       });
 
       const response = await request(app)

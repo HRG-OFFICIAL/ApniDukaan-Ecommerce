@@ -7,7 +7,7 @@
     "start": "node dist/app.js",
     "dev": "nodemon src/app.ts",
     "build": "tsc",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "lint": "eslint src/**/*.ts --fix",
     "type-check": "tsc --noEmit",
     "seed": "ts-node src/scripts/seed.ts",
