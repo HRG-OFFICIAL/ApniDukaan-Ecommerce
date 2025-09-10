@@ -105,7 +105,7 @@ router.post('/',
     body('shippingAddress.state').trim().isLength({ min: 1 }).withMessage('State is required'),
     body('shippingAddress.postalCode').trim().isLength({ min: 1 }).withMessage('Postal code is required'),
     body('shippingAddress.country').trim().isLength({ min: 1 }).withMessage('Country is required'),
-    body('billingAddress.firstName').trim().isLength({ min: 1 }).withMessage('Billing first name is required'),
+    body('billingAddress.firstName').optional().trim().isLength({ min: 1 }).withMessage('Billing first name is required'),
     body('shippingMethod').isIn(Object.values(ShippingMethod)).withMessage('Valid shipping method is required'),
     body('paymentMethod').isIn(Object.values(PaymentMethod)).withMessage('Valid payment method is required')
   ],
@@ -1117,3 +1117,4 @@ router.use((error: any, req: express.Request, res: express.Response, _next: expr
 });
 
 export default router;
+export { inventoryService };

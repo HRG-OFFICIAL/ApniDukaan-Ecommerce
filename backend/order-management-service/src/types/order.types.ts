@@ -387,10 +387,13 @@ export interface IOrderListResponse {
   success: boolean;
   data?: {
     orders: IOrder[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
+    pagination: {
+      currentPage: number;
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
   };
   error?: string;
   code?: string;

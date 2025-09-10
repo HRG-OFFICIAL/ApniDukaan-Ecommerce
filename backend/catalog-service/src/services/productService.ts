@@ -1,5 +1,4 @@
 import { Product, IProduct } from '../models/Product';
-import { Category } from '../models/Category';
 import { Review } from '../models/Review';
 import { logger } from '@apnidukaan/shared';
 

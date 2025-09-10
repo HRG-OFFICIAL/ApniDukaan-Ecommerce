@@ -17,7 +17,7 @@ import CartService from './services/CartService';
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT || 4003;
+const PORT = process.env.PORT || 4005;
 
   try {
     // Connect to MongoDB
@@ -197,7 +197,7 @@ async function startServer() {
     });
 
     // Global error handler
-    app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    app.use((error: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
       logger.error('Unhandled error in Cart Service', {
         error: error.message,
         stack: error.stack,

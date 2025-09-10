@@ -6,7 +6,7 @@
 
   async function startServer() {
     const app = express();
-    const PORT = process.env.PORT || 4005;
+const PORT = process.env.PORT || 4007;
 
     try {
       // Connect to MongoDB Atlas

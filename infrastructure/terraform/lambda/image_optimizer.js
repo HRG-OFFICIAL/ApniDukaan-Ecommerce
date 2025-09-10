@@ -1,9 +1,11 @@
-const AWS = require('aws-sdk');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { CloudFrontClient, CreateInvalidationCommand } = require('@aws-sdk/client-cloudfront');
+const { Upload } = require('@aws-sdk/lib-storage');
 const sharp = require('sharp');
 const { v4: uuidv4 } = require('uuid');
 
-const s3 = new AWS.S3();
-const cloudfront = new AWS.CloudFront();
+const s3Client = new S3Client({ region: process.env.AWS_REGION || 'us-east-1' });
+const cloudfrontClient = new CloudFrontClient({ region: process.env.AWS_REGION || 'us-east-1' });
 
 const BUCKET_NAME = process.env.S3_BUCKET;
 const CLOUDFRONT_DOMAIN = process.env.CLOUDFRONT_DOMAIN;
@@ -90,25 +92,30 @@ exports.handler = async (event) => {
         // Generate S3 key
         const s3Key = `images/${productId || 'temp'}/${fileId}_${sizeName}.jpg`;
         
-        // Upload to S3
-        const uploadPromise = s3.upload({
-          Bucket: BUCKET_NAME,
-          Key: s3Key,
-          Body: processedBuffer,
-          ContentType: 'image/jpeg',
-          CacheControl: 'max-age=31536000', // 1 year
-          Metadata: {
-            'original-filename': fileName,
-            'processed-size': sizeName,
-            'product-id': productId || 'temp'
+        // Upload to S3 using AWS SDK v3
+        const upload = new Upload({
+          client: s3Client,
+          params: {
+            Bucket: BUCKET_NAME,
+            Key: s3Key,
+            Body: processedBuffer,
+            ContentType: 'image/jpeg',
+            CacheControl: 'max-age=31536000', // 1 year
+            Metadata: {
+              'original-filename': fileName,
+              'processed-size': sizeName,
+              'product-id': productId || 'temp'
+            }
           }
-        }).promise();
+        });
+        
+        const uploadPromise = upload.done();
 
         uploadPromises.push(uploadPromise.then(result => ({
           size: sizeName,
           key: s3Key,
           url: `https://${CLOUDFRONT_DOMAIN}/${s3Key}`,
-          s3Url: result.Location
+          s3Url: `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${s3Key}`
         })));
 
       } catch (error) {
@@ -141,7 +148,7 @@ exports.handler = async (event) => {
     try {
       const invalidationPaths = uploadResults.map(result => `/${result.key}`);
       
-      await cloudfront.createInvalidation({
+      const invalidationCommand = new CreateInvalidationCommand({
         DistributionId: process.env.CLOUDFRONT_DISTRIBUTION_ID,
         InvalidationBatch: {
           CallerReference: `image-upload-${fileId}-${Date.now()}`,
@@ -150,7 +157,9 @@ exports.handler = async (event) => {
             Items: invalidationPaths
           }
         }
-      }).promise();
+      });
+      
+      await cloudfrontClient.send(invalidationCommand);
     } catch (error) {
       console.warn('Failed to invalidate CloudFront cache:', error);
       // Don't fail the request if cache invalidation fails

@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema, Types } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
 // Product variants interface
 export interface IProductVariant {
@@ -609,8 +609,7 @@ const ProductSchema = new Schema<IProduct>({
 
 // Indexes for better query performance
 ProductSchema.index({ name: 'text', description: 'text', tags: 'text', 'shortDescription': 'text' });
-ProductSchema.index({ slug: 1 }, { unique: true });
-ProductSchema.index({ sku: 1 }, { unique: true });
+// Note: slug and sku indexes are already created via schema unique: true constraint
 ProductSchema.index({ 'category.id': 1 });
 ProductSchema.index({ 'category.slug': 1 });
 ProductSchema.index({ 'subcategory.id': 1 });

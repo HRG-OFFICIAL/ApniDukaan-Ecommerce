@@ -80,11 +80,19 @@ class InventoryService {
   constructor() {
     // Initialize Redis client for inventory caching and reservations
     this.redisClient = createClient({
-      url: process.env.REDIS_URI || 'redis://localhost:6379'
+      url: process.env.REDIS_URL || process.env.REDIS_URI || 'redis://localhost:6379'
     });
 
     this.redisClient.on('error', (err) => {
       console.error('Redis Client Error:', err);
+    });
+
+    this.redisClient.on('connect', () => {
+      console.log('InventoryService Redis client connected');
+    });
+
+    this.redisClient.on('ready', () => {
+      console.log('InventoryService Redis client ready');
     });
 
     this.config = {
@@ -97,6 +105,8 @@ class InventoryService {
       catalogServiceUrl: process.env.CATALOG_SERVICE_URL || 'http://localhost:3001'
     };
 
+    // Auto-connect to Redis
+    this.connect().catch(console.error);
     this.startReservationCleanup();
   }
 
@@ -109,6 +119,7 @@ class InventoryService {
   async disconnect(): Promise<void> {
     if (this.reservationCleanupInterval) {
       clearInterval(this.reservationCleanupInterval);
+      this.reservationCleanupInterval = null;
     }
     if (this.redisClient.isReady) {
       await this.redisClient.disconnect();
@@ -122,6 +133,13 @@ class InventoryService {
    */
   async checkStock(productId: string, variantId?: string, location?: string): Promise<IStockCheck> {
     try {
+      // Check Redis connection before attempting operations
+      if (!this.redisClient.isOpen) {
+        console.log('Redis client not connected, fetching inventory from catalog service');
+        const inventory = await this.fetchInventoryFromCatalog(productId, variantId, location);
+        return this.buildStockCheckResponse(inventory, productId, variantId);
+      }
+
       const key = this.getInventoryKey(productId, variantId, location);
       
       // Try to get from cache first
@@ -146,22 +164,13 @@ class InventoryService {
         // Fetch from catalog service if not in cache
         inventory = await this.fetchInventoryFromCatalog(productId, variantId, location);
         
-        // Cache the result
-        await this.cacheInventory(inventory);
+        // Cache the result if Redis is available
+        if (this.redisClient.isOpen) {
+          await this.cacheInventory(inventory);
+        }
       }
 
-      const lowStockThreshold = Math.max(1, Math.floor(inventory.maxStock * this.config.lowStockThreshold / 100));
-
-      return {
-        productId,
-        ...(variantId && { variantId }),
-        available: inventory.quantityAvailable,
-        reserved: inventory.quantityReserved,
-        onOrder: inventory.quantityOnOrder,
-        inStock: inventory.quantityAvailable > 0,
-        lowStock: inventory.quantityAvailable <= lowStockThreshold,
-        canBackorder: this.config.allowBackorders && inventory.quantityOnOrder > 0
-      };
+      return this.buildStockCheckResponse(inventory, productId, variantId);
 
     } catch (error) {
       console.error('Error checking stock:', error);
@@ -752,6 +761,24 @@ class InventoryService {
   }
 
   /**
+   * Build stock check response from inventory data
+   */
+  private buildStockCheckResponse(inventory: IInventoryItem, productId: string, variantId?: string): IStockCheck {
+    const lowStockThreshold = Math.max(1, Math.floor(inventory.maxStock * this.config.lowStockThreshold / 100));
+
+    return {
+      productId,
+      ...(variantId && { variantId }),
+      available: inventory.quantityAvailable,
+      reserved: inventory.quantityReserved,
+      onOrder: inventory.quantityOnOrder,
+      inStock: inventory.quantityAvailable > 0,
+      lowStock: inventory.quantityAvailable <= lowStockThreshold,
+      canBackorder: this.config.allowBackorders && inventory.quantityOnOrder > 0
+    };
+  }
+
+  /**
    * Log inventory update
    */
   private async logInventoryUpdate(update: IInventoryUpdate): Promise<void> {
@@ -804,9 +831,21 @@ class InventoryService {
    */
   private async cleanupExpiredReservations(): Promise<void> {
     try {
+      // Check if Redis client is connected before attempting operations
+      if (!this.redisClient.isOpen) {
+        console.log('Redis client not connected, skipping reservation cleanup');
+        return;
+      }
+
       const reservationKeys = await this.redisClient.keys(`${this.config.redisKeyPrefix}reservation:*`);
       
       for (const key of reservationKeys) {
+        // Double-check connection before each operation
+        if (!this.redisClient.isOpen) {
+          console.log('Redis client disconnected during cleanup, stopping');
+          break;
+        }
+
         const ttl = await this.redisClient.ttl(key);
         
         // If key has expired or will expire soon (within 1 minute)
@@ -832,7 +871,12 @@ class InventoryService {
       }
 
     } catch (error) {
-      console.error('Error cleaning up expired reservations:', error);
+      // Handle specific Redis connection errors gracefully
+      if (error instanceof Error && error.message.includes('closed')) {
+        console.log('Redis client closed during reservation cleanup, will retry on next interval');
+      } else {
+        console.error('Error cleaning up expired reservations:', error);
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
-import mongoose, { Schema, Model } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import { ICart, ICartItem, ICartDiscount, ICartTotals, ICartModel } from '../types/cart.types';
 
 // Cart Item Schema

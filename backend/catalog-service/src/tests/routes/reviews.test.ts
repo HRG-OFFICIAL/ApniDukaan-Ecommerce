@@ -5,25 +5,25 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import reviewsRouter from '../../routes/reviews';
 import { ReviewModel } from '../../models/Review';
 import { ProductModel } from '../../models/Product';
-import { authenticate, authorize } from '@apnidukaan/shared';
+// Imports are mocked below
 
 // Mock authentication middleware
 jest.mock('@apnidukaan/shared', () => ({
-  authenticate: (req: any, res: any, next: any) => {
+  authenticate: jest.fn((req, res, next) => {
     req.user = {
       userId: 'user123',
       email: 'test@example.com',
       role: 'user'
     };
     next();
-  },
-  authorize: (options: { roles: string[] }) => (req: any, res: any, next: any) => {
-    if (options.roles.includes(req.user?.role)) {
+  }),
+  authorize: jest.fn((options) => (req, res, next) => {
+    if (options.roles && options.roles.includes(req.user?.role)) {
       next();
     } else {
       res.status(403).json({ success: false, error: 'Access denied' });
     }
-  },
+  }),
   logger: {
     info: jest.fn(),
     error: jest.fn(),
