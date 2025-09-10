@@ -1,4 +1,4 @@
-import mongoose, { Schema, Model } from 'mongoose';
+import mongoose, { Schema, Model, Types } from 'mongoose';
 import {
   IUserProfile,
   IAddress,
@@ -106,8 +106,7 @@ const AddressSchema = new Schema<IAddress>({
 const WishlistItemSchema = new Schema<IWishlistItem>({
   productId: {
     type: String,
-    required: [true, 'Product ID is required'],
-    index: true
+    required: [true, 'Product ID is required']
   },
   variantId: {
     type: String,
@@ -289,13 +288,20 @@ const UserProfileSchema = new Schema<IUserProfile>({
       required: [true, 'Email is required'],
       lowercase: true,
       trim: true,
-      index: true,
       match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
     },
     phone: {
       type: String,
       trim: true,
-      maxlength: [20, 'Phone number cannot exceed 20 characters']
+      maxlength: [20, 'Phone number cannot exceed 20 characters'],
+      validate: {
+        validator: function(phone: string) {
+          if (!phone) return true; // Optional field
+          const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+          return phoneRegex.test(phone);
+        },
+        message: 'Please enter a valid phone number'
+      }
     },
     dateOfBirth: {
       type: Date,
@@ -399,6 +405,14 @@ const UserProfileSchema = new Schema<IUserProfile>({
       default: false
     }
   },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  isVerified: {
+    type: Boolean,
+    default: true
+  },
   status: {
     type: String,
     enum: ['active', 'inactive', 'suspended', 'deleted'],
@@ -466,6 +480,11 @@ UserProfileSchema.virtual('defaultBillingAddress').get(function(this: IUserProfi
     (addr.type === 'billing' || addr.type === 'home'));
 });
 
+// Virtual for active wishlist items
+UserProfileSchema.virtual('activeWishlistItems').get(function(this: IUserProfile) {
+  return this.wishlist.filter(item => item.notifyOnRestock || item.notifyOnSale);
+});
+
 // Pre-save middleware
 UserProfileSchema.pre('save', function(this: IUserProfile) {
   // Ensure only one default address per type
@@ -503,38 +522,44 @@ UserProfileSchema.pre('save', function(this: IUserProfile) {
 });
 
 // Instance Methods
-UserProfileSchema.methods.addAddress = function(
+UserProfileSchema.methods.addAddress = async function(
   this: IUserProfile,
   addressData: Omit<IAddress, '_id' | 'createdAt' | 'updatedAt'>
 ) {
-  // If this is the first address or marked as default, set it as default
-  if (this.addresses.length === 0 || addressData.isDefault) {
-    // Remove default from other addresses of the same type
+  // If this is the first address, set it as default
+  if (this.addresses.length === 0) {
+    addressData.isDefault = true;
+  } else if (addressData.isDefault) {
+    // Remove default from all other addresses
     this.addresses.forEach(addr => {
-      if (addr.type === addressData.type) {
-        addr.isDefault = false;
-      }
+      addr.isDefault = false;
     });
   }
 
-  this.addresses.push(addressData as IAddress);
-  return this.save();
+  const newAddress = {
+    ...addressData,
+    _id: new Types.ObjectId().toString()
+  } as IAddress;
+  
+  this.addresses.push(newAddress);
+  await this.save();
+  return true;
 };
 
-UserProfileSchema.methods.updateAddress = function(
+UserProfileSchema.methods.updateAddress = async function(
   this: IUserProfile,
   addressId: string,
   updateData: Partial<IAddress>
 ) {
-  const address = this.addresses.id(addressId);
+  const address = this.addresses.find(addr => addr._id === addressId);
   if (!address) {
-    throw new Error('Address not found');
+    return false;
   }
 
   // If setting as default, remove default from other addresses of the same type
   if (updateData.isDefault) {
     this.addresses.forEach(addr => {
-      if (addr.type === (updateData.type || address.type) && addr._id?.toString() !== addressId) {
+      if (addr.type === (updateData.type || address.type) && addr._id !== addressId) {
         addr.isDefault = false;
       }
     });
@@ -542,23 +567,25 @@ UserProfileSchema.methods.updateAddress = function(
 
   Object.assign(address, updateData);
   address.updatedAt = new Date();
-  return this.save();
+  await this.save();
+  return true;
 };
 
-UserProfileSchema.methods.removeAddress = function(
+UserProfileSchema.methods.removeAddress = async function(
   this: IUserProfile,
   addressId: string
 ) {
-  const address = this.addresses.id(addressId);
+  const address = this.addresses.find(addr => addr._id === addressId);
   if (!address) {
-    throw new Error('Address not found');
+    return false;
   }
 
-  this.addresses.pull(addressId);
-  return this.save();
+  this.addresses = this.addresses.filter(addr => addr._id !== addressId);
+  await this.save();
+  return true;
 };
 
-UserProfileSchema.methods.addToWishlist = function(
+UserProfileSchema.methods.addToWishlist = async function(
   this: IUserProfile,
   wishlistData: Omit<IWishlistItem, '_id' | 'addedAt'>
 ) {
@@ -569,45 +596,50 @@ UserProfileSchema.methods.addToWishlist = function(
   );
 
   if (existingItem) {
-    throw new Error('Item already in wishlist');
+    return false;
   }
 
-  this.wishlist.push({
+  const newItem = {
     ...wishlistData,
+    _id: new Types.ObjectId().toString(),
     addedAt: new Date()
-  } as IWishlistItem);
+  } as IWishlistItem;
 
-  return this.save();
+  this.wishlist.push(newItem);
+  await this.save();
+  return true;
 };
 
-UserProfileSchema.methods.updateWishlistItem = function(
+UserProfileSchema.methods.updateWishlistItem = async function(
   this: IUserProfile,
   itemId: string,
   updateData: Partial<IWishlistItem>
 ) {
-  const item = this.wishlist.id(itemId);
+  const item = this.wishlist.find(item => item._id === itemId);
   if (!item) {
-    throw new Error('Wishlist item not found');
+    return false;
   }
 
   Object.assign(item, updateData);
-  return this.save();
+  await this.save();
+  return true;
 };
 
-UserProfileSchema.methods.removeFromWishlist = function(
+UserProfileSchema.methods.removeFromWishlist = async function(
   this: IUserProfile,
   itemId: string
 ) {
-  const item = this.wishlist.id(itemId);
+  const item = this.wishlist.find(item => item._id === itemId);
   if (!item) {
-    throw new Error('Wishlist item not found');
+    return false;
   }
 
-  this.wishlist.pull(itemId);
-  return this.save();
+  this.wishlist = this.wishlist.filter(item => item._id !== itemId);
+  await this.save();
+  return true;
 };
 
-UserProfileSchema.methods.addLoyaltyPoints = function(
+UserProfileSchema.methods.addLoyaltyPoints = async function(
   this: IUserProfile,
   points: number
 ) {
@@ -620,7 +652,60 @@ UserProfileSchema.methods.addLoyaltyPoints = function(
   }
 
   this.loyaltyProgram.points += points;
-  return this.save();
+  await this.save();
+  return true;
+};
+
+UserProfileSchema.methods.setDefaultAddress = async function(
+  this: IUserProfile,
+  addressId: string
+): Promise<boolean> {
+  const address = this.addresses.find(addr => addr._id === addressId);
+  if (!address) {
+    return false;
+  }
+
+  // Remove default from all addresses of the same type
+  this.addresses.forEach(addr => {
+    if (addr.type === address.type) {
+      addr.isDefault = false;
+    }
+  });
+
+  // Set the specified address as default
+  address.isDefault = true;
+  await this.save();
+  return true;
+};
+
+UserProfileSchema.methods.calculateProfileCompletion = function(this: IUserProfile): number {
+  let completion = 0;
+  const fields = [
+    'personalInfo.firstName',
+    'personalInfo.lastName', 
+    'personalInfo.email',
+    'personalInfo.phone',
+    'personalInfo.dateOfBirth',
+    'personalInfo.gender'
+  ];
+
+  fields.forEach(field => {
+    const value = field.split('.').reduce((obj: any, key: string) => obj?.[key], this);
+    if (value) completion += 1;
+  });
+
+  return Math.round((completion / fields.length) * 100);
+};
+
+UserProfileSchema.methods.getStatistics = function(this: IUserProfile) {
+  return {
+    totalAddresses: this.addresses.length,
+    wishlistItems: this.wishlist.length,
+    profileCompletion: this.calculateProfileCompletion(),
+    accountAge: this.createdAt ? Math.floor((Date.now() - this.createdAt.getTime()) / (1000 * 60 * 60 * 24)) : 0,
+    loyaltyPoints: this.loyaltyProgram?.points || 0,
+    loyaltyTier: this.loyaltyProgram?.tier || 'bronze'
+  };
 };
 
 // Static Methods
@@ -642,16 +727,27 @@ UserProfileSchema.statics.searchProfiles = function(
 ) {
   const query: any = { status: { $ne: 'deleted' } };
 
-  if (filters.status) query.status = filters.status;
-  if (filters.loyaltyTier) query['loyaltyProgram.tier'] = filters.loyaltyTier;
-  if (filters.country) query['addresses.country'] = filters.country;
-  if (filters.state) query['addresses.state'] = filters.state;
-  if (filters.city) query['addresses.city'] = filters.city;
+  // Handle text search
+  if (typeof filters === 'string') {
+    query.$or = [
+      { 'personalInfo.firstName': { $regex: filters, $options: 'i' } },
+      { 'personalInfo.lastName': { $regex: filters, $options: 'i' } },
+      { 'personalInfo.email': { $regex: filters, $options: 'i' } }
+    ];
+  } else {
+    if (filters.status) query.status = filters.status;
+    if (filters.loyaltyTier) query['loyaltyProgram.tier'] = filters.loyaltyTier;
+    if (filters.country) query['addresses.country'] = filters.country;
+    if (filters.state) query['addresses.state'] = filters.state;
+    if (filters.city) query['addresses.city'] = filters.city;
+  }
 
-  if (filters.registrationDateFrom || filters.registrationDateTo) {
-    query.createdAt = {};
-    if (filters.registrationDateFrom) query.createdAt.$gte = filters.registrationDateFrom;
-    if (filters.registrationDateTo) query.createdAt.$lte = filters.registrationDateTo;
+  if (typeof filters === 'object' && filters) {
+    if (filters.registrationDateFrom || filters.registrationDateTo) {
+      query.createdAt = {};
+      if (filters.registrationDateFrom) query.createdAt.$gte = filters.registrationDateFrom;
+      if (filters.registrationDateTo) query.createdAt.$lte = filters.registrationDateTo;
+    }
   }
 
   const skip = (page - 1) * limit;
@@ -681,6 +777,8 @@ UserProfileSchema.statics.getLoyaltyLeaderboard = function(limit: number = 10) {
   .limit(limit)
   .exec();
 };
+
+// Static methods are already defined above
 
 // Create and export the model
 const UserProfile: Model<IUserProfile> = mongoose.model<IUserProfile>('UserProfile', UserProfileSchema);

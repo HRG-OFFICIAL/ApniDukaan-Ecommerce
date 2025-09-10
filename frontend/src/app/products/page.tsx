@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { 
   Filter, 
-  SlidersHorizontal,
   Search 
 } from 'lucide-react'
 import ProductCard from '../../components/product/ProductCard'

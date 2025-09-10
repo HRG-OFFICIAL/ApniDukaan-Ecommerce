@@ -7,7 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { createClient } from 'redis';
 
-import User from '../models/User';
+import User, { IUserDocument } from '../models/User';
 import {
   IUserService,
   IUser,
@@ -81,7 +81,7 @@ export class UserService implements IUserService {
         }
       }
 
-      const user = await User.findById(userId);
+      const user = await User.findById(userId) as IUserDocument;
       if (!user) {
         return {
           success: false,
@@ -98,7 +98,7 @@ export class UserService implements IUserService {
 
       return {
         success: true,
-        user: user.toJSON()
+        user: user as IUser
       };
 
     } catch (error: any) {
@@ -112,7 +112,7 @@ export class UserService implements IUserService {
 
   async getUserByEmail(email: string): Promise<{ success: boolean; user?: IUser; error?: string }> {
     try {
-      const user = await User.findByEmail(email);
+      const user = await User.findByEmail(email) as IUserDocument;
       if (!user) {
         return {
           success: false,
@@ -122,7 +122,7 @@ export class UserService implements IUserService {
 
       return {
         success: true,
-        user: user.toJSON()
+        user: user as IUser
       };
 
     } catch (error: any) {
@@ -138,7 +138,7 @@ export class UserService implements IUserService {
 
   async updateProfile(userId: string, profileData: IProfileUpdateRequest): Promise<{ success: boolean; user?: IUser; error?: string }> {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId) as IUserDocument;
       if (!user) {
         return {
           success: false,
@@ -222,7 +222,7 @@ export class UserService implements IUserService {
 
       return {
         success: true,
-        user: user.toJSON()
+        user: user as IUser
       };
 
     } catch (error: any) {
@@ -238,7 +238,7 @@ export class UserService implements IUserService {
 
   async uploadAvatar(userId: string, file: any): Promise<{ success: boolean; avatar?: any; error?: string }> {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId) as IUserDocument;
       if (!user) {
         return {
           success: false,
@@ -330,7 +330,7 @@ export class UserService implements IUserService {
 
   async addAddress(userId: string, addressData: IAddressRequest): Promise<{ success: boolean; address?: IAddress; error?: string }> {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId) as IUserDocument;
       if (!user) {
         return {
           success: false,
@@ -358,6 +358,7 @@ export class UserService implements IUserService {
 
       // Create new address
       const newAddress: IAddress = {
+        _id: new Types.ObjectId().toString(),
         type: addressData.type,
         firstName: addressData.firstName.trim(),
         lastName: addressData.lastName.trim(),
@@ -401,7 +402,7 @@ export class UserService implements IUserService {
 
       return {
         success: true,
-        address: addedAddress.toJSON()
+        address: addedAddress
       };
 
     } catch (error: any) {
@@ -415,7 +416,7 @@ export class UserService implements IUserService {
 
   async updateAddress(userId: string, addressId: string, addressData: Partial<IAddressRequest>): Promise<{ success: boolean; error?: string }> {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId) as IUserDocument;
       if (!user) {
         return {
           success: false,
@@ -509,7 +510,7 @@ export class UserService implements IUserService {
 
   async deleteAddress(userId: string, addressId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId) as IUserDocument;
       if (!user) {
         return {
           success: false,
@@ -569,7 +570,7 @@ export class UserService implements IUserService {
 
   async updatePreferences(userId: string, preferences: Partial<IUserPreferences>): Promise<{ success: boolean; error?: string }> {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId) as IUserDocument;
       if (!user) {
         return {
           success: false,
@@ -617,7 +618,7 @@ export class UserService implements IUserService {
 
   async deactivateUser(userId: string, reason?: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId) as IUserDocument;
       if (!user) {
         return {
           success: false,
@@ -676,7 +677,7 @@ export class UserService implements IUserService {
 
   async reactivateUser(userId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId) as IUserDocument;
       if (!user) {
         return {
           success: false,
@@ -819,7 +820,7 @@ export class UserService implements IUserService {
     imageBuffer: Buffer, 
     userId: string, 
     type: 'avatar' | 'document'
-  ): Promise<{ success: boolean; url?: string; publicId?: string; provider?: string; error?: string }> {
+  ): Promise<{ success: boolean; url?: string; publicId?: string; provider?: 'local' | 'cloudinary' | 'aws'; error?: string }> {
     const filename = `${type}_${userId}_${Date.now()}.jpg`;
 
     // Try Cloudinary first
@@ -837,7 +838,7 @@ export class UserService implements IUserService {
                 { format: 'jpg' }
               ]
             },
-            (error, result) => {
+            (error: any, result: any) => {
               if (error) reject(error);
               else resolve(result);
             }
@@ -1206,7 +1207,7 @@ export class UserService implements IUserService {
 
   async updateUserAsAdmin(userId: string, updateData: any, adminUserId: string): Promise<{ success: boolean; user?: IUser; error?: string }> {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId) as IUserDocument;
       if (!user) {
         return {
           success: false,
@@ -1253,7 +1254,7 @@ export class UserService implements IUserService {
 
       return {
         success: true,
-        user: user.toJSON()
+        user: user as IUser
       };
 
     } catch (error: any) {
@@ -1267,7 +1268,7 @@ export class UserService implements IUserService {
 
   async suspendUser(userId: string, reason: string, duration?: number, adminUserId?: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId) as IUserDocument;
       if (!user) {
         return {
           success: false,
@@ -1328,7 +1329,7 @@ export class UserService implements IUserService {
 
   async deleteUser(userId: string, reason: string, adminUserId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const user = await User.findById(userId);
+      const user = await User.findById(userId) as IUserDocument;
       if (!user) {
         return {
           success: false,
@@ -1382,8 +1383,8 @@ export class UserService implements IUserService {
     try {
       const { action, userIds, reason, metadata } = bulkRequest;
       const results = {
-        successful: [],
-        failed: [],
+        successful: [] as string[],
+        failed: [] as { userId: string; error: string }[],
         total: userIds.length
       };
 
@@ -1392,7 +1393,7 @@ export class UserService implements IUserService {
           let result;
           switch (action) {
             case 'activate':
-              result = await this.reactivateUser(userId, adminUserId);
+              result = await this.reactivateUser(userId);
               break;
             case 'suspend':
               result = await this.suspendUser(userId, reason, metadata?.duration, adminUserId);
@@ -1407,7 +1408,7 @@ export class UserService implements IUserService {
           if (result.success) {
             results.successful.push(userId);
           } else {
-            results.failed.push({ userId, error: result.error });
+            results.failed.push({ userId, error: result.error || 'Unknown error' });
           }
         } catch (error: any) {
           results.failed.push({ userId, error: error.message });

@@ -30,7 +30,7 @@ jest.mock('redis', () => ({
 }));
 
 // Mock shared logger
-jest.mock('@shopsphere/shared', () => ({
+jest.mock('@apnidukaan/shared', () => ({
   logger: {
     info: jest.fn(),
     error: jest.fn(),
@@ -55,19 +55,19 @@ jest.mock('@shopsphere/shared', () => ({
 }));
 
 // Mock external services
-jest.mock('../services/ExternalServices', () => ({
-  catalogService: {
-    getProduct: jest.fn(),
-    validateProduct: jest.fn()
-  },
-  notificationService: {
-    sendNotification: jest.fn()
-  },
-  eventBus: {
-    emit: jest.fn(),
-    on: jest.fn()
-  }
-}));
+// jest.mock('../services/ExternalServices', () => ({
+//   catalogService: {
+//     getProduct: jest.fn(),
+//     validateProduct: jest.fn()
+//   },
+//   notificationService: {
+//     sendNotification: jest.fn()
+//   },
+//   eventBus: {
+//     emit: jest.fn(),
+//     on: jest.fn()
+//   }
+// }));
 
 // Mock file upload utilities
 jest.mock('multer', () => ({

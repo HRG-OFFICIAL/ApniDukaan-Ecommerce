@@ -1,4 +1,13 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
+
+// Extend Request interface to include userId
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string;
+    }
+  }
+}
 import { body, param, query, validationResult } from 'express-validator';
 import multer from 'multer';
 import sharp from 'sharp';
@@ -41,7 +50,7 @@ const authenticate = (req: any, res: any, next: any) => {
       code: 'AUTHENTICATION_REQUIRED'
     });
   }
-  req.userId = userId;
+  req.userId! = userId;
   next();
 };
 
@@ -172,7 +181,7 @@ const wishlistValidation = [
 router.post('/',
   authenticate,
   createProfileValidation,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -184,7 +193,7 @@ router.post('/',
       }
 
       const profileData: ICreateProfileRequest = {
-        userId: req.userId,
+        userId: req.userId!!,
         personalInfo: req.body.personalInfo,
         preferences: req.body.preferences,
         registrationSource: req.body.registrationSource,
@@ -218,7 +227,7 @@ router.post('/',
  */
 router.get('/', authenticate, async (req, res) => {
   try {
-    const result = await profileService.getProfile(req.userId);
+    const result = await profileService.getProfile(req.userId!);
 
     if (!result.success) {
       const statusCode = result.code === 'PROFILE_NOT_FOUND' ? 404 : 500;
@@ -245,7 +254,7 @@ router.get('/', authenticate, async (req, res) => {
 router.put('/',
   authenticate,
   updateProfileValidation,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -257,7 +266,7 @@ router.put('/',
       }
 
       const updateData: IUpdateProfileRequest = req.body;
-      const result = await profileService.updateProfile(req.userId, updateData);
+      const result = await profileService.updateProfile(req.userId!, updateData);
 
       if (!result.success) {
         const statusCode = result.code === 'PROFILE_NOT_FOUND' ? 404 : 
@@ -285,7 +294,7 @@ router.put('/',
  */
 router.delete('/', authenticate, async (req, res) => {
   try {
-    const result = await profileService.deleteProfile(req.userId);
+    const result = await profileService.deleteProfile(req.userId!);
 
     if (!result.success) {
       const statusCode = result.code === 'PROFILE_NOT_FOUND' ? 404 : 500;
@@ -312,7 +321,7 @@ router.delete('/', authenticate, async (req, res) => {
 router.post('/avatar',
   authenticate,
   upload.single('avatar'),
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({
@@ -332,9 +341,9 @@ router.post('/avatar',
         .toBuffer();
 
       // In a real implementation, upload to cloud storage (AWS S3, Cloudinary, etc.)
-      const avatarUrl = `https://storage.example.com/avatars/${req.userId}.jpg`;
+      const avatarUrl = `https://storage.example.com/avatars/${req.userId!}.jpg`;
 
-      const result = await profileService.updateProfile(req.userId, {
+      const result = await profileService.updateProfile(req.userId!, {
         personalInfo: { avatar: avatarUrl }
       });
 
@@ -367,7 +376,7 @@ router.post('/avatar',
  */
 router.get('/statistics', authenticate, async (req, res) => {
   try {
-    const statistics = await profileService.getProfileStatistics(req.userId);
+    const statistics = await profileService.getProfileStatistics(req.userId!);
 
     if (!statistics) {
       return res.status(404).json({
@@ -379,6 +388,7 @@ router.get('/statistics', authenticate, async (req, res) => {
 
     res.json({
       success: true,
+      message: 'Profile statistics retrieved successfully',
       data: { statistics }
     });
 
@@ -401,7 +411,7 @@ router.get('/statistics', authenticate, async (req, res) => {
  */
 router.get('/addresses', authenticate, async (req, res) => {
   try {
-    const result = await profileService.getProfile(req.userId);
+    const result = await profileService.getProfile(req.userId!);
 
     if (!result.success) {
       const statusCode = result.code === 'PROFILE_NOT_FOUND' ? 404 : 500;
@@ -410,6 +420,7 @@ router.get('/addresses', authenticate, async (req, res) => {
 
     res.json({
       success: true,
+      message: 'Addresses retrieved successfully',
       data: { 
         addresses: result.data!.profile.addresses,
         totalAddresses: result.data!.profile.addresses.length
@@ -434,7 +445,7 @@ router.get('/addresses', authenticate, async (req, res) => {
 router.post('/addresses',
   authenticate,
   addressValidation,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -446,7 +457,7 @@ router.post('/addresses',
       }
 
       const addressData: IAddAddressRequest = req.body;
-      const result = await profileService.addAddress(req.userId, addressData);
+      const result = await profileService.addAddress(req.userId!, addressData);
 
       if (!result.success) {
         const statusCode = result.code === 'PROFILE_NOT_FOUND' ? 404 : 500;
@@ -474,7 +485,7 @@ router.post('/addresses',
 router.put('/addresses/:addressId',
   authenticate,
   param('addressId').isMongoId().withMessage('Valid address ID is required'),
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -486,7 +497,7 @@ router.put('/addresses/:addressId',
       }
 
       const updateData: IUpdateAddressRequest = req.body;
-      const result = await profileService.updateAddress(req.userId, req.params.addressId, updateData);
+      const result = await profileService.updateAddress(req.userId!, req.params.addressId, updateData);
 
       if (!result.success) {
         const statusCode = result.code === 'PROFILE_NOT_FOUND' ? 404 : 500;
@@ -514,7 +525,7 @@ router.put('/addresses/:addressId',
 router.delete('/addresses/:addressId',
   authenticate,
   param('addressId').isMongoId().withMessage('Valid address ID is required'),
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -525,7 +536,7 @@ router.delete('/addresses/:addressId',
         });
       }
 
-      const result = await profileService.removeAddress(req.userId, req.params.addressId);
+      const result = await profileService.removeAddress(req.userId!, req.params.addressId);
 
       if (!result.success) {
         const statusCode = result.code === 'PROFILE_NOT_FOUND' ? 404 : 500;
@@ -553,7 +564,7 @@ router.delete('/addresses/:addressId',
 router.post('/addresses/:addressId/default',
   authenticate,
   param('addressId').isMongoId().withMessage('Valid address ID is required'),
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -564,7 +575,7 @@ router.post('/addresses/:addressId/default',
         });
       }
 
-      const result = await profileService.setDefaultAddress(req.userId, req.params.addressId);
+      const result = await profileService.setDefaultAddress(req.userId!, req.params.addressId);
 
       if (!result.success) {
         const statusCode = result.code === 'PROFILE_NOT_FOUND' || 
@@ -598,9 +609,9 @@ router.get('/wishlist', authenticate, async (req, res) => {
 
     let result;
     if (includeDetails) {
-      result = await profileService.getWishlistWithDetails(req.userId);
+      result = await profileService.getWishlistWithDetails(req.userId!);
     } else {
-      const profileResult = await profileService.getProfile(req.userId);
+      const profileResult = await profileService.getProfile(req.userId!);
       if (!profileResult.success) {
         const statusCode = profileResult.code === 'PROFILE_NOT_FOUND' ? 404 : 500;
         return res.status(statusCode).json(profileResult);
@@ -608,6 +619,7 @@ router.get('/wishlist', authenticate, async (req, res) => {
 
       result = {
         success: true,
+        message: 'Wishlist retrieved successfully',
         data: {
           wishlist: profileResult.data!.profile.wishlist,
           totalItems: profileResult.data!.profile.wishlist.length
@@ -640,7 +652,7 @@ router.get('/wishlist', authenticate, async (req, res) => {
 router.post('/wishlist',
   authenticate,
   wishlistValidation,
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -652,7 +664,7 @@ router.post('/wishlist',
       }
 
       const wishlistData: IAddWishlistItemRequest = req.body;
-      const result = await profileService.addToWishlist(req.userId, wishlistData);
+      const result = await profileService.addToWishlist(req.userId!, wishlistData);
 
       if (!result.success) {
         const statusCode = result.code === 'PROFILE_NOT_FOUND' ? 404 :
@@ -681,7 +693,7 @@ router.post('/wishlist',
 router.put('/wishlist/:itemId',
   authenticate,
   param('itemId').isMongoId().withMessage('Valid item ID is required'),
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -693,7 +705,7 @@ router.put('/wishlist/:itemId',
       }
 
       const updateData: IUpdateWishlistItemRequest = req.body;
-      const result = await profileService.updateWishlistItem(req.userId, req.params.itemId, updateData);
+      const result = await profileService.updateWishlistItem(req.userId!, req.params.itemId, updateData);
 
       if (!result.success) {
         const statusCode = result.code === 'PROFILE_NOT_FOUND' ||
@@ -722,7 +734,7 @@ router.put('/wishlist/:itemId',
 router.delete('/wishlist/:itemId',
   authenticate,
   param('itemId').isMongoId().withMessage('Valid item ID is required'),
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -733,7 +745,7 @@ router.delete('/wishlist/:itemId',
         });
       }
 
-      const result = await profileService.removeFromWishlist(req.userId, req.params.itemId);
+      const result = await profileService.removeFromWishlist(req.userId!, req.params.itemId);
 
       if (!result.success) {
         const statusCode = result.code === 'PROFILE_NOT_FOUND' ||
@@ -763,7 +775,7 @@ router.delete('/wishlist/:itemId',
  */
 router.get('/preferences', authenticate, async (req, res) => {
   try {
-    const result = await profileService.getProfile(req.userId);
+    const result = await profileService.getProfile(req.userId!);
 
     if (!result.success) {
       const statusCode = result.code === 'PROFILE_NOT_FOUND' ? 404 : 500;
@@ -772,6 +784,7 @@ router.get('/preferences', authenticate, async (req, res) => {
 
     res.json({
       success: true,
+      message: 'Preferences retrieved successfully',
       data: { preferences: result.data!.profile.preferences }
     });
 
@@ -792,7 +805,7 @@ router.get('/preferences', authenticate, async (req, res) => {
  */
 router.put('/preferences', authenticate, async (req, res) => {
   try {
-    const result = await profileService.updatePreferences(req.userId, req.body);
+    const result = await profileService.updatePreferences(req.userId!, req.body);
 
     if (!result.success) {
       const statusCode = result.code === 'PROFILE_NOT_FOUND' ? 404 : 500;
@@ -818,7 +831,7 @@ router.put('/preferences', authenticate, async (req, res) => {
  */
 router.get('/settings', authenticate, async (req, res) => {
   try {
-    const result = await profileService.getProfile(req.userId);
+    const result = await profileService.getProfile(req.userId!);
 
     if (!result.success) {
       const statusCode = result.code === 'PROFILE_NOT_FOUND' ? 404 : 500;
@@ -827,6 +840,7 @@ router.get('/settings', authenticate, async (req, res) => {
 
     res.json({
       success: true,
+      message: 'Account settings retrieved successfully',
       data: { settings: result.data!.profile.accountSettings }
     });
 
@@ -847,7 +861,7 @@ router.get('/settings', authenticate, async (req, res) => {
  */
 router.put('/settings', authenticate, async (req, res) => {
   try {
-    const result = await profileService.updateAccountSettings(req.userId, req.body);
+    const result = await profileService.updateAccountSettings(req.userId!, req.body);
 
     if (!result.success) {
       const statusCode = result.code === 'PROFILE_NOT_FOUND' ? 404 : 500;
@@ -877,7 +891,7 @@ router.post('/loyalty/points',
     body('points').isInt({ min: 1 }).withMessage('Points must be a positive integer'),
     body('reason').trim().isLength({ min: 1, max: 200 }).withMessage('Reason is required')
   ],
-  async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       // This would typically require admin authentication
       const userRole = req.headers['x-user-role'] as string;
@@ -899,7 +913,7 @@ router.post('/loyalty/points',
       }
 
       const { points, reason } = req.body;
-      const result = await profileService.addLoyaltyPoints(req.userId, points, reason);
+      const result = await profileService.addLoyaltyPoints(req.userId!, points, reason);
 
       if (!result.success) {
         const statusCode = result.code === 'PROFILE_NOT_FOUND' ? 404 : 500;

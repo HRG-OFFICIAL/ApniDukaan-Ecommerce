@@ -586,7 +586,7 @@ export async function seedDatabase(
   options: Parameters<DatabaseSeeder['seedDatabase']>[0] = {}
 ) {
   try {
-    await connectDatabase(mongoUri, dbName);
+    await connectDatabase({ uri: mongoUri, dbName });
     
     const seeder = new DatabaseSeeder();
     await seeder.seedDatabase(options);

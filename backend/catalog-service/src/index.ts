@@ -2,12 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { connectDatabase, logger } from '@apnidukaan/shared';
+import { connectDatabase, logger, kafkaProducerService } from '@apnidukaan/shared';
 
 // Import routes
 import productRoutes from './routes/products';
 import categoryRoutes from './routes/categories';
 import reviewRoutes from './routes/reviews';
+import imageRoutes from './routes/image.routes';
 
 async function startServer() {
   const app = express();
@@ -15,10 +16,24 @@ async function startServer() {
 
   try {
     // Connect to MongoDB Atlas
-    await connectDatabase(
-                  process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_catalog?retryWrites=true&w=majority&appName=Cluster0',
-      'catalog_db'
-    );
+    await connectDatabase({
+      uri: process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_catalog?retryWrites=true&w=majority&appName=Cluster0',
+      dbName: 'catalog_db'
+    });
+
+    // Initialize Kafka Producer
+    try {
+      await kafkaProducerService.connect();
+      logger.info('Kafka producer initialized for Catalog Service', {
+        action: 'kafka_producer_initialized'
+      });
+    } catch (kafkaError) {
+      logger.warn('Failed to initialize Kafka producer', {
+        error: (kafkaError as any).message,
+        action: 'kafka_producer_init_warning'
+      });
+      // Continue without Kafka if it fails
+    }
 
     // Security middleware
     app.use(helmet({
@@ -66,7 +81,8 @@ async function startServer() {
           health: '/health',
           products: '/api/products',
           categories: '/api/categories',
-          reviews: '/api/reviews'
+          reviews: '/api/reviews',
+          images: '/api/images'
         }
       });
     });
@@ -286,10 +302,11 @@ async function startServer() {
       });
     });
 
-    // Mount route handlers (for future use)
-    // app.use('/api/products', productRoutes);
-    // app.use('/api/categories', categoryRoutes);
-    // app.use('/api/reviews', reviewRoutes);
+    // Mount route handlers
+    app.use('/api/products', productRoutes);
+    app.use('/api/categories', categoryRoutes);
+    app.use('/api/reviews', reviewRoutes);
+    app.use('/api/images', imageRoutes);
 
     // Global error handler
     app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -328,11 +345,27 @@ async function startServer() {
     // Graceful shutdown
     process.on('SIGTERM', async () => {
       logger.info('SIGTERM received, shutting down Catalog Service gracefully');
+      try {
+        await kafkaProducerService.disconnect();
+      } catch (error) {
+        logger.error('Error disconnecting Kafka producer during shutdown', {
+          error: (error as any).message,
+          action: 'kafka_producer_shutdown_error'
+        });
+      }
       process.exit(0);
     });
 
     process.on('SIGINT', async () => {
       logger.info('SIGINT received, shutting down Catalog Service gracefully');
+      try {
+        await kafkaProducerService.disconnect();
+      } catch (error) {
+        logger.error('Error disconnecting Kafka producer during shutdown', {
+          error: (error as any).message,
+          action: 'kafka_producer_shutdown_error'
+        });
+      }
       process.exit(0);
     });
 

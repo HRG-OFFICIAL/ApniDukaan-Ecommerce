@@ -1,161 +1,324 @@
-import mongoose from 'mongoose';
+import mongoose, { Connection, Model, Document, Schema, Types } from 'mongoose';
 import { logger } from './logger';
 
-export class DatabaseConnection {
-  private static instance: DatabaseConnection;
-  private isConnected = false;
+// Database connection state
+let connection: Connection | null = null;
 
-  public static getInstance(): DatabaseConnection {
-    if (!DatabaseConnection.instance) {
-      DatabaseConnection.instance = new DatabaseConnection();
-    }
-    return DatabaseConnection.instance;
-  }
-
-  public async connect(uri: string, dbName?: string): Promise<void> {
-    if (this.isConnected) {
-      logger.info('Database already connected');
-      return;
-    }
-
-    try {
-      await mongoose.connect(uri, {
-        dbName,
-        maxPoolSize: 10,
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000,
-        bufferCommands: false
-      });
-
-      this.isConnected = true;
-      logger.info(`Database connected successfully to ${dbName || 'default'}`);
-
-      mongoose.connection.on('error', (error) => {
-        logger.error('Database connection error:', error);
-      });
-
-      mongoose.connection.on('disconnected', () => {
-        logger.warn('Database disconnected');
-        this.isConnected = false;
-      });
-
-      mongoose.connection.on('reconnected', () => {
-        logger.info('Database reconnected');
-        this.isConnected = true;
-      });
-
-    } catch (error) {
-      logger.error('Database connection failed:', error);
-      throw error;
-    }
-  }
-
-  public async disconnect(): Promise<void> {
-    if (!this.isConnected) {
-      return;
-    }
-
-    try {
-      await mongoose.disconnect();
-      this.isConnected = false;
-      logger.info('Database disconnected successfully');
-    } catch (error) {
-      logger.error('Error disconnecting from database:', error);
-      throw error;
-    }
-  }
-
-  public isConnectedToDB(): boolean {
-    return this.isConnected && mongoose.connection.readyState === 1;
-  }
-
-  public getConnection() {
-    return mongoose.connection;
-  }
+// Connection options interface
+export interface DatabaseConfig {
+  uri: string;
+  dbName: string;
+  maxPoolSize?: number;
+  serverSelectionTimeoutMS?: number;
+  socketTimeoutMS?: number;
+  retryWrites?: boolean;
+  retryReads?: boolean;
+  readPreference?: string;
+  writeConcern?: any;
 }
 
-export const connectDatabase = async (uri: string, dbName?: string): Promise<void> => {
-  const db = DatabaseConnection.getInstance();
-  await db.connect(uri, dbName);
+// Default configuration
+const DEFAULT_CONFIG: Partial<DatabaseConfig> = {
+  maxPoolSize: 10,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  retryWrites: true,
+  retryReads: true,
+  readPreference: 'primary'
 };
 
+/**
+ * Connect to MongoDB database
+ */
+export const connectDatabase = async (config: DatabaseConfig): Promise<Connection> => {
+  try {
+    if (connection && connection.readyState === 1) {
+      logger.info('Database already connected', {
+        database: config.dbName,
+        action: 'database_connect_existing'
+      });
+      return connection;
+    }
+
+    const connectionOptions = {
+      ...DEFAULT_CONFIG,
+      ...config,
+      dbName: config.dbName,
+      readPreference: config.readPreference as any
+    };
+
+    connection = await mongoose.createConnection(config.uri, {
+      ...DEFAULT_CONFIG,
+      dbName: config.dbName,
+      readPreference: config.readPreference as any
+    });
+
+    // Set up connection event listeners
+    connection.on('connected', () => {
+      logger.info('Database connected successfully', {
+        database: config.dbName,
+        host: connection?.host,
+        port: connection?.port,
+        action: 'database_connect'
+      });
+    });
+
+    connection.on('error', (error: any) => {
+      logger.error('Database connection error', {
+        database: config.dbName,
+        error: error.message,
+        action: 'database_connect_error'
+      });
+    });
+
+    connection.on('disconnected', () => {
+      logger.warn('Database disconnected', {
+        database: config.dbName,
+        action: 'database_disconnect'
+      });
+    });
+
+    connection.on('reconnected', () => {
+      logger.info('Database reconnected', {
+        database: config.dbName,
+        action: 'database_reconnect'
+      });
+    });
+
+    return connection;
+  } catch (error: any) {
+    logger.error('Database connection failed', {
+      database: config.dbName,
+      error: error.message,
+      stack: error.stack,
+      action: 'database_connect_error'
+    });
+    throw error;
+  }
+};
+
+/**
+ * Get the current database connection
+ */
+export const getConnection = (): Connection | null => {
+  return connection;
+};
+
+/**
+ * Check if database is connected
+ */
+export const isConnected = (): boolean => {
+  return connection ? connection.readyState === 1 : false;
+};
+
+/**
+ * Disconnect from database
+ */
 export const disconnectDatabase = async (): Promise<void> => {
-  const db = DatabaseConnection.getInstance();
-  await db.disconnect();
-};
-
-export const isDatabaseConnected = (): boolean => {
-  const db = DatabaseConnection.getInstance();
-  return db.isConnectedToDB();
-};
-
-// Mongoose plugin for adding timestamps and common methods
-export const timestampPlugin = (schema: mongoose.Schema) => {
-  schema.add({
-    createdAt: {
-      type: Date,
-      default: Date.now,
-      immutable: true
-    },
-    updatedAt: {
-      type: Date,
-      default: Date.now
+  try {
+    if (connection) {
+      await connection.close();
+      connection = null;
+      logger.info('Database disconnected successfully', {
+        action: 'database_disconnect'
+      });
     }
-  });
-
-  schema.pre('save', function(this: any) {
-    this.updatedAt = new Date();
-  });
-
-  schema.pre(['updateOne', 'updateMany', 'findOneAndUpdate'], function(this: any) {
-    this.set({ updatedAt: new Date() });
-  });
+  } catch (error: any) {
+    logger.error('Database disconnection failed', {
+      error: error.message,
+      action: 'database_disconnect_error'
+    });
+    throw error;
+  }
 };
 
-// Common aggregation pipelines
-export const paginationPipeline = (page: number = 1, limit: number = 20) => {
-  const skip = (page - 1) * limit;
-  return [
-    { $skip: skip },
-    { $limit: limit }
-  ];
+/**
+ * Graceful shutdown
+ */
+export const gracefulShutdown = async (): Promise<void> => {
+  try {
+    await disconnectDatabase();
+    logger.info('Database graceful shutdown completed', {
+      action: 'database_graceful_shutdown'
+    });
+  } catch (error: any) {
+    logger.error('Database graceful shutdown failed', {
+      error: error.message,
+      action: 'database_graceful_shutdown_error'
+    });
+    throw error;
+  }
 };
 
-export const searchPipeline = (searchTerm: string, fields: string[]) => {
-  if (!searchTerm) return [];
-  
-  return [
-    {
-      $match: {
-        $or: fields.map(field => ({
-          [field]: { $regex: searchTerm, $options: 'i' }
-        }))
-      }
+/**
+ * Create a model with connection validation
+ */
+export const createModel = <T extends Document>(
+  name: string,
+  schema: Schema<T>
+): Model<T> => {
+  if (!connection) {
+    throw new Error('Database not connected. Call connectDatabase() first.');
+  }
+  return connection.model<T>(name, schema);
+};
+
+/**
+ * Get collection statistics
+ */
+export const getCollectionStats = async (collectionName: string): Promise<any> => {
+  if (!connection) {
+    throw new Error('Database not connected');
+  }
+
+  try {
+    const stats = await (connection.db?.collection(collectionName) as any).stats();
+    logger.info('Collection stats retrieved', {
+      collection: collectionName,
+      stats,
+      action: 'database_collection_stats'
+    });
+    return stats;
+  } catch (error: any) {
+    logger.error('Failed to get collection stats', {
+      collection: collectionName,
+      error: error.message,
+      action: 'database_collection_stats_error'
+    });
+    throw error;
+  }
+};
+
+/**
+ * Create indexes for a collection
+ */
+export const createIndexes = async (
+  collectionName: string,
+  indexes: any[]
+): Promise<void> => {
+  if (!connection) {
+    throw new Error('Database not connected');
+  }
+
+  try {
+    const collection = connection.db?.collection(collectionName);
+    if (collection) {
+      await collection.createIndexes(indexes);
+      logger.info('Indexes created successfully', {
+        collection: collectionName,
+        indexCount: indexes.length,
+        action: 'database_create_indexes'
+      });
     }
-  ];
+  } catch (error: any) {
+    logger.error('Failed to create indexes', {
+      collection: collectionName,
+      error: error.message,
+      action: 'database_create_indexes_error'
+    });
+    throw error;
+  }
 };
 
-export const sortPipeline = (sortBy: string = 'createdAt', sortOrder: 'asc' | 'desc' = 'desc') => {
-  return [
-    { $sort: { [sortBy]: sortOrder === 'asc' ? 1 : -1 } }
-  ];
+/**
+ * Drop collection
+ */
+export const dropCollection = async (collectionName: string): Promise<void> => {
+  if (!connection) {
+    throw new Error('Database not connected');
+  }
+
+  try {
+    await connection.db?.collection(collectionName).drop();
+    logger.info('Collection dropped successfully', {
+      collection: collectionName,
+      action: 'database_drop_collection'
+    });
+  } catch (error: any) {
+    logger.error('Failed to drop collection', {
+      collection: collectionName,
+      error: error.message,
+      action: 'database_drop_collection_error'
+    });
+    throw error;
+  }
 };
 
-// Transaction helper
+/**
+ * Get database health status
+ */
+export const getDatabaseHealth = async (): Promise<{
+  connected: boolean;
+  readyState: number;
+  host?: string;
+  port?: number;
+  name?: string;
+}> => {
+  if (!connection) {
+    return {
+      connected: false,
+      readyState: 0
+    };
+  }
+
+  return {
+    connected: connection.readyState === 1,
+    readyState: connection.readyState,
+    host: connection.host,
+    port: connection.port,
+    name: connection.name
+  };
+};
+
+/**
+ * Transaction helper
+ */
 export const withTransaction = async <T>(
-  callback: (session: mongoose.ClientSession) => Promise<T>
+  operations: (session: mongoose.ClientSession) => Promise<T>
 ): Promise<T> => {
-  const session = await mongoose.startSession();
+  if (!connection) {
+    throw new Error('Database not connected');
+  }
+
+  const session = await connection.startSession();
   
   try {
-    session.startTransaction();
-    const result = await callback(session);
-    await session.commitTransaction();
-    return result;
-  } catch (error) {
-    await session.abortTransaction();
+    let result: T;
+    await session.withTransaction(async () => {
+      result = await operations(session);
+    });
+    return result!;
+  } catch (error: any) {
+    logger.error('Transaction failed', {
+      error: error.message,
+      action: 'database_transaction_error'
+    });
     throw error;
   } finally {
     await session.endSession();
   }
+};
+
+/**
+ * Utility to convert string to ObjectId
+ */
+export const toObjectId = (id: string | Types.ObjectId): Types.ObjectId => {
+  if (Types.ObjectId.isValid(id)) {
+    return new Types.ObjectId(id);
+  }
+  throw new Error(`Invalid ObjectId: ${id}`);
+};
+
+/**
+ * Utility to check if string is valid ObjectId
+ */
+export const isValidObjectId = (id: string): boolean => {
+  return Types.ObjectId.isValid(id);
+};
+
+/**
+ * Utility to generate new ObjectId
+ */
+export const newObjectId = (): Types.ObjectId => {
+  return new Types.ObjectId();
 };

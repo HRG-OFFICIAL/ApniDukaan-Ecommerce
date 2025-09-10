@@ -7,7 +7,7 @@ import mongoose from 'mongoose';
 import { createClient } from 'redis';
 import { config } from 'dotenv';
 import profileRoutes from './routes/profile';
-import { logger, errorHandler, notFoundHandler, requestLogger } from '@apnidukaan/shared';
+import { logger } from '@apnidukaan/shared';
 
 // Load environment variables
 config();
@@ -66,7 +66,8 @@ app.use(helmet({
       fontSrc: ["'self'", "https:", "data:"],
     },
   },
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  frameguard: { action: 'deny' }
 }));
 
 // CORS configuration
@@ -107,8 +108,15 @@ app.use(compression());
 app.use(express.json({ limit: MAX_REQUEST_SIZE }));
 app.use(express.urlencoded({ extended: true, limit: MAX_REQUEST_SIZE }));
 
-// Request logging
-app.use(requestLogger);
+// Request logging middleware
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.path}`, {
+    ip: req.ip,
+    userAgent: req.get('User-Agent'),
+    timestamp: new Date().toISOString()
+  });
+  next();
+});
 
 // Rate limiting
 app.use(globalLimiter);
@@ -142,10 +150,32 @@ app.get('/health', (req, res) => {
 app.use('/profile', profileRoutes);
 
 // Catch 404 errors
-app.use(notFoundHandler);
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Route not found',
+    message: `Cannot ${req.method} ${req.path}`,
+    code: 'NOT_FOUND',
+    timestamp: new Date().toISOString(),
+    path: req.path,
+    method: req.method
+  });
+});
 
 // Global error handler
-app.use(errorHandler);
+app.use((error: any, req: any, res: any, next: any) => {
+  logger.error('Unhandled error:', error);
+  
+  res.status(error.status || 500).json({
+    success: false,
+    error: error.message || 'Internal server error',
+    message: NODE_ENV === 'development' ? error.stack : 'Something went wrong',
+    code: error.code || 'INTERNAL_ERROR',
+    timestamp: new Date().toISOString(),
+    path: req.path,
+    method: req.method
+  });
+});
 
 // Database connections
 let mongoConnection: typeof mongoose;
@@ -159,7 +189,7 @@ const connectMongoDB = async (): Promise<typeof mongoose> => {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
       bufferCommands: false,
-      bufferMaxEntries: 0,
+      // bufferMaxEntries: 0, // Removed - not supported in current Redis version
     });
 
     logger.info('Connected to MongoDB', {
@@ -197,7 +227,7 @@ const connectRedis = async (): Promise<ReturnType<typeof createClient>> => {
       socket: {
         reconnectStrategy: (retries) => Math.min(retries * 50, 1000),
         connectTimeout: 5000,
-        lazyConnect: true
+        // lazyConnect: true // Removed - not supported in current Redis version
       }
     });
 

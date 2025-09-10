@@ -173,7 +173,7 @@ router.post('/register',
     body('acceptTerms').equals('true').withMessage('You must accept the terms and conditions'),
     body('username').optional().isAlphanumeric().isLength({ min: 3, max: 30 }).withMessage('Username must be 3-30 alphanumeric characters')
   ],
-  async (req, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -233,7 +233,7 @@ router.post('/login',
       return true;
     })
   ],
-  async (req, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -279,7 +279,7 @@ router.post('/login',
  */
 router.post('/logout',
   authenticate,
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const result = await authService.logout(req.session.sessionId);
       res.json({
@@ -306,7 +306,7 @@ router.post('/refresh-token',
   [
     body('refreshToken').notEmpty().withMessage('Refresh token is required')
   ],
-  async (req, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -347,7 +347,7 @@ router.post('/verify-email',
   [
     body('token').notEmpty().withMessage('Verification token is required')
   ],
-  async (req, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -387,7 +387,7 @@ router.post('/resend-verification',
   [
     body('email').isEmail().normalizeEmail().withMessage('Valid email is required')
   ],
-  async (req, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -427,7 +427,7 @@ router.post('/forgot-password',
   [
     body('email').isEmail().normalizeEmail().withMessage('Valid email is required')
   ],
-  async (req, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -477,7 +477,7 @@ router.post('/reset-password',
       return true;
     })
   ],
-  async (req, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -530,7 +530,7 @@ router.put('/change-password',
       return true;
     })
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -575,7 +575,7 @@ router.put('/change-password',
  */
 router.get('/profile',
   authenticate,
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const result = await userService.getUserById(req.user.id);
       
@@ -619,7 +619,7 @@ router.put('/profile',
     body('website').optional().isURL().withMessage('Valid website URL is required'),
     body('dateOfBirth').optional().isISO8601().toDate().withMessage('Valid date of birth is required')
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -671,7 +671,7 @@ router.put('/profile',
 router.post('/profile/avatar',
   authenticate,
   upload.single('avatar'),
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       if (!req.file) {
         return res.status(400).json({
@@ -720,7 +720,7 @@ router.post('/addresses',
     body('postalCode').trim().isLength({ min: 3, max: 20 }).withMessage('Postal code is required'),
     body('country').trim().isLength({ min: 1, max: 50 }).withMessage('Country is required')
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -760,7 +760,7 @@ router.post('/addresses',
 router.put('/addresses/:addressId',
   authenticate,
   param('addressId').isMongoId().withMessage('Valid address ID is required'),
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -798,7 +798,7 @@ router.put('/addresses/:addressId',
 router.delete('/addresses/:addressId',
   authenticate,
   param('addressId').isMongoId().withMessage('Valid address ID is required'),
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -837,7 +837,7 @@ router.delete('/addresses/:addressId',
  */
 router.put('/preferences',
   authenticate,
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const result = await userService.updatePreferences(req.user.id, req.body);
       
@@ -870,7 +870,7 @@ router.post('/mfa/setup',
   [
     body('method').isIn(Object.values(MfaMethod)).withMessage('Valid MFA method is required')
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -916,7 +916,7 @@ router.post('/mfa/verify',
     body('token').notEmpty().withMessage('MFA token is required'),
     body('method').isIn(Object.values(MfaMethod)).withMessage('Valid MFA method is required')
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -963,7 +963,7 @@ router.post('/mfa/disable',
     body('token').notEmpty().withMessage('MFA token is required'),
     body('method').isIn(Object.values(MfaMethod)).withMessage('Valid MFA method is required')
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -1008,7 +1008,7 @@ router.post('/mfa/disable',
  */
 router.get('/auth/:provider/url',
   param('provider').isIn(Object.values(AuthProvider)).withMessage('Valid auth provider is required'),
-  async (req, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -1019,8 +1019,8 @@ router.get('/auth/:provider/url',
         });
       }
 
-      const provider = req.params.provider as AuthProvider;
-      const state = req.query.state as string;
+      const provider = req.params?.provider as AuthProvider;
+      const state = req.query?.state as string;
       const authUrl = socialAuthService.getAuthUrl(provider, state);
 
       if (!authUrl) {
@@ -1056,7 +1056,7 @@ router.get('/auth/:provider/url',
 router.post('/auth/:provider',
   authLimiter,
   param('provider').isIn(Object.values(AuthProvider)).withMessage('Valid auth provider is required'),
-  async (req, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -1123,7 +1123,7 @@ router.post('/auth/:provider',
  */
 router.get('/social-accounts',
   authenticate,
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const result = await socialAuthService.getSocialAccountInfo(req.user.id);
       
@@ -1153,7 +1153,7 @@ router.get('/social-accounts',
 router.post('/social-accounts/:provider/link',
   authenticate,
   param('provider').isIn(Object.values(AuthProvider)).withMessage('Valid auth provider is required'),
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -1192,7 +1192,7 @@ router.post('/social-accounts/:provider/link',
 router.delete('/social-accounts/:provider',
   authenticate,
   param('provider').isIn(Object.values(AuthProvider)).withMessage('Valid auth provider is required'),
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -1235,7 +1235,7 @@ router.post('/deactivate',
   [
     body('reason').optional().trim().isLength({ max: 200 }).withMessage('Reason must be less than 200 characters')
   ],
-  async (req: any, res) => {
+  async (req: any, res: any) => {
     try {
       const result = await userService.deactivateUser(req.user.id, req.body.reason);
       
@@ -1292,7 +1292,7 @@ router.use((error: any, req: express.Request, res: express.Response, next: expre
     method: req.method
   });
 
-  res.status(500).json({
+  return res.status(500).json({
     success: false,
     error: 'Internal server error',
     code: 'INTERNAL_ERROR'

@@ -1,6 +1,12 @@
 import express from 'express';
 import { body, param, query, validationResult } from 'express-validator';
 import multer from 'multer';
+
+// Extend Express Request interface to include custom properties
+interface CustomRequest extends express.Request {
+  userId?: string;
+  userRole?: string;
+}
 import OrderService from '../services/OrderService';
 import PaymentService from '../services/PaymentService';
 import ShippingService from '../services/ShippingService';
@@ -8,7 +14,7 @@ import InventoryService from '../services/InventoryService';
 import {
   ICreateOrderRequest,
   IUpdateOrderRequest,
-  IPaymentRequest,
+  // IPaymentRequest, // Not used currently
   IRefundRequest,
   IShippingUpdateRequest,
   OrderStatus,
@@ -22,38 +28,39 @@ import { logger } from '@apnidukaan/shared';
 const router = express.Router();
 
 // Initialize services
-const orderService = new OrderService();
+const orderService = OrderService.createWithMockServices();
 const paymentService = new PaymentService();
 const shippingService = new ShippingService();
 const inventoryService = new InventoryService();
 
 // Configure file upload for receipts/documents
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type'));
-    }
-  }
-});
+// const upload = multer({
+//   storage: multer.memoryStorage(),
+//   limits: {
+//     fileSize: 10 * 1024 * 1024 // 10MB limit
+//   },
+//   fileFilter: (req, file, cb) => {
+//     const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+//     if (allowedTypes.includes(file.mimetype)) {
+//       cb(null, true);
+//     } else {
+//       cb(new Error('Invalid file type'));
+//     }
+//   }
+// }); // Not used currently
 
 // Authentication middleware (mock)
-const authenticate = (req: any, res: any, next: any) => {
+const authenticate = (req: CustomRequest, res: express.Response, next: express.NextFunction): void => {
   const userId = req.headers['x-user-id'] as string;
   const userRole = req.headers['x-user-role'] as string || 'customer';
   
   if (!userId) {
-    return res.status(401).json({
+    res.status(401).json({
       success: false,
       error: 'Authentication required',
       code: 'AUTHENTICATION_REQUIRED'
     });
+    return;
   }
   
   req.userId = userId;
@@ -63,13 +70,14 @@ const authenticate = (req: any, res: any, next: any) => {
 
 // Authorization middleware
 const authorize = (roles: string[]) => {
-  return (req: any, res: any, next: any) => {
-    if (!roles.includes(req.userRole)) {
-      return res.status(403).json({
+  return (req: CustomRequest, res: express.Response, next: express.NextFunction): void => {
+    if (!roles.includes(req.userRole || '')) {
+      res.status(403).json({
         success: false,
         error: 'Access denied',
         code: 'ACCESS_DENIED'
       });
+      return;
     }
     next();
   };
@@ -101,7 +109,7 @@ router.post('/',
     body('shippingMethod').isIn(Object.values(ShippingMethod)).withMessage('Valid shipping method is required'),
     body('paymentMethod').isIn(Object.values(PaymentMethod)).withMessage('Valid payment method is required')
   ],
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -113,7 +121,7 @@ router.post('/',
       }
 
       const orderData: ICreateOrderRequest = {
-        customerId: req.userId,
+        customerId: req.userId!,
         customerEmail: req.body.customerEmail,
         items: req.body.items,
         shippingAddress: req.body.shippingAddress,
@@ -133,11 +141,11 @@ router.post('/',
         return res.status(400).json(result);
       }
 
-      res.status(201).json(result);
+      return res.status(201).json(result);
 
     } catch (error) {
       logger.error('Error creating order:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: 'Internal server error',
         code: 'INTERNAL_ERROR'
@@ -154,7 +162,7 @@ router.post('/',
 router.get('/:orderId',
   authenticate,
   param('orderId').isMongoId().withMessage('Valid order ID is required'),
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -165,7 +173,7 @@ router.get('/:orderId',
         });
       }
 
-      const result = await orderService.getOrder(req.params.orderId);
+      const result = await orderService.getOrder(req.params.orderId as string);
       
       if (!result.success) {
         const statusCode = result.code === 'ORDER_NOT_FOUND' ? 404 : 500;
@@ -182,11 +190,11 @@ router.get('/:orderId',
         });
       }
 
-      res.json(result);
+      return res.json(result);
 
     } catch (error) {
       logger.error('Error retrieving order:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: 'Internal server error',
         code: 'INTERNAL_ERROR'
@@ -203,7 +211,7 @@ router.get('/:orderId',
 router.get('/number/:orderNumber',
   authenticate,
   param('orderNumber').trim().isLength({ min: 1 }).withMessage('Valid order number is required'),
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -214,7 +222,7 @@ router.get('/number/:orderNumber',
         });
       }
 
-      const result = await orderService.getOrderByNumber(req.params.orderNumber);
+      const result = await orderService.getOrderByNumber(req.params.orderNumber as string);
       
       if (!result.success) {
         const statusCode = result.code === 'ORDER_NOT_FOUND' ? 404 : 500;
@@ -231,11 +239,11 @@ router.get('/number/:orderNumber',
         });
       }
 
-      res.json(result);
+      return res.json(result);
 
     } catch (error) {
       logger.error('Error retrieving order by number:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: 'Internal server error',
         code: 'INTERNAL_ERROR'
@@ -258,7 +266,7 @@ router.get('/',
     query('startDate').optional().isISO8601().toDate().withMessage('Valid start date is required'),
     query('endDate').optional().isISO8601().toDate().withMessage('Valid end date is required')
   ],
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -270,10 +278,10 @@ router.get('/',
       }
 
       const query: IOrderSearchQuery = {
-        page: req.query.page as number || 1,
-        limit: req.query.limit as number || 20,
+        page: parseInt(req.query.page as string) || 1,
+        limit: parseInt(req.query.limit as string) || 20,
         sort: {
-          field: (req.query.sortBy as string) || 'createdAt',
+          field: (req.query.sortBy as 'createdAt' | 'updatedAt' | 'placedAt' | 'total' | 'orderNumber') || 'createdAt',
           direction: (req.query.sortOrder as 'asc' | 'desc') || 'desc'
         },
         filters: {}
@@ -281,7 +289,7 @@ router.get('/',
 
       // Apply role-based filtering
       if (req.userRole !== 'admin') {
-        query.filters!.customerId = req.userId;
+        query.filters!.customerId = req.userId!;
       } else {
         // Admin can filter by customer
         if (req.query.customerId) {
@@ -298,8 +306,8 @@ router.get('/',
 
       if (req.query.startDate && req.query.endDate) {
         query.filters!.dateRange = {
-          start: req.query.startDate as Date,
-          end: req.query.endDate as Date
+          start: new Date(req.query.startDate as string),
+          end: new Date(req.query.endDate as string)
         };
       }
 
@@ -308,11 +316,11 @@ router.get('/',
       }
 
       const result = await orderService.getOrders(query);
-      res.json(result);
+      return res.json(result);
 
     } catch (error) {
       logger.error('Error retrieving orders:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: 'Internal server error',
         code: 'INTERNAL_ERROR'
@@ -329,7 +337,7 @@ router.get('/',
 router.put('/:orderId',
   authenticate,
   param('orderId').isMongoId().withMessage('Valid order ID is required'),
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -341,7 +349,7 @@ router.put('/:orderId',
       }
 
       // Check order ownership
-      const orderResult = await orderService.getOrder(req.params.orderId);
+      const orderResult = await orderService.getOrder(req.params.orderId as string);
       if (!orderResult.success) {
         return res.status(404).json(orderResult);
       }
@@ -371,18 +379,18 @@ router.put('/:orderId',
         }
       }
 
-      const result = await orderService.updateOrder(req.params.orderId, updateData);
+      const result = await orderService.updateOrder(req.params.orderId as string, updateData);
       
       if (!result.success) {
         const statusCode = result.code === 'ORDER_NOT_FOUND' ? 404 : 400;
         return res.status(statusCode).json(result);
       }
 
-      res.json(result);
+      return res.json(result);
 
     } catch (error) {
       logger.error('Error updating order:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: 'Internal server error',
         code: 'INTERNAL_ERROR'
@@ -402,7 +410,7 @@ router.post('/:orderId/cancel',
     param('orderId').isMongoId().withMessage('Valid order ID is required'),
     body('reason').optional().trim().isLength({ max: 500 }).withMessage('Cancellation reason must be less than 500 characters')
   ],
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -414,7 +422,7 @@ router.post('/:orderId/cancel',
       }
 
       // Check order ownership
-      const orderResult = await orderService.getOrder(req.params.orderId);
+      const orderResult = await orderService.getOrder(req.params.orderId as string);
       if (!orderResult.success) {
         return res.status(404).json(orderResult);
       }
@@ -428,18 +436,18 @@ router.post('/:orderId/cancel',
         });
       }
 
-      const result = await orderService.cancelOrder(req.params.orderId, req.body.reason);
+      const result = await orderService.cancelOrder(req.params.orderId as string, req.body.reason);
       
       if (!result.success) {
         const statusCode = result.code === 'ORDER_NOT_FOUND' ? 404 : 400;
         return res.status(statusCode).json(result);
       }
 
-      res.json(result);
+      return res.json(result);
 
     } catch (error) {
       logger.error('Error cancelling order:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: 'Internal server error',
         code: 'INTERNAL_ERROR'
@@ -463,7 +471,7 @@ router.post('/:orderId/payments',
     body('amount').isFloat({ min: 0.01 }).withMessage('Valid payment amount is required'),
     body('currency').isLength({ min: 3, max: 3 }).withMessage('Valid currency code is required')
   ],
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -475,7 +483,7 @@ router.post('/:orderId/payments',
       }
 
       // Check order ownership
-      const orderResult = await orderService.getOrder(req.params.orderId);
+      const orderResult = await orderService.getOrder(req.params.orderId as string);
       if (!orderResult.success) {
         return res.status(404).json(orderResult);
       }
@@ -490,7 +498,7 @@ router.post('/:orderId/payments',
       }
 
       const paymentData = {
-        orderId: req.params.orderId,
+        orderId: req.params.orderId as string,
         method: req.body.method,
         amount: req.body.amount,
         currency: req.body.currency,
@@ -499,18 +507,18 @@ router.post('/:orderId/payments',
         metadata: req.body.metadata
       };
 
-      const result = await orderService.processPayment(req.params.orderId, paymentData);
+      const result = await orderService.processPayment(req.params.orderId as string, paymentData);
       
       if (!result.success) {
         const statusCode = result.code === 'ORDER_NOT_FOUND' ? 404 : 400;
         return res.status(statusCode).json(result);
       }
 
-      res.json(result);
+      return res.json(result);
 
     } catch (error) {
       logger.error('Error processing payment:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: 'Internal server error',
         code: 'INTERNAL_ERROR'
@@ -534,7 +542,7 @@ router.post('/:orderId/refunds',
     body('reason').isIn(Object.values(RefundReason)).withMessage('Valid refund reason is required'),
     body('description').optional().trim().isLength({ max: 500 }).withMessage('Description must be less than 500 characters')
   ],
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -546,7 +554,7 @@ router.post('/:orderId/refunds',
       }
 
       const refundRequest: IRefundRequest = {
-        orderId: req.params.orderId,
+        orderId: req.params.orderId as string,
         paymentId: req.body.paymentId,
         amount: req.body.amount,
         reason: req.body.reason,
@@ -564,7 +572,7 @@ router.post('/:orderId/refunds',
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Refund processed successfully',
         data: { refund: result.refund }
@@ -572,7 +580,7 @@ router.post('/:orderId/refunds',
 
     } catch (error) {
       logger.error('Error processing refund:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: 'Internal server error',
         code: 'INTERNAL_ERROR'
@@ -591,7 +599,7 @@ router.post('/:orderId/refunds',
 router.get('/:orderId/shipping/rates',
   authenticate,
   param('orderId').isMongoId().withMessage('Valid order ID is required'),
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -603,7 +611,7 @@ router.get('/:orderId/shipping/rates',
       }
 
       // Check order ownership
-      const orderResult = await orderService.getOrder(req.params.orderId);
+      const orderResult = await orderService.getOrder(req.params.orderId as string);
       if (!orderResult.success) {
         return res.status(404).json(orderResult);
       }
@@ -640,14 +648,14 @@ router.get('/:orderId/shipping/rates',
         }
       );
 
-      res.json({
+      return res.json({
         success: true,
         data: { rates }
       });
 
     } catch (error) {
       logger.error('Error getting shipping rates:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: 'Internal server error',
         code: 'INTERNAL_ERROR'
@@ -665,7 +673,7 @@ router.post('/:orderId/shipping/label',
   authenticate,
   authorize(['admin']),
   param('orderId').isMongoId().withMessage('Valid order ID is required'),
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -676,7 +684,7 @@ router.post('/:orderId/shipping/label',
         });
       }
 
-      const orderResult = await orderService.getOrder(req.params.orderId);
+      const orderResult = await orderService.getOrder(req.params.orderId as string);
       if (!orderResult.success) {
         return res.status(404).json(orderResult);
       }
@@ -684,7 +692,7 @@ router.post('/:orderId/shipping/label',
       const order = orderResult.data!.order;
       const label = await shippingService.createShipment(order);
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Shipping label generated successfully',
         data: { label }
@@ -692,7 +700,7 @@ router.post('/:orderId/shipping/label',
 
     } catch (error) {
       logger.error('Error generating shipping label:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: 'Internal server error',
         code: 'INTERNAL_ERROR'
@@ -709,7 +717,7 @@ router.post('/:orderId/shipping/label',
 router.get('/:orderId/tracking',
   authenticate,
   param('orderId').isMongoId().withMessage('Valid order ID is required'),
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -721,7 +729,7 @@ router.get('/:orderId/tracking',
       }
 
       // Check order ownership
-      const orderResult = await orderService.getOrder(req.params.orderId);
+      const orderResult = await orderService.getOrder(req.params.orderId as string);
       if (!orderResult.success) {
         return res.status(404).json(orderResult);
       }
@@ -748,14 +756,14 @@ router.get('/:orderId/tracking',
         order.shipping.carrier
       );
 
-      res.json({
+      return res.json({
         success: true,
         data: { tracking }
       });
 
     } catch (error) {
       logger.error('Error getting tracking information:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: 'Internal server error',
         code: 'INTERNAL_ERROR'
@@ -777,7 +785,7 @@ router.put('/:orderId/shipping/status',
     body('status').isIn(['pending', 'processing', 'shipped', 'in_transit', 'out_for_delivery', 'delivered', 'failed_delivery', 'returned']).withMessage('Valid shipping status is required'),
     body('message').optional().trim().isLength({ max: 200 }).withMessage('Message must be less than 200 characters')
   ],
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -789,7 +797,7 @@ router.put('/:orderId/shipping/status',
       }
 
       const updateRequest: IShippingUpdateRequest = {
-        orderId: req.params.orderId,
+        orderId: req.params.orderId as string,
         status: req.body.status,
         trackingNumber: req.body.trackingNumber,
         carrier: req.body.carrier,
@@ -808,14 +816,14 @@ router.put('/:orderId/shipping/status',
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Shipping status updated successfully'
       });
 
     } catch (error) {
       logger.error('Error updating shipping status:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: 'Internal server error',
         code: 'INTERNAL_ERROR'
@@ -835,7 +843,7 @@ router.post('/:orderId/inventory/reserve',
   authenticate,
   authorize(['admin']),
   param('orderId').isMongoId().withMessage('Valid order ID is required'),
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -846,18 +854,18 @@ router.post('/:orderId/inventory/reserve',
         });
       }
 
-      const orderResult = await orderService.getOrder(req.params.orderId);
+      const orderResult = await orderService.getOrder(req.params.orderId as string);
       if (!orderResult.success) {
         return res.status(404).json(orderResult);
       }
 
       const order = orderResult.data!.order;
       const reservation = await inventoryService.reserveInventory({
-        orderId: req.params.orderId,
+        orderId: req.params.orderId as string,
         customerId: order.customerId,
         items: order.items.map(item => ({
           productId: item.productId,
-          variantId: item.variantId,
+          ...(item.variantId && { variantId: item.variantId }),
           quantity: item.quantity
         })),
         expiresIn: req.body.expiresIn
@@ -871,7 +879,7 @@ router.post('/:orderId/inventory/reserve',
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Inventory reserved successfully',
         data: {
@@ -882,7 +890,7 @@ router.post('/:orderId/inventory/reserve',
 
     } catch (error) {
       logger.error('Error reserving inventory:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: 'Internal server error',
         code: 'INTERNAL_ERROR'
@@ -900,7 +908,7 @@ router.post('/:orderId/inventory/confirm',
   authenticate,
   authorize(['admin']),
   param('orderId').isMongoId().withMessage('Valid order ID is required'),
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -911,7 +919,7 @@ router.post('/:orderId/inventory/confirm',
         });
       }
 
-      const confirmed = await inventoryService.confirmReservation(req.params.orderId);
+      const confirmed = await inventoryService.confirmReservation(req.params.orderId as string);
 
       if (!confirmed) {
         return res.status(400).json({
@@ -921,14 +929,14 @@ router.post('/:orderId/inventory/confirm',
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Inventory reservation confirmed successfully'
       });
 
     } catch (error) {
       logger.error('Error confirming inventory reservation:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: 'Internal server error',
         code: 'INTERNAL_ERROR'
@@ -946,7 +954,7 @@ router.post('/:orderId/inventory/confirm',
  */
 router.post('/webhooks/stripe',
   express.raw({ type: 'application/json' }),
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const signature = req.headers['stripe-signature'] as string;
       const payload = req.body;
@@ -957,11 +965,11 @@ router.post('/webhooks/stripe',
         return res.status(400).json({ error: result.error });
       }
 
-      res.json({ received: true });
+      return res.json({ received: true });
 
     } catch (error) {
       logger.error('Error handling Stripe webhook:', error);
-      res.status(400).json({ error: 'Webhook handling failed' });
+      return res.status(400).json({ error: 'Webhook handling failed' });
     }
   }
 );
@@ -972,7 +980,7 @@ router.post('/webhooks/stripe',
  * @access Public (webhook signature verification)
  */
 router.post('/webhooks/paypal',
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const result = await paymentService.handlePayPalWebhook(req.body);
 
@@ -980,11 +988,11 @@ router.post('/webhooks/paypal',
         return res.status(400).json({ error: result.error });
       }
 
-      res.json({ received: true });
+      return res.json({ received: true });
 
     } catch (error) {
       logger.error('Error handling PayPal webhook:', error);
-      res.status(400).json({ error: 'Webhook handling failed' });
+      return res.status(400).json({ error: 'Webhook handling failed' });
     }
   }
 );
@@ -1003,7 +1011,7 @@ router.get('/admin/orders/analytics',
     query('startDate').optional().isISO8601().toDate().withMessage('Valid start date is required'),
     query('endDate').optional().isISO8601().toDate().withMessage('Valid end date is required')
   ],
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -1044,14 +1052,14 @@ router.get('/admin/orders/analytics',
         }
       };
 
-      res.json({
+      return res.json({
         success: true,
         data: { analytics }
       });
 
     } catch (error) {
       logger.error('Error getting order analytics:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: 'Internal server error',
         code: 'INTERNAL_ERROR'
@@ -1067,7 +1075,7 @@ router.get('/admin/orders/analytics',
  * @desc Health check endpoint
  * @access Public
  */
-router.get('/health', (req, res) => {
+router.get('/health', (_req, res) => {
   res.json({
     success: true,
     service: 'order-management-service',
@@ -1082,7 +1090,7 @@ router.get('/health', (req, res) => {
 });
 
 // Error handling middleware
-router.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+router.use((error: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Order router error:', {
     error: error.message,
     stack: error.stack,
@@ -1101,7 +1109,7 @@ router.use((error: any, req: express.Request, res: express.Response, next: expre
     }
   }
 
-  res.status(500).json({
+  return res.status(500).json({
     success: false,
     error: 'Internal server error',
     code: 'INTERNAL_ERROR'

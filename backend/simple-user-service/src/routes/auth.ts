@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request } from 'express';
 import { User } from '../models/User';
 import { jwtService } from '../utils/jwt';
 import { authenticate, AuthRequest } from '../middleware/auth';
@@ -122,7 +122,7 @@ router.post('/login', async (req, res) => {
 });
 
 // Get current user
-router.get('/me', authenticate, async (req: AuthRequest, res) => {
+router.get('/me', authenticate, async (req: Request, res) => {
   try {
     const user = await User.findById(req.user!.userId);
     if (!user) {

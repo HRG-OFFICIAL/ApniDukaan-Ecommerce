@@ -1,5 +1,5 @@
 import ProfileService from '../../services/ProfileService';
-import { UserProfile } from '../../models/UserProfile';
+import UserProfile from '../../models/UserProfile';
 import {
   createMockUserProfile,
   createMockCreateProfileRequest,

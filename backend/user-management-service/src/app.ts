@@ -117,7 +117,6 @@ const initializeSession = async () => {
       url: config.REDIS_URL,
       socket: {
         connectTimeout: 60000,
-        lazyConnect: true,
       }
     });
 
@@ -161,7 +160,14 @@ const initializeSession = async () => {
 };
 
 // Custom middleware for request logging
-app.use(requestLogger);
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.path}`, {
+    ip: req.ip,
+    userAgent: req.get('User-Agent'),
+    timestamp: new Date().toISOString()
+  });
+  next();
+});
 
 // API routes
 app.use('/api/users', userRoutes);
@@ -244,11 +250,9 @@ const startServer = async () => {
         case 'EACCES':
           logger.error(`Port ${PORT} requires elevated privileges`);
           process.exit(1);
-          break;
         case 'EADDRINUSE':
           logger.error(`Port ${PORT} is already in use`);
           process.exit(1);
-          break;
         default:
           throw error;
       }

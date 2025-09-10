@@ -1,4 +1,4 @@
-import { Schema, model, Document, Types } from 'mongoose';
+import { Schema, model, Document, Types, Model } from 'mongoose';
 import { IRole, IPermission } from '../types/user.types';
 
 // ==================== PERMISSION SCHEMA ====================
@@ -64,16 +64,16 @@ const PermissionSchema = new Schema<IPermission>({
   toJSON: {
     transform: function(doc, ret) {
       ret.id = ret._id;
-      delete ret._id;
-      delete ret.__v;
+      delete (ret as any)._id;
+      delete (ret as any).__v;
       return ret;
     }
   },
   toObject: {
     transform: function(doc, ret) {
       ret.id = ret._id;
-      delete ret._id;
-      delete ret.__v;
+      delete (ret as any)._id;
+      delete (ret as any).__v;
       return ret;
     }
   }
@@ -132,16 +132,16 @@ const RoleSchema = new Schema<IRole>({
   toJSON: {
     transform: function(doc, ret) {
       ret.id = ret._id;
-      delete ret._id;
-      delete ret.__v;
+      delete (ret as any)._id;
+      delete (ret as any).__v;
       return ret;
     }
   },
   toObject: {
     transform: function(doc, ret) {
       ret.id = ret._id;
-      delete ret._id;
-      delete ret.__v;
+      delete (ret as any)._id;
+      delete (ret as any).__v;
       return ret;
     }
   }
@@ -322,6 +322,15 @@ RoleSchema.post(['deleteOne', 'findOneAndDelete'], async function(doc) {
 });
 
 export const Permission = model<IPermission>('Permission', PermissionSchema);
-export const Role = model<IRole>('Role', RoleSchema);
+// Define the Role model interface with methods
+interface IRoleModel extends Model<IRole> {
+  findByName(name: string): Promise<IRole | null>;
+  findSystemRoles(): Promise<IRole[]>;
+  findCustomRoles(): Promise<IRole[]>;
+  findByHierarchy(minHierarchy: number, maxHierarchy?: number): Promise<IRole[]>;
+  getDefaultRoles(): Promise<IRole[]>;
+}
+
+export const Role = model<IRole, IRoleModel>('Role', RoleSchema);
 
 export default { Role, Permission };

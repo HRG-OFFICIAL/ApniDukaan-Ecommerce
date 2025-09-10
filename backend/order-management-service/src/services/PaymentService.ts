@@ -35,33 +35,6 @@ interface IPaymentConfig {
   webhookTimeout: number;
 }
 
-// Payment gateway response interfaces
-interface IStripePaymentResult {
-  success: boolean;
-  paymentIntent?: Stripe.PaymentIntent;
-  clientSecret?: string;
-  error?: string;
-}
-
-interface IPayPalPaymentResult {
-  success: boolean;
-  paymentId?: string;
-  approvalUrl?: string;
-  error?: string;
-}
-
-interface IStripeRefundResult {
-  success: boolean;
-  refund?: Stripe.Refund;
-  error?: string;
-}
-
-interface IPayPalRefundResult {
-  success: boolean;
-  refundId?: string;
-  error?: string;
-}
-
 class PaymentService {
   private stripe: Stripe | null = null;
   private config: IPaymentConfig;
@@ -130,7 +103,8 @@ class PaymentService {
         return {
           success: false,
           error: validation.error!,
-          code: 'PAYMENT_VALIDATION_FAILED'
+          code: 'PAYMENT_VALIDATION_FAILED',
+          message: validation.error!
         };
       }
 
@@ -156,16 +130,18 @@ class PaymentService {
           return {
             success: false,
             error: 'Unsupported payment method',
-            code: 'UNSUPPORTED_PAYMENT_METHOD'
+            code: 'UNSUPPORTED_PAYMENT_METHOD',
+            message: 'Unsupported payment method'
           };
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing payment:', error);
       return {
         success: false,
         error: 'Payment processing failed',
-        code: 'PAYMENT_PROCESSING_ERROR'
+        code: 'PAYMENT_PROCESSING_ERROR',
+        message: 'Payment processing failed'
       };
     }
   }
@@ -178,7 +154,8 @@ class PaymentService {
       return {
         success: false,
         error: 'Stripe not configured',
-        code: 'STRIPE_NOT_CONFIGURED'
+        code: 'STRIPE_NOT_CONFIGURED',
+        message: 'Stripe not configured'
       };
     }
 
@@ -197,18 +174,20 @@ class PaymentService {
           orderId,
           ...(paymentRequest.metadata || {})
         },
-        shipping: paymentData.shipping ? {
-          address: {
-            line1: paymentData.shipping.address.line1,
-            line2: paymentData.shipping.address.line2,
-            city: paymentData.shipping.address.city,
-            state: paymentData.shipping.address.state,
-            postal_code: paymentData.shipping.address.postal_code,
-            country: paymentData.shipping.address.country
-          },
-          name: paymentData.shipping.name,
-          phone: paymentData.shipping.phone
-        } : undefined,
+        ...(paymentData.shipping && {
+          shipping: {
+            address: {
+              line1: paymentData.shipping.address.line1,
+              line2: paymentData.shipping.address.line2,
+              city: paymentData.shipping.address.city,
+              state: paymentData.shipping.address.state,
+              postal_code: paymentData.shipping.address.postal_code,
+              country: paymentData.shipping.address.country
+            },
+            name: paymentData.shipping.name,
+            phone: paymentData.shipping.phone
+          }
+        }),
         receipt_email: paymentData.receiptEmail
       });
 
@@ -230,11 +209,11 @@ class PaymentService {
         amount,
         currency,
         status: this.mapStripeStatus(finalPaymentIntent.status),
-        paidAt: isSuccess ? new Date() : undefined,
+        paidAt: isSuccess ? new Date() : new Date(),
         metadata: paymentRequest.metadata || {},
         gateway: {
           paymentIntentId: finalPaymentIntent.id,
-          chargeId: finalPaymentIntent.charges.data[0]?.id,
+          chargeId: (finalPaymentIntent as any).charges?.data[0]?.id,
           customerId: paymentData.customerId,
           paymentMethodId: paymentData.paymentMethodId
         },
@@ -242,8 +221,8 @@ class PaymentService {
       };
 
       // Add card details if available
-      if (finalPaymentIntent.charges.data[0]?.payment_method_details?.card) {
-        const card = finalPaymentIntent.charges.data[0].payment_method_details.card;
+      if ((finalPaymentIntent as any).charges?.data[0]?.payment_method_details?.card) {
+        const card = (finalPaymentIntent as any).charges.data[0].payment_method_details.card;
         payment.card = {
           last4: card.last4!,
           brand: card.brand!,
@@ -258,7 +237,7 @@ class PaymentService {
         message: isSuccess ? 'Payment processed successfully' : 'Payment requires additional action',
         data: {
           payment,
-          clientSecret: finalPaymentIntent.client_secret || undefined
+          ...(finalPaymentIntent.client_secret && { clientSecret: finalPaymentIntent.client_secret })
         }
       };
 
@@ -268,7 +247,8 @@ class PaymentService {
       return {
         success: false,
         error: error.message || 'Stripe payment failed',
-        code: 'STRIPE_PAYMENT_FAILED'
+        code: 'STRIPE_PAYMENT_FAILED',
+        message: error.message || 'Stripe payment failed'
       };
     }
   }
@@ -281,7 +261,8 @@ class PaymentService {
       return {
         success: false,
         error: 'PayPal not configured',
-        code: 'PAYPAL_NOT_CONFIGURED'
+        code: 'PAYPAL_NOT_CONFIGURED',
+        message: 'PayPal not configured'
       };
     }
 
@@ -318,7 +299,8 @@ class PaymentService {
             resolve({
               success: false,
               error: error.message || 'PayPal payment failed',
-              code: 'PAYPAL_PAYMENT_FAILED'
+              code: 'PAYPAL_PAYMENT_FAILED',
+              message: error.message || 'PayPal payment failed'
             });
           } else {
             const approvalUrl = payment.links.find((link: any) => link.rel === 'approval_url')?.href;
@@ -354,7 +336,8 @@ class PaymentService {
       return {
         success: false,
         error: error.message || 'PayPal payment failed',
-        code: 'PAYPAL_PAYMENT_FAILED'
+        code: 'PAYPAL_PAYMENT_FAILED',
+        message: error.message || 'PayPal payment failed'
       };
     }
   }
@@ -395,7 +378,8 @@ class PaymentService {
           resolve({
             success: false,
             error: error.message || 'PayPal payment execution failed',
-            code: 'PAYPAL_EXECUTION_FAILED'
+            code: 'PAYPAL_EXECUTION_FAILED',
+            message: error.message || 'PayPal payment execution failed'
           });
         } else {
           const updatedPayment: Partial<IPayment> = {
@@ -473,7 +457,7 @@ class PaymentService {
       const amountInCents = new Decimal(refundRequest.amount).mul(100).toNumber();
 
       const refund = await this.stripe.refunds.create({
-        payment_intent: payment.gateway?.paymentIntentId,
+        payment_intent: payment.gateway?.paymentIntentId || '',
         amount: amountInCents,
         reason: this.mapRefundReasonToStripe(refundRequest.reason),
         metadata: {
@@ -485,12 +469,12 @@ class PaymentService {
 
       const refundRecord: IRefund = {
         amount: refundRequest.amount,
-        currency: refundRequest.amount.toString(), // This should be currency from payment
+        currency: payment.currency, // <- corrected: use payment.currency
         reason: refundRequest.reason,
-        description: refundRequest.description,
+        description: refundRequest.description || '',
         refundId: refund.id,
         status: refund.status === 'succeeded' ? 'completed' : 'processing',
-        processedAt: refund.status === 'succeeded' ? new Date() : undefined,
+        processedAt: refund.status === 'succeeded' ? new Date() : new Date(), // ensure Date type
         metadata: refundRequest.metadata || {}
       };
 
@@ -533,10 +517,11 @@ class PaymentService {
             amount: refundRequest.amount,
             currency: payment.currency,
             reason: refundRequest.reason,
-            description: refundRequest.description,
+            description: refundRequest.description || '',
             refundId: refund.id,
             status: refund.state === 'completed' ? 'completed' : 'processing',
-            processedAt: refund.state === 'completed' ? new Date() : undefined,
+            // Make processedAt always a Date to satisfy type expectations
+            processedAt: refund.state === 'completed' ? new Date() : new Date(),
             metadata: refundRequest.metadata || {}
           };
 

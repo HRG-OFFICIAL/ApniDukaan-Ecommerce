@@ -14,6 +14,7 @@ export enum UserRole {
   SUPER_ADMIN = 'super_admin',
   ADMIN = 'admin',
   MANAGER = 'manager',
+  MODERATOR = 'moderator',
   CUSTOMER = 'customer',
   GUEST = 'guest'
 }
@@ -74,7 +75,9 @@ export enum AccountAction {
   MFA_DISABLE = 'mfa_disable',
   ROLE_CHANGE = 'role_change',
   ACCOUNT_SUSPENSION = 'account_suspension',
-  ACCOUNT_REACTIVATION = 'account_reactivation'
+  ACCOUNT_REACTIVATION = 'account_reactivation',
+  ADMIN_UPDATE = 'admin_update',
+  ACCOUNT_DELETION = 'account_deletion'
 }
 
 // ==================== BASE INTERFACES ====================
@@ -93,6 +96,7 @@ export interface IAuditFields extends ITimestamps {
 // ==================== USER INTERFACES ====================
 
 export interface IAddress {
+  _id?: string;
   type: AddressType;
   firstName: string;
   lastName: string;
@@ -255,6 +259,7 @@ export interface IUser extends Document, IAuditFields {
   loyaltyPoints?: number;
   referralCode?: string;
   referredBy?: string;
+  suspensionEndDate?: Date;
   tags: string[];
   notes?: string;
   metadata?: Record<string, any>;
@@ -312,6 +317,10 @@ export interface ISession extends Document, IAuditFields {
   revokedAt?: Date;
   revokedBy?: Types.ObjectId;
   metadata?: Record<string, any>;
+  isExpired?: boolean;
+  isActive?: boolean;
+  durationMinutes?: number;
+  timeUntilExpiry?: number;
 }
 
 // ==================== REQUEST/RESPONSE INTERFACES ====================
@@ -554,7 +563,9 @@ export interface IApiResponse<T = any> {
   method?: string;
 }
 
-export interface IPaginatedResponse<T = any> extends IApiResponse<T> {
+export interface IPaginatedResponse<T = any> {
+  success: boolean;
+  message: string;
   data: {
     items: T[];
     pagination: {
@@ -566,6 +577,11 @@ export interface IPaginatedResponse<T = any> extends IApiResponse<T> {
       hasPrev: boolean;
     };
   };
+  error?: string;
+  code?: string;
+  timestamp: string;
+  path?: string;
+  method?: string;
 }
 
 export interface IValidationError {
@@ -581,4 +597,84 @@ export interface IServiceResponse<T = any> {
   error?: string;
   code?: string;
   validationErrors?: IValidationError[];
+}
+
+// ==================== ADDITIONAL REQUEST/RESPONSE INTERFACES ====================
+
+export interface IRoleRequest {
+  name: string;
+  displayName: string;
+  description: string;
+  type: RoleType;
+  permissions: string[];
+  isSystem?: boolean;
+  isActive?: boolean;
+  hierarchy?: number;
+  metadata?: Record<string, any>;
+}
+
+export interface IRoleUpdateRequest {
+  name?: string;
+  displayName?: string;
+  description?: string;
+  type?: RoleType;
+  permissions?: string[];
+  isActive?: boolean;
+  hierarchy?: number;
+  metadata?: Record<string, any>;
+}
+
+export interface IUserSearchRequest {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: UserStatus;
+  role?: UserRole;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  startDate?: Date;
+  endDate?: Date;
+  isEmailVerified?: boolean;
+  hasMfaEnabled?: boolean;
+  sort?: {
+    field: string;
+    direction: 'asc' | 'desc';
+  };
+  filters?: {
+    status?: UserStatus;
+    role?: string;
+    emailVerified?: boolean;
+    lastLogin?: {
+      start: Date;
+      end: Date;
+    };
+    registrationDate?: {
+      start: Date;
+      end: Date;
+    };
+    search?: string;
+    tags?: string[];
+  };
+}
+
+export interface IUserBulkActionRequest {
+  userIds: string[];
+  action: BulkAction;
+  reason?: string;
+  metadata?: Record<string, any>;
+}
+
+export enum RoleType {
+  SYSTEM = 'system',
+  CUSTOM = 'custom'
+}
+
+export enum BulkAction {
+  ACTIVATE = 'activate',
+  DEACTIVATE = 'deactivate',
+  SUSPEND = 'suspend',
+  DELETE = 'delete',
+  CHANGE_ROLE = 'change_role',
+  SEND_EMAIL = 'send_email',
+  EXPORT_DATA = 'export_data'
 }

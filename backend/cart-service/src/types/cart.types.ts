@@ -1,4 +1,4 @@
-import { Document } from 'mongoose';
+import { Document, Model } from 'mongoose';
 
 export interface ICartItem {
   productId: string;
@@ -53,6 +53,21 @@ export interface ICart extends Document {
   expiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  
+  // Instance methods
+  calculateTotals(): void;
+  addItem(item: Omit<ICartItem, 'addedAt' | 'updatedAt'>): Promise<ICart>;
+  updateItem(productId: string, variantId: string | undefined, quantity: number): Promise<ICart>;
+  removeItem(productId: string, variantId?: string): Promise<ICart>;
+  clear(): Promise<ICart>;
+  applyDiscount(discount: ICartDiscount): Promise<ICart>;
+  removeDiscount(): Promise<ICart>;
+}
+
+export interface ICartModel extends Model<ICart> {
+  findActiveCart(userId?: string, sessionId?: string): Promise<ICart | null>;
+  findAbandonedCarts(hoursAgo?: number): Promise<ICart[]>;
+  cleanupExpiredCarts(): Promise<any>;
 }
 
 export interface ICartItemUpdate {

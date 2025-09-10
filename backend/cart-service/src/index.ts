@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import session from 'express-session';
-import connectRedis from 'connect-redis';
+import RedisStore from 'connect-redis';
 import { createClient } from 'redis';
 import mongoose from 'mongoose';
 import { connectDatabase, logger } from '@apnidukaan/shared';
@@ -21,19 +21,31 @@ async function startServer() {
 
   try {
     // Connect to MongoDB
-    await connectDatabase(process.env.MONGODB_URI!, 'cart_db');
-
-    // Connect to Redis
-    const redisClient = createClient({
-      url: process.env.REDIS_URL || 'redis://localhost:6379'
+    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_cart?retryWrites=true&w=majority&appName=Cluster0';
+    await connectDatabase({
+      uri: mongoUri,
+      dbName: 'cart_db'
     });
 
-    redisClient.on('error', (err) => {
-      logger.error('Redis Client Error:', err);
-    });
+    // Connect to Redis (optional)
+    let redisClient = null;
+    try {
+      redisClient = createClient({
+        url: process.env.REDIS_URL || 'redis://localhost:6379'
+      });
 
-    await redisClient.connect();
-    logger.info('Connected to Redis');
+      redisClient.on('error', (err) => {
+        logger.error('Redis Client Error:', err);
+      });
+
+      await redisClient.connect();
+      logger.info('Connected to Redis');
+    } catch (redisError) {
+      logger.warn('Failed to connect to Redis, continuing without Redis support', {
+        error: (redisError as any).message
+      });
+      redisClient = null;
+    }
 
     // Security middleware
     app.use(helmet({
@@ -77,12 +89,7 @@ async function startServer() {
     app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
     // Session configuration for guest carts
-    const RedisStore = connectRedis(session);
-    app.use(session({
-      store: new RedisStore({
-        client: redisClient,
-        prefix: 'cart_session:'
-      }),
+    const sessionConfig: any = {
       secret: process.env.SESSION_SECRET || 'cart-service-secret-key',
       resave: false,
       saveUninitialized: false,
@@ -92,7 +99,17 @@ async function startServer() {
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
       },
       name: 'cart.sid'
-    }));
+    };
+
+    // Use Redis store if available, otherwise use memory store
+    if (redisClient) {
+      sessionConfig.store = new RedisStore({
+        client: redisClient,
+        prefix: 'cart_session:'
+      });
+    }
+
+    app.use(session(sessionConfig));
 
     // Request logging middleware
     app.use((req, res, next) => {
@@ -125,7 +142,7 @@ async function startServer() {
         uptime: process.uptime(),
         environment: process.env.NODE_ENV || 'development',
         mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-        redis: redisClient.isReady ? 'connected' : 'disconnected'
+        redis: redisClient ? (redisClient.isReady ? 'connected' : 'disconnected') : 'not_configured'
       });
     });
 
@@ -165,7 +182,7 @@ async function startServer() {
         if (deletedCount > 0) {
           logger.info(`Cleaned up ${deletedCount} expired carts`);
         }
-      } catch (error) {
+      } catch (error: any) {
         logger.error('Error in cleanup job:', error);
       }
     }, cleanupInterval);
@@ -232,13 +249,15 @@ async function startServer() {
           await mongoose.connection.close();
           logger.info('MongoDB connection closed');
           
-          // Close Redis connection
-          await redisClient.quit();
-          logger.info('Redis connection closed');
+          // Close Redis connection if available
+          if (redisClient) {
+            await redisClient.quit();
+            logger.info('Redis connection closed');
+          }
           
           logger.info('Graceful shutdown completed');
           process.exit(0);
-        } catch (error) {
+        } catch (error: any) {
           logger.error('Error during graceful shutdown:', error);
           process.exit(1);
         }
@@ -254,7 +273,7 @@ async function startServer() {
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Failed to start Cart Service', {
       error: error.message,
       stack: error.stack,

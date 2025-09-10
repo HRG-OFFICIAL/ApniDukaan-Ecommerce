@@ -11,7 +11,7 @@ import { logger } from '@apnidukaan/shared';
 
 // Handle uncaught exceptions before starting the application
 process.on('uncaughtException', (error: Error) => {
-  logger.fatal('Uncaught Exception - Server startup failed:', {
+  logger.error('Uncaught Exception - Server startup failed:', {
     error: error.message,
     stack: error.stack,
     timestamp: new Date().toISOString()
@@ -21,7 +21,7 @@ process.on('uncaughtException', (error: Error) => {
 
 // Handle unhandled promise rejections before starting the application
 process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
-  logger.fatal('Unhandled Rejection - Server startup failed:', {
+  logger.error('Unhandled Rejection - Server startup failed:', {
     reason,
     promise,
     timestamp: new Date().toISOString()
@@ -53,7 +53,7 @@ const requiredEnvVars = [
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingEnvVars.length > 0) {
-  logger.fatal('Missing required environment variables:', {
+  logger.error('Missing required environment variables:', {
     missing: missingEnvVars,
     timestamp: new Date().toISOString()
   });
@@ -77,7 +77,7 @@ async function startServer() {
     const app = new OrderManagementApp();
     await app.start();
   } catch (error: any) {
-    logger.fatal('Failed to start Order Management Service:', {
+    logger.error('Failed to start Order Management Service:', {
       error: error.message,
       stack: error.stack,
       timestamp: new Date().toISOString()

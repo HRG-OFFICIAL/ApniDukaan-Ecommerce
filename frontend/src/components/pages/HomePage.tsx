@@ -7,6 +7,7 @@ import { ArrowRight, TrendingUp, Star, ShoppingBag, Truck, Shield, Headphones } 
 import { Button } from '@/components/ui/Button';
 import ProductCard from '@/components/product/ProductCard';
 import { useFeaturedProducts } from '@/hooks/useProducts';
+import { Product } from '@/graphql/types';
 
 export const HomePage: React.FC = () => {
   const { 
@@ -155,7 +156,7 @@ export const HomePage: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredProducts?.map((product) => (
+              {featuredProducts?.map((product: Product) => (
                 <ProductCard
                   key={product.id}
                   product={product}

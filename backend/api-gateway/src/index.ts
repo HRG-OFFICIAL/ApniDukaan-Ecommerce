@@ -121,7 +121,7 @@ async function startServer() {
     }));
 
     // Global error handler
-    app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    app.use((error: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
       logger.error('Unhandled error in API Gateway', {
         error: error.message,
         stack: error.stack,

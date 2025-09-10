@@ -184,7 +184,7 @@ export class RoleService implements IRoleService {
           };
         }
 
-        role.permissions = permissionIds;
+        role.permissions = permissionIds as any;
       }
 
       role.updatedBy = roleData.updatedBy;
@@ -288,7 +288,7 @@ export class RoleService implements IRoleService {
       const roleName = role.name.toLowerCase();
       
       // Check if user already has this role
-      if (user.hasRole(roleName)) {
+      if ((user as any).hasRole(roleName)) {
         return {
           success: false,
           error: 'User already has this role'
@@ -296,10 +296,10 @@ export class RoleService implements IRoleService {
       }
 
       // Add role to user
-      user.addRole(roleName);
+      (user as any).addRole(roleName);
 
       // Log role assignment
-      user.addActivity({
+      (user as any).addActivity({
         action: AccountAction.ROLE_CHANGE,
         timestamp: new Date(),
         success: true,
@@ -354,7 +354,7 @@ export class RoleService implements IRoleService {
       const roleName = role.name.toLowerCase();
       
       // Check if user has this role
-      if (!user.hasRole(roleName)) {
+      if (!(user as any).hasRole(roleName)) {
         return {
           success: false,
           error: 'User does not have this role'
@@ -370,10 +370,10 @@ export class RoleService implements IRoleService {
       }
 
       // Remove role from user
-      user.removeRole(roleName);
+      (user as any).removeRole(roleName);
 
       // Log role removal
-      user.addActivity({
+      (user as any).addActivity({
         action: AccountAction.ROLE_CHANGE,
         timestamp: new Date(),
         success: true,

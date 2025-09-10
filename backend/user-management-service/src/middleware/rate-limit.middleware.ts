@@ -16,7 +16,6 @@ const initializeRedisClient = async () => {
       url: redisUrl,
       socket: {
         connectTimeout: 10000,
-        lazyConnect: true,
       }
     });
 

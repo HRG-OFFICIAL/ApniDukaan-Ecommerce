@@ -5,14 +5,20 @@ import CartService from '../services/CartService';
 import { ICartMergeOptions } from '../types/cart.types';
 import { logger } from '@apnidukaan/shared';
 
+// Extend Express Request interface to include custom properties
+interface CustomRequest extends express.Request {
+  userId?: string;
+  sessionId?: string;
+}
+
 const router = express.Router();
 const cartService = new CartService();
 
 // Middleware to get user ID from headers or session
-const getUserContext = (req: any, res: any, next: any) => {
+const getUserContext = (req: CustomRequest, res: express.Response, next: express.NextFunction) => {
   // In a real application, this would extract user ID from JWT token
-  req.userId = req.headers['x-user-id'] || null;
-  req.sessionId = req.headers['x-session-id'] || req.sessionID || uuidv4();
+  req.userId = req.headers['x-user-id'] as string || undefined;
+  req.sessionId = req.headers['x-session-id'] as string || req.sessionID || uuidv4();
   next();
 };
 
@@ -74,7 +80,7 @@ const mergeCartsValidation = [
  * @desc Get current cart
  * @access Public (uses session) / Private (uses user ID)
  */
-router.get('/', getUserContext, async (req, res) => {
+router.get('/', getUserContext, async (req: CustomRequest, res: express.Response) => {
   try {
     const cart = await cartService.getCart(req.userId, req.sessionId);
 
@@ -91,7 +97,7 @@ router.get('/', getUserContext, async (req, res) => {
       data: { cart }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error getting cart:', error);
     res.status(500).json({
       success: false,
@@ -106,7 +112,7 @@ router.get('/', getUserContext, async (req, res) => {
  * @desc Get cart summary (item count, total, etc.)
  * @access Public (uses session) / Private (uses user ID)
  */
-router.get('/summary', getUserContext, async (req, res) => {
+router.get('/summary', getUserContext, async (req: CustomRequest, res: express.Response) => {
   try {
     const summary = await cartService.getCartSummary(req.userId, req.sessionId);
 
@@ -115,7 +121,7 @@ router.get('/summary', getUserContext, async (req, res) => {
       data: { summary }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error getting cart summary:', error);
     res.status(500).json({
       success: false,
@@ -133,7 +139,7 @@ router.get('/summary', getUserContext, async (req, res) => {
 router.post('/items',
   getUserContext,
   addToCartValidation,
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -152,7 +158,7 @@ router.post('/items',
         data: { cart: result.cart }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error adding to cart:', error);
       
       // Handle specific error cases
@@ -189,7 +195,7 @@ router.post('/items',
 router.put('/items/:productId/:variantId?',
   getUserContext,
   updateCartItemValidation,
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -217,7 +223,7 @@ router.put('/items/:productId/:variantId?',
         data: { cart: result.cart }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error updating cart item:', error);
       
       if (error.message.includes('not found')) {
@@ -256,7 +262,7 @@ router.delete('/items/:productId/:variantId?',
     param('productId').isMongoId().withMessage('Product ID must be valid'),
     param('variantId').optional().isMongoId().withMessage('Variant ID must be valid')
   ],
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -282,7 +288,7 @@ router.delete('/items/:productId/:variantId?',
         data: { cart: result.cart }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error removing from cart:', error);
       
       if (error.message.includes('not found')) {
@@ -307,7 +313,7 @@ router.delete('/items/:productId/:variantId?',
  * @desc Clear entire cart
  * @access Public (uses session) / Private (uses user ID)
  */
-router.delete('/', getUserContext, async (req, res) => {
+router.delete('/', getUserContext, async (req: CustomRequest, res: express.Response) => {
   try {
     const result = await cartService.clearCart(req.userId, req.sessionId);
 
@@ -317,7 +323,7 @@ router.delete('/', getUserContext, async (req, res) => {
       data: { cart: result.cart }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error clearing cart:', error);
     res.status(500).json({
       success: false,
@@ -335,7 +341,7 @@ router.delete('/', getUserContext, async (req, res) => {
 router.post('/discount',
   getUserContext,
   applyDiscountValidation,
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -355,7 +361,7 @@ router.post('/discount',
         data: { cart: result.cart }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error applying discount:', error);
       
       if (error.message.includes('not found') || error.message.includes('invalid')) {
@@ -388,7 +394,7 @@ router.post('/discount',
  * @desc Remove discount from cart
  * @access Public (uses session) / Private (uses user ID)
  */
-router.delete('/discount', getUserContext, async (req, res) => {
+router.delete('/discount', getUserContext, async (req: CustomRequest, res: express.Response) => {
   try {
     const result = await cartService.removeDiscount(req.userId, req.sessionId);
 
@@ -398,7 +404,7 @@ router.delete('/discount', getUserContext, async (req, res) => {
       data: { cart: result.cart }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error removing discount:', error);
     res.status(500).json({
       success: false,
@@ -413,7 +419,7 @@ router.delete('/discount', getUserContext, async (req, res) => {
  * @desc Validate cart items (check availability, prices)
  * @access Public (uses session) / Private (uses user ID)
  */
-router.post('/validate', getUserContext, async (req, res) => {
+router.post('/validate', getUserContext, async (req: CustomRequest, res: express.Response) => {
   try {
     const validation = await cartService.validateCart(req.userId, req.sessionId);
 
@@ -426,7 +432,7 @@ router.post('/validate', getUserContext, async (req, res) => {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error validating cart:', error);
     res.status(500).json({
       success: false,
@@ -443,7 +449,7 @@ router.post('/validate', getUserContext, async (req, res) => {
  */
 router.post('/merge',
   mergeCartsValidation,
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -486,7 +492,7 @@ router.post('/merge',
         data: { cart: result.cart }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error merging carts:', error);
       res.status(500).json({
         success: false,
@@ -506,7 +512,7 @@ router.get('/abandoned',
   [
     query('hours').optional().isInt({ min: 1, max: 168 }).withMessage('Hours must be between 1 and 168')
   ],
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       // In a real application, this would check for admin role
       const userRole = req.headers['x-user-role'] as string;
@@ -530,7 +536,7 @@ router.get('/abandoned',
         }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error getting abandoned carts:', error);
       res.status(500).json({
         success: false,
@@ -546,7 +552,7 @@ router.get('/abandoned',
  * @desc Clean up expired carts (admin only)
  * @access Private (Admin)
  */
-router.post('/cleanup', async (req, res) => {
+router.post('/cleanup', async (req: express.Request, res: express.Response) => {
   try {
     // In a real application, this would check for admin role
     const userRole = req.headers['x-user-role'] as string;
@@ -566,7 +572,7 @@ router.post('/cleanup', async (req, res) => {
       data: { deletedCount }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error cleaning up expired carts:', error);
     res.status(500).json({
       success: false,
@@ -586,7 +592,7 @@ router.patch('/:cartId/status',
     param('cartId').isMongoId().withMessage('Cart ID must be valid'),
     body('status').isIn(['abandoned', 'converted', 'expired']).withMessage('Invalid status')
   ],
-  async (req, res) => {
+  async (req: CustomRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -622,7 +628,7 @@ router.patch('/:cartId/status',
         data: { cartId, status }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error updating cart status:', error);
       res.status(500).json({
         success: false,

@@ -1,5 +1,5 @@
 import { createClient, RedisClientType } from 'redis';
-import { IOrderItem, IInventoryReservation, IOrder } from '../types/order.types';
+import { IInventoryReservation } from '../types/order.types';
 
 // Inventory interfaces
 interface IInventoryItem {
@@ -132,7 +132,7 @@ class InventoryService {
       if (Object.keys(cachedInventory).length > 0) {
         inventory = {
           productId,
-          variantId,
+          ...(variantId && { variantId }),
           sku: cachedInventory.sku || '',
           quantityAvailable: parseInt(cachedInventory.quantityAvailable || '0'),
           quantityReserved: parseInt(cachedInventory.quantityReserved || '0'),
@@ -154,7 +154,7 @@ class InventoryService {
 
       return {
         productId,
-        variantId,
+        ...(variantId && { variantId }),
         available: inventory.quantityAvailable,
         reserved: inventory.quantityReserved,
         onOrder: inventory.quantityOnOrder,
@@ -169,7 +169,7 @@ class InventoryService {
       // Return safe defaults on error
       return {
         productId,
-        variantId,
+        ...(variantId && { variantId }),
         available: 0,
         reserved: 0,
         onOrder: 0,
@@ -204,13 +204,13 @@ class InventoryService {
           stockCheck: stockChecks[index]
         }))
         .filter(({ quantity, stockCheck }) => 
-          stockCheck.available < quantity && !stockCheck.canBackorder
+          stockCheck && stockCheck.available < quantity && !stockCheck.canBackorder
         )
         .map(({ productId, variantId, quantity, stockCheck }) => ({
           productId,
-          variantId,
+          ...(variantId && { variantId }),
           requested: quantity,
-          available: stockCheck.available
+          available: stockCheck?.available || 0
         }));
 
       return {
@@ -226,7 +226,7 @@ class InventoryService {
         stockChecks: [],
         unavailableItems: items.map(item => ({
           productId: item.productId,
-          variantId: item.variantId,
+          ...(item.variantId && { variantId: item.variantId }),
           requested: item.quantity,
           available: 0
         }))
@@ -261,7 +261,7 @@ class InventoryService {
         orderId: request.orderId,
         items: request.items.map(item => ({
           productId: item.productId,
-          variantId: item.variantId,
+          ...(item.variantId && { variantId: item.variantId }),
           quantity: item.quantity,
           reservedAt: new Date(),
           expiresAt
@@ -287,7 +287,7 @@ class InventoryService {
         await Promise.all(
           successfulIndexes.map(index => {
             const item = request.items[index];
-            return this.releaseReservation(item.productId, item.quantity, reservationId, item.variantId);
+            return item ? this.releaseReservation(item.productId, item.quantity, reservationId, item.variantId) : Promise.resolve(false);
           })
         );
 
@@ -368,7 +368,7 @@ class InventoryService {
       // Log the inventory update
       await this.logInventoryUpdate({
         productId,
-        variantId,
+        ...(variantId && { variantId }),
         quantity,
         operation: 'release',
         reason: `Reservation ${reservationId} released`,
@@ -552,11 +552,11 @@ class InventoryService {
       // Log the inventory update
       await this.logInventoryUpdate({
         productId,
-        variantId,
+        ...(variantId && { variantId }),
         quantity,
         operation,
         reason,
-        userId,
+        ...(userId && { userId }),
         timestamp: new Date()
       });
 
@@ -583,7 +583,7 @@ class InventoryService {
     productId: string,
     quantity: number,
     reservationId: string,
-    expiresAt: Date,
+    _expiresAt: Date,
     variantId?: string
   ): Promise<boolean> {
     const key = this.getInventoryKey(productId, variantId);
@@ -614,7 +614,7 @@ class InventoryService {
       // Log the reservation
       await this.logInventoryUpdate({
         productId,
-        variantId,
+        ...(variantId && { variantId }),
         quantity,
         operation: 'reserve',
         reason: `Reservation ${reservationId}`,
@@ -662,7 +662,7 @@ class InventoryService {
       // Log the confirmation
       await this.logInventoryUpdate({
         productId,
-        variantId,
+        ...(variantId && { variantId }),
         quantity,
         operation: 'subtract',
         reason: `Order ${orderId} confirmed`,
@@ -688,14 +688,14 @@ class InventoryService {
       // Mock implementation - in production this would call the actual catalog service
       const mockInventory: IInventoryItem = {
         productId,
-        variantId,
+        ...(variantId && { variantId }),
         sku: `SKU-${productId}${variantId ? `-${variantId}` : ''}`,
         quantityAvailable: Math.floor(Math.random() * 100) + 10,
         quantityReserved: Math.floor(Math.random() * 5),
         quantityOnOrder: Math.floor(Math.random() * 20),
         reorderPoint: 10,
         maxStock: 200,
-        location: location || this.config.warehouseLocations[0],
+        location: location || this.config.warehouseLocations[0] || 'MAIN',
         lastUpdated: new Date()
       };
 
@@ -707,7 +707,7 @@ class InventoryService {
       // Return safe defaults
       return {
         productId,
-        variantId,
+        ...(variantId && { variantId }),
         sku: 'UNKNOWN',
         quantityAvailable: 0,
         quantityReserved: 0,
