@@ -146,9 +146,14 @@ export async function middleware(request: NextRequest) {
 
 function handleApiProxy(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
   
-  // Construct the backend URL
+  // Handle catalog service routes - delegate to Next.js rewrites
+  if (pathname.startsWith('/api/catalog/')) {
+    return NextResponse.next()
+  }
+  
+  // Handle other API routes (API Gateway)
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
   const backendUrl = `${apiUrl}${pathname.replace('/api', '')}${search}`
   
   // Create headers for the proxied request
