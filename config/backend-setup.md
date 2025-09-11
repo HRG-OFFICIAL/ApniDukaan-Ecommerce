@@ -62,7 +62,7 @@ export const config = {
   port: process.env.PORT || 4001,
   database: {
     mongodb: {
-      uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/shopsphere_catalog',
+      uri: process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_catalog?retryWrites=true&w=majority&appName=Cluster0',
     },
     redis: {
       url: process.env.REDIS_URL || 'redis://localhost:6379',
@@ -85,7 +85,7 @@ export const config = {
   port: process.env.PORT || 4002,
   database: {
     mongodb: {
-      uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/shopsphere_users',
+      uri: process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_users?retryWrites=true&w=majority&appName=Cluster0',
     },
   },
   jwt: {

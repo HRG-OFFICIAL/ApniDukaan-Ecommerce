@@ -3,11 +3,27 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import { ApolloServer } from 'apollo-server-express';
+import { typeDefs } from './graphql/schema';
+import { resolvers } from './graphql/resolvers';
 import { logger } from '@apnidukaan/shared';
 
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 4000;
+
+  // Initialize Apollo GraphQL Server
+  const apolloServer = new ApolloServer({
+    typeDefs,
+    resolvers,
+    context: ({ req }) => {
+      const token = req.headers.authorization;
+      return { token };
+    },
+    introspection: true,
+  });
+
+  await apolloServer.start();
 
   try {
     // Security middleware
@@ -36,6 +52,13 @@ async function startServer() {
     // Body parsing middleware
     app.use(express.json({ limit: '10mb' }));
     app.use(express.urlencoded({ extended: true }));
+
+    // Apply GraphQL middleware
+    apolloServer.applyMiddleware({ 
+      app: app as any, 
+      path: '/graphql',
+      cors: false // Already handled above
+    });
 
     // Health check endpoint
     app.get('/health', (req, res) => {
@@ -151,6 +174,8 @@ async function startServer() {
       });
       
       console.log(`🚀 API Gateway ready at http://localhost:${PORT}`);
+      console.log(`🎯 GraphQL endpoint: http://localhost:${PORT}${apolloServer.graphqlPath}`);
+      console.log(`🎮 GraphQL Playground: http://localhost:${PORT}${apolloServer.graphqlPath}`);
       console.log(`📊 Health check: http://localhost:${PORT}/health`);
       console.log(`🛍️  Catalog API: http://localhost:${PORT}/api/catalog`);
       console.log(`👤 User API: http://localhost:${PORT}/api/users`);

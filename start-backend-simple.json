@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "dev:essential": "concurrently \"npm run dev --workspace=backend/catalog-service\" \"npm run dev --workspace=backend/api-gateway\""
+  }
+}

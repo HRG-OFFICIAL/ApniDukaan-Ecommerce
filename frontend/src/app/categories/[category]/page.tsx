@@ -106,11 +106,11 @@ export default function CategoryPage() {
     },
     search: searchQuery || undefined,
     sort: sortBy === 'featured' ? undefined : 
-          sortBy === 'price-asc' ? { field: 'price', direction: 'ASC' } :
-          sortBy === 'price-desc' ? { field: 'price', direction: 'DESC' } :
-          sortBy === 'name-asc' ? { field: 'name', direction: 'ASC' } :
-          sortBy === 'rating-desc' ? { field: 'rating', direction: 'DESC' } :
-          sortBy === 'newest' ? { field: 'createdAt', direction: 'DESC' } : undefined,
+          sortBy === 'price-asc' ? 'price_asc' :
+          sortBy === 'price-desc' ? 'price_desc' :
+          sortBy === 'name-asc' ? 'name_asc' :
+          sortBy === 'rating-desc' ? 'rating_desc' :
+          sortBy === 'newest' ? 'created_desc' : undefined,
     limit: 12
   })
   

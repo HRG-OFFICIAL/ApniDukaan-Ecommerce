@@ -597,8 +597,8 @@ UserSchema.methods.generateAccessToken = function(sessionId: string): string {
     sessionId,
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
-    iss: process.env.JWT_ISSUER || 'shopsphere-user-service',
-    aud: process.env.JWT_AUDIENCE || 'shopsphere-app'
+    iss: process.env.JWT_ISSUER || 'apnidukaan-user-service',
+    aud: process.env.JWT_AUDIENCE || 'apnidukaan-app'
   };
   
   return jwt.sign(payload, process.env.JWT_SECRET!);

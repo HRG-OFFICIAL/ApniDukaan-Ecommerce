@@ -87,10 +87,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
-        <span className={loading ? 'sr-only' : undefined}>
-          {loading ? `Loading...` : children}
-        </span>
-        {!loading && children}
+        {loading ? (
+          <span className="sr-only">Loading...</span>
+        ) : (
+          children
+        )}
       </button>
     );
   }

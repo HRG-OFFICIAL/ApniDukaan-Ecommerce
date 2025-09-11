@@ -24,8 +24,8 @@ async function testRedisIntegration() {
     console.log(`✅ Ping response: ${pong}`);
 
     // String operations
-    await client.set('shopsphere:test:connection', 'Redis Cloud is working!');
-    const testValue = await client.get('shopsphere:test:connection');
+    await client.set('ApniDukaan:test:connection', 'Redis Cloud is working!');
+    const testValue = await client.get('ApniDukaan:test:connection');
     console.log(`✅ String operations: ${testValue}`);
 
     // JSON operations (like product caching)
@@ -37,35 +37,35 @@ async function testRedisIntegration() {
       inStock: true
     };
     
-    await client.set('shopsphere:product:1', JSON.stringify(productData));
-    const cachedProduct = await client.get('shopsphere:product:1');
+    await client.set('ApniDukaan:product:1', JSON.stringify(productData));
+    const cachedProduct = await client.get('ApniDukaan:product:1');
     const parsedProduct = JSON.parse(cachedProduct);
     console.log(`✅ JSON operations: ${parsedProduct.name} - $${parsedProduct.price}`);
 
     // Hash operations (like user sessions)
-    await client.hSet('shopsphere:user:session:123', {
+    await client.hSet('ApniDukaan:user:session:123', {
       userId: '123',
       email: 'user@example.com',
       loginTime: new Date().toISOString(),
       cartItems: '5'
     });
     
-    const sessionData = await client.hGetAll('shopsphere:user:session:123');
+    const sessionData = await client.hGetAll('ApniDukaan:user:session:123');
     console.log(`✅ Hash operations: User ${sessionData.userId} logged in at ${sessionData.loginTime}`);
 
     // List operations (like shopping cart)
-    await client.lPush('shopsphere:cart:user123', 'product1', 'product2', 'product3');
-    const cartItems = await client.lRange('shopsphere:cart:user123', 0, -1);
+    await client.lPush('ApniDukaan:cart:user123', 'product1', 'product2', 'product3');
+    const cartItems = await client.lRange('ApniDukaan:cart:user123', 0, -1);
     console.log(`✅ List operations: Cart has ${cartItems.length} items`);
 
     // Set operations (like product tags)
-    await client.sAdd('shopsphere:product:1:tags', 'wireless', 'bluetooth', 'headphones', 'electronics');
-    const tags = await client.sMembers('shopsphere:product:1:tags');
+    await client.sAdd('ApniDukaan:product:1:tags', 'wireless', 'bluetooth', 'headphones', 'electronics');
+    const tags = await client.sMembers('ApniDukaan:product:1:tags');
     console.log(`✅ Set operations: Product tags: ${tags.join(', ')}`);
 
     // Expiration test (like session timeout)
-    await client.setEx('shopsphere:session:temp', 5, 'This session expires in 5 seconds');
-    const beforeExpiry = await client.get('shopsphere:session:temp');
+    await client.setEx('ApniDukaan:session:temp', 5, 'This session expires in 5 seconds');
+    const beforeExpiry = await client.get('ApniDukaan:session:temp');
     console.log(`✅ Expiration test: ${beforeExpiry} (will expire in 5 seconds)`);
 
     // Performance test
@@ -74,7 +74,7 @@ async function testRedisIntegration() {
     
     // Simulate multiple operations
     for (let i = 0; i < 100; i++) {
-      await client.set(`shopsphere:test:perf:${i}`, `value${i}`);
+      await client.set(`ApniDukaan:test:perf:${i}`, `value${i}`);
     }
     
     const endTime = Date.now();
@@ -83,17 +83,17 @@ async function testRedisIntegration() {
 
     // Cleanup
     console.log('\n4️⃣ Cleaning up test data...');
-    const keys = await client.keys('shopsphere:test:*');
+    const keys = await client.keys('ApniDukaan:test:*');
     if (keys.length > 0) {
       await client.del(keys);
     }
-    await client.del('shopsphere:product:1', 'shopsphere:user:session:123', 'shopsphere:cart:user123');
+    await client.del('ApniDukaan:product:1', 'ApniDukaan:user:session:123', 'ApniDukaan:cart:user123');
     console.log('✅ Cleanup completed\n');
 
     console.log('🎉 Redis Cloud Integration Test PASSED!');
     console.log('✅ All Redis operations working correctly');
     console.log('✅ Performance is excellent');
-    console.log('✅ Ready for ShopSphere integration\n');
+    console.log('✅ Ready for ApniDukaan integration\n');
 
     console.log('📊 Redis Cloud Features Available:');
     console.log('   - Product caching (faster page loads)');

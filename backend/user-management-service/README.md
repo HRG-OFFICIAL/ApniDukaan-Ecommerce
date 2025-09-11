@@ -1,6 +1,6 @@
-# ShopSphere User Management Service
+# ApniDukaan User Management Service
 
-A comprehensive microservice for user authentication, authorization, and profile management in the ShopSphere e-commerce platform.
+A comprehensive microservice for user authentication, authorization, and profile management in the ApniDukaan e-commerce platform.
 
 ## 🚀 Features
 
@@ -67,7 +67,7 @@ src/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/shopsphere/user-management-service
+   git clone https://github.com/ApniDukaan/user-management-service
    cd user-management-service
    ```
 
@@ -197,7 +197,7 @@ npm run test:watch
 ### Docker Deployment
 ```bash
 # Build image
-docker build -t shopsphere/user-management .
+docker build -t ApniDukaan/user-management .
 
 # Run with Docker Compose
 docker-compose up -d
@@ -227,7 +227,7 @@ EMAIL_SERVICE_API_KEY=your-email-service-key
 
 After running the seeder, a default admin account is created:
 
-- **Email:** admin@shopsphere.com
+- **Email:** admin@ApniDukaan.com
 - **Username:** superadmin  
 - **Password:** SuperAdmin123!
 
@@ -239,8 +239,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-For support, email support@shopsphere.com or create an issue in the repository.
+For support, email support@ApniDukaan.com or create an issue in the repository.
 
 ---
 
-Made with ❤️ by the ShopSphere Team
+Made with ❤️ by the ApniDukaan Team

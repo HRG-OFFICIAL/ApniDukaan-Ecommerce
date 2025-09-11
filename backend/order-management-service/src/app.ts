@@ -47,7 +47,7 @@ class OrderManagementApp {
       origin: process.env.CORS_ORIGIN?.split(',') || [
         'http://localhost:3000',
         'http://localhost:3001',
-        'https://shopsphere.com'
+        'https://apnidukaan.com'
       ],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -222,7 +222,7 @@ class OrderManagementApp {
     this.app.get('/', (_req: Request, res: Response) => {
       res.json({
         success: true,
-        message: 'ShopSphere Order Management Service API',
+        message: 'ApniDukaan Order Management Service API',
         version: process.env.npm_package_version || '1.0.0',
         documentation: '/api/docs',
         health: '/health',
@@ -333,7 +333,7 @@ class OrderManagementApp {
 
   public async initializeDatabase(): Promise<void> {
     try {
-      const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/shopsphere-orders';
+      const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_orders?retryWrites=true&w=majority&appName=Cluster0';
       
       await mongoose.connect(mongoUri, {
         maxPoolSize: parseInt(process.env.MONGODB_MAX_POOL_SIZE || '10'),

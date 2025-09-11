@@ -15,9 +15,6 @@ import {
   RotateCcw,
   Heart
 } from 'lucide-react'
-import { usePreferencesStore } from '../../store/usePreferencesStore'
-import { ThemeToggle } from '../ui/ThemeToggle'
-import { Logo } from '../ui/Logo'
 
 const footerLinks = {
   company: {
@@ -97,8 +94,6 @@ const socialLinks = [
 ]
 
 export default function Footer() {
-  const { currency } = usePreferencesStore()
-  
   return (
     <footer className="bg-gray-900 text-gray-300">
       {/* Features Section */}
@@ -128,7 +123,12 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
           {/* Brand Column */}
           <div className="lg:col-span-2">
-            <Logo variant="footer" size="lg" className="mb-6" />
+            <div className="flex items-center space-x-2 mb-6">
+              <div className="h-10 w-10 rounded bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+                <span className="text-white font-bold text-lg">A</span>
+              </div>
+              <span className="text-2xl font-bold text-white">ApniDukaan</span>
+            </div>
             
             <p className="text-gray-400 mb-6 max-w-sm">
               Your ultimate e-commerce destination. Discover amazing products, 
@@ -161,19 +161,13 @@ export default function Footer() {
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-gray-800 dark:bg-gray-700 p-2 rounded-full hover:bg-blue-600 transition-colors"
+                    className="bg-gray-800 p-2 rounded-full hover:bg-blue-600 transition-colors"
                     aria-label={social.name}
                   >
                     <Icon className="h-5 w-5" />
                   </a>
                 )
               })}
-            </div>
-
-            {/* Theme Toggle */}
-            <div className="mt-6">
-              <p className="text-sm text-gray-400 mb-3">Theme Preference</p>
-              <ThemeToggle variant="compact" />
             </div>
           </div>
 
@@ -230,7 +224,7 @@ export default function Footer() {
                 © {new Date().getFullYear()} ApniDukaan. All rights reserved.
               </p>
               <div className="flex items-center space-x-4 text-xs text-gray-500">
-                <span>Currency: {currency}</span>
+                <span>Currency: USD</span>
                 <span>•</span>
                 <span>English (US)</span>
               </div>

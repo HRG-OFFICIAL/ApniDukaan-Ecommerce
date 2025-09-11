@@ -22,10 +22,10 @@ const getAllowedOrigins = (): string[] => {
 
   if (isProduction) {
     baseOrigins.push(
-      'https://shopsphere.com',
-      'https://www.shopsphere.com',
-      'https://admin.shopsphere.com',
-      'https://api.shopsphere.com'
+      'https://ApniDukaan.com',
+      'https://www.ApniDukaan.com',
+      'https://admin.ApniDukaan.com',
+      'https://api.ApniDukaan.com'
     );
   }
 

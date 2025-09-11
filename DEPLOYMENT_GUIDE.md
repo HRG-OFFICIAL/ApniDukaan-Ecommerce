@@ -1,4 +1,4 @@
-# ShopSphere Deployment Guide
+# ApniDukaan Deployment Guide
 
 This guide covers local development setup, Docker deployment, and production deployment on AWS with Kubernetes.
 
@@ -23,8 +23,8 @@ This guide covers local development setup, Docker deployment, and production dep
 ### 1. Clone and Setup Environment
 
 ```bash
-git clone https://github.com/your-username/shopsphere-ecommerce.git
-cd shopsphere-ecommerce
+git clone https://github.com/your-username/ApniDukaan-ecommerce.git
+cd ApniDukaan-ecommerce
 
 # Copy and configure environment variables
 cp .env.example .env
@@ -60,7 +60,7 @@ docker-compose ps
 npm run seed
 
 # Or manually access services:
-# MongoDB: mongodb://localhost:27017
+# MongoDB: MongoDB Atlas (Cloud)
 # Redis: redis://localhost:6379
 # MinIO Console: http://localhost:9001 (minioadmin/minioadmin123)
 ```
@@ -130,7 +130,7 @@ JWT_ACCESS_SECRET=your-super-secure-access-secret-min-32-chars
 JWT_REFRESH_SECRET=your-super-secure-refresh-secret-min-32-chars
 
 # Database
-MONGODB_URI=mongodb://localhost:27017
+MONGODB_URI=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0
 REDIS_URL=redis://localhost:6379
 REDIS_PASSWORD=your-redis-password
 
@@ -168,7 +168,7 @@ GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/callback/google
 #### Email Configuration
 ```bash
 SENDGRID_API_KEY=SG.your-sendgrid-api-key
-FROM_EMAIL=noreply@shopsphere.com
+FROM_EMAIL=noreply@ApniDukaan.com
 ```
 
 #### AWS Configuration
@@ -176,7 +176,7 @@ FROM_EMAIL=noreply@shopsphere.com
 AWS_ACCESS_KEY_ID=your-aws-access-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 AWS_REGION=us-east-1
-S3_BUCKET=shopsphere-product-images
+S3_BUCKET=ApniDukaan-product-images
 CLOUDFRONT_DOMAIN=d1234567890.cloudfront.net
 ```
 
@@ -192,9 +192,9 @@ sudo mv /tmp/eksctl /usr/local/bin
 
 # Create EKS cluster
 eksctl create cluster \
-  --name shopsphere-cluster \
+  --name ApniDukaan-cluster \
   --region us-east-1 \
-  --nodegroup-name shopsphere-nodes \
+  --nodegroup-name ApniDukaan-nodes \
   --node-type t3.medium \
   --nodes 3 \
   --nodes-min 1 \
@@ -205,7 +205,7 @@ eksctl create cluster \
 #### Setup AWS Resources
 ```bash
 # Create S3 bucket for images
-aws s3 mb s3://shopsphere-product-images-prod
+aws s3 mb s3://ApniDukaan-product-images-prod
 
 # Create CloudFront distribution
 aws cloudfront create-distribution \
@@ -216,7 +216,7 @@ aws cloudfront create-distribution \
 
 # Create ElastiCache Redis cluster
 aws elasticache create-cache-cluster \
-  --cache-cluster-id shopsphere-redis \
+  --cache-cluster-id ApniDukaan-redis \
   --engine redis \
   --cache-node-type cache.t3.micro \
   --num-cache-nodes 1
@@ -232,8 +232,8 @@ docker-compose -f docker-compose.prod.yml build
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
 
 # Tag and push each service
-docker tag shopsphere-frontend:latest YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/shopsphere-frontend:latest
-docker push YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/shopsphere-frontend:latest
+docker tag ApniDukaan-frontend:latest YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/ApniDukaan-frontend:latest
+docker push YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/ApniDukaan-frontend:latest
 
 # Repeat for all services...
 ```
@@ -242,7 +242,7 @@ docker push YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/shopsphere-frontend:
 
 ```bash
 # Create namespace
-kubectl create namespace shopsphere
+kubectl create namespace ApniDukaan
 
 # Create secrets
 kubectl create secret generic app-secrets \
@@ -250,14 +250,14 @@ kubectl create secret generic app-secrets \
   --from-literal=jwt-refresh-secret="your-jwt-refresh-secret" \
   --from-literal=stripe-secret-key="your-stripe-secret" \
   --from-literal=mongodb-uri="your-mongodb-connection-string" \
-  -n shopsphere
+  -n ApniDukaan
 
 # Apply Kubernetes manifests
-kubectl apply -f infrastructure/k8s/ -n shopsphere
+kubectl apply -f infrastructure/k8s/ -n ApniDukaan
 
 # Verify deployment
-kubectl get pods -n shopsphere
-kubectl get services -n shopsphere
+kubectl get pods -n ApniDukaan
+kubectl get services -n ApniDukaan
 ```
 
 ### 4. Configure Ingress and SSL
@@ -267,14 +267,14 @@ kubectl get services -n shopsphere
 helm repo add eks https://aws.github.io/eks-charts
 helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   -n kube-system \
-  --set clusterName=shopsphere-cluster
+  --set clusterName=ApniDukaan-cluster
 
 # Apply ingress configuration
-kubectl apply -f infrastructure/k8s/ingress.yaml -n shopsphere
+kubectl apply -f infrastructure/k8s/ingress.yaml -n ApniDukaan
 
 # Configure SSL with cert-manager
 kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.13.0/cert-manager.yaml
-kubectl apply -f infrastructure/k8s/cert-manager-issuer.yaml -n shopsphere
+kubectl apply -f infrastructure/k8s/cert-manager-issuer.yaml -n ApniDukaan
 ```
 
 ## 🔍 Monitoring and Logging

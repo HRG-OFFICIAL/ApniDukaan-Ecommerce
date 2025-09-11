@@ -1,18 +1,15 @@
-'use client'
-
 import Link from 'next/link'
+import { ArrowRight, Zap, Gift, Store } from 'lucide-react'
 import { sampleProducts, categories } from '../lib/data'
 import ProductCard from '../components/ProductCard'
-import Header from '../components/Header'
-import Footer from '../components/layout/Footer'
-import { ArrowRight, Zap, Gift } from 'lucide-react'
+import MainLayout from '../components/layout/MainLayout'
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
+    <MainLayout pageTitle="Home" className="bg-gray-50">
+      <div className="min-h-screen bg-gray-50">
 
-      <main>
+      <main className="bg-gray-50">
         <section className="relative bg-blue-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
             <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 tracking-tight">
@@ -81,8 +78,7 @@ export default function Home() {
           </div>
         </section>
       </main>
-
-      <Footer />
-    </div>
+      </div>
+    </MainLayout>
   )
 }

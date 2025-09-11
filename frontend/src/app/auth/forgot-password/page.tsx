@@ -1,13 +1,15 @@
-'use client';
+'use client'
+
+export const dynamic = 'force-dynamic'
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useAuth as useAuthHook } from '../../../hooks/useAuth';
+import { useAuthAPI } from '../../../hooks/useAuthAPI';
 import { Mail, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ForgotPasswordPage() {
-  const { forgotPassword, loading } = useAuthHook();
+  const { forgotPassword, loading } = useAuthAPI();
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState('');

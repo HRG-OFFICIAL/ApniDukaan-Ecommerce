@@ -1,7 +1,7 @@
 {
-  "name": "@shopsphere/user-management-service",
+  "name": "@apnidukaan/user-management-service",
   "version": "1.0.0",
-  "description": "ShopSphere User Management Service - Authentication and user profiles",
+  "description": "ApniDukaan User Management Service - Authentication and user profiles",
   "main": "dist/app.js",
   "scripts": {
     "start": "node dist/app.js",

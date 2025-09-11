@@ -141,7 +141,7 @@ const initializeSession = async () => {
       secret: config.SESSION_SECRET,
       resave: false,
       saveUninitialized: false,
-      name: 'shopsphere.sid',
+      name: 'apnidukaan.sid',
       cookie: {
         secure: config.NODE_ENV === 'production',
         httpOnly: true,
@@ -184,7 +184,7 @@ app.get('/api/docs', (req, res) => {
       health: '/health',
       metrics: '/metrics'
     },
-    documentation: 'https://docs.shopsphere.com/api/user-management'
+    documentation: 'https://docs.apnidukaan.com/api/user-management'
   });
 });
 

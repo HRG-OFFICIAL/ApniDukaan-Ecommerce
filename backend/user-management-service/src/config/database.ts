@@ -3,7 +3,7 @@ import { logger } from '@apnidukaan/shared';
 
 export const connectDB = async (): Promise<void> => {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/shopsphere_users';
+    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_users?retryWrites=true&w=majority&appName=Cluster0';
     
     await mongoose.connect(mongoUri, {
       maxPoolSize: 10,

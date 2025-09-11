@@ -31,7 +31,13 @@ const brands: FilterOption[] = [
   { id: 'sony', label: 'Sony', count: 78 },
   { id: 'lg', label: 'LG', count: 45 },
   { id: 'oneplus', label: 'OnePlus', count: 67 },
-  { id: 'xiaomi', label: 'Xiaomi', count: 123 }
+  { id: 'xiaomi', label: 'Xiaomi', count: 123 },
+  { id: 'techsound', label: 'TechSound', count: 45 },
+  { id: 'fittech', label: 'FitTech', count: 67 },
+  { id: 'ecowear', label: 'EcoWear', count: 89 },
+  { id: 'photopro', label: 'PhotoPro', count: 23 },
+  { id: 'comfortseat', label: 'ComfortSeat', count: 34 },
+  { id: 'soundwave', label: 'SoundWave', count: 56 }
 ]
 
 const categories: FilterOption[] = [
@@ -41,7 +47,12 @@ const categories: FilterOption[] = [
   { id: 'home-kitchen', label: 'Home & Kitchen', count: 189 },
   { id: 'sports', label: 'Sports & Fitness', count: 156 },
   { id: 'books', label: 'Books', count: 89 },
-  { id: 'beauty', label: 'Beauty & Health', count: 234 }
+  { id: 'beauty', label: 'Beauty & Health', count: 234 },
+  { id: 'photography', label: 'Photography', count: 78 },
+  { id: 'furniture', label: 'Furniture', count: 123 },
+  { id: 'automotive', label: 'Automotive', count: 45 },
+  { id: 'toys-games', label: 'Toys & Games', count: 156 },
+  { id: 'jewelry', label: 'Jewelry & Watches', count: 89 }
 ]
 
 export function AdvancedFilters({ onFiltersChange, activeFilters, isOpen, onToggle }: FiltersProps) {

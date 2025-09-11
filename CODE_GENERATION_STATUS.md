@@ -127,7 +127,7 @@ import {
   authenticate,
   connectDatabase,
   logger 
-} from '@shopsphere/shared';
+} from '@ApniDukaan/shared';
 ```
 
 ✅ **Use JWT authentication**:

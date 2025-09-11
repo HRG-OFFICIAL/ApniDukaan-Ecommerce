@@ -10,7 +10,6 @@ const nextConfig = {
   },
   
   // Performance optimizations
-  swcMinify: true,
   compress: true,
   
   // Static generation configuration
@@ -23,7 +22,6 @@ const nextConfig = {
       allowedOrigins: ['localhost:3000', 'localhost:4000']
     },
     optimizePackageImports: ['lucide-react', '@heroicons/react', 'framer-motion', 'react-hot-toast'],
-    optimizeCss: true,
     scrollRestoration: true,
   },
   
@@ -63,11 +61,26 @@ const nextConfig = {
         hostname: 'res.cloudinary.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+        port: '',
+        pathname: '/**',
       }
     ],
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   
   // Environment variables
@@ -75,7 +88,7 @@ const nextConfig = {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'http://localhost:5000',
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'your-secret-key',
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
-    NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'ShopSphere',
+    NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'ApniDukaan',
   },
   
   // API rewrites
@@ -111,16 +124,16 @@ const nextConfig = {
     ]
   },
   
-  // Redirects
-  async redirects() {
-    return [
-      {
-        source: '/admin',
-        destination: '/admin/dashboard',
-        permanent: true,
-      },
-    ]
-  },
+  // Redirects - temporarily disabled to fix build errors
+  // async redirects() {
+  //   return [
+  //     {
+  //       source: '/admin',
+  //       destination: '/admin/dashboard',
+  //       permanent: true,
+  //     },
+  //   ]
+  // },
   
   // Webpack configuration
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {

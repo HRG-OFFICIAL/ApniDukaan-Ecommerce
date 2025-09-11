@@ -1,8 +1,8 @@
-# 🔴 Redis Setup Guide for ShopSphere
+# 🔴 Redis Setup Guide for ApniDukaan
 
 ## 🎯 **Why Redis?**
 
-Redis adds powerful features to ShopSphere:
+Redis adds powerful features to ApniDukaan:
 - **⚡ Caching** - Faster product loading and API responses
 - **👤 Session Management** - Persistent user sessions
 - **🛒 Shopping Cart** - Real-time cart synchronization
@@ -27,7 +27,7 @@ Redis adds powerful features to ShopSphere:
 2. Copy the "Public endpoint" URL
 3. It looks like: `redis://username:password@host:port`
 
-### **Step 4: Update ShopSphere**
+### **Step 4: Update ApniDukaan**
 ```bash
 # Set environment variable
 set REDIS_URL=redis://username:password@host:port
@@ -63,14 +63,14 @@ docker run -d -p 6379:6379 redis:latest
 node test-redis-connection.js
 ```
 
-## 🔧 **Update ShopSphere Services**
+## 🔧 **Update ApniDukaan Services**
 
 Once Redis is set up, update your services:
 
 ### **Catalog Service**
 ```typescript
 // Add Redis caching to product queries
-import { connectRedis, cache } from '@shopsphere/shared';
+import { connectRedis, cache } from '@ApniDukaan/shared';
 
 // Cache products for 1 hour
 const cachedProducts = await cache.get('products:all');
@@ -83,13 +83,13 @@ if (!cachedProducts) {
 ### **User Service**
 ```typescript
 // Cache user sessions
-import { connectRedis, cache } from '@shopsphere/shared';
+import { connectRedis, cache } from '@ApniDukaan/shared';
 
 // Store user session
 await cache.set(`session:${sessionId}`, userData, { ttl: 86400 });
 ```
 
-## 📊 **Redis Features in ShopSphere**
+## 📊 **Redis Features in ApniDukaan**
 
 ### **Product Caching**
 - Cache frequently accessed products
@@ -119,14 +119,14 @@ await cache.set(`session:${sessionId}`, userData, { ttl: 86400 });
    ```bash
    node test-redis-connection.js
    ```
-6. **Restart ShopSphere**:
+6. **Restart ApniDukaan**:
    ```bash
    node start-with-atlas.js
    ```
 
 ## ⚠️ **Without Redis (Current Setup)**
 
-Your ShopSphere application works perfectly without Redis:
+Your ApniDukaan application works perfectly without Redis:
 - ✅ **MongoDB Atlas** - Data persistence
 - ✅ **All features** - Products, cart, orders
 - ✅ **Full functionality** - Complete e-commerce
@@ -138,4 +138,4 @@ Your ShopSphere application works perfectly without Redis:
 For **development and testing**: Continue without Redis
 For **production**: Add Redis Cloud for better performance
 
-**Your ShopSphere is complete and functional either way!** 🎉
+**Your ApniDukaan is complete and functional either way!** 🎉

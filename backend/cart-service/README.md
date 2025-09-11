@@ -1,6 +1,6 @@
 # Shopping Cart Service
 
-A comprehensive, scalable shopping cart service for the ShopSphere e-commerce platform. This microservice handles cart management for both guest and authenticated users with Redis-based session storage, MongoDB persistence, and advanced features like cart merging, validation, and abandoned cart recovery.
+A comprehensive, scalable shopping cart service for the ApniDukaan e-commerce platform. This microservice handles cart management for both guest and authenticated users with Redis-based session storage, MongoDB persistence, and advanced features like cart merging, validation, and abandoned cart recovery.
 
 ## 🚀 Features
 
@@ -161,7 +161,7 @@ PORT=4003
 NODE_ENV=development
 
 # Database Configuration
-MONGODB_URI=mongodb://localhost:27017/shopsphere_cart
+MONGODB_URI=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_cart?retryWrites=true&w=majority&appName=Cluster0
 REDIS_URL=redis://localhost:6379
 
 # Session Configuration
@@ -419,4 +419,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-Built with ❤️ by the ShopSphere Team
+Built with ❤️ by the ApniDukaan Team

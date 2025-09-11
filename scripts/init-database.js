@@ -11,11 +11,11 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 // MongoDB initialization script
 const initScript = `
-// MongoDB Initialization Script for ShopSphere
+// MongoDB Initialization Script for ApniDukaan
 // Run this script to create databases and initial collections
 
 // Switch to catalog database
-use shopsphere_catalog;
+use ApniDukaan_catalog;
 
 // Create indexes for products collection
 db.products.createIndex({ "name": "text", "description": "text", "tags": "text" });
@@ -47,7 +47,7 @@ db.reviews.createIndex({ "isHelpful.yes": -1 });
 db.reviews.createIndex({ "product": 1, "user": 1 }, { unique: true });
 
 // Switch to users database
-use shopsphere_users;
+use ApniDukaan_users;
 
 // Create indexes for users collection
 db.users.createIndex({ "email": 1 }, { unique: true });
@@ -66,7 +66,7 @@ db.wishlists.createIndex({ "userId": 1 }, { unique: true });
 db.wishlists.createIndex({ "items.productId": 1 });
 
 // Switch to orders database
-use shopsphere_orders;
+use ApniDukaan_orders;
 
 // Create indexes for orders collection
 db.orders.createIndex({ "userId": 1 });
@@ -83,7 +83,7 @@ db.carts.createIndex({ "items.productId": 1 });
 db.carts.createIndex({ "updatedAt": -1 });
 
 // Switch to payments database
-use shopsphere_payments;
+use ApniDukaan_payments;
 
 // Create indexes for payments collection
 db.payments.createIndex({ "orderId": 1 });
@@ -102,10 +102,10 @@ print("Database indexes created successfully!");
 `;
 
 const databases = [
-  'shopsphere_catalog',
-  'shopsphere_users', 
-  'shopsphere_orders',
-  'shopsphere_payments'
+  'ApniDukaan_catalog',
+  'ApniDukaan_users', 
+  'ApniDukaan_orders',
+  'ApniDukaan_payments'
 ];
 
 async function initializeDatabases() {
@@ -114,7 +114,7 @@ async function initializeDatabases() {
     console.log(`📡 Connecting to MongoDB: ${process.env.MONGODB_URI}`);
 
     // Connect to MongoDB
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017', {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0', {
       serverSelectionTimeoutMS: 5000,
     });
 
@@ -162,8 +162,8 @@ async function seedSampleData() {
     const { seedDatabase } = require('../backend/shared/dist/utils/seeder');
     
     await seedDatabase(
-      process.env.MONGODB_URI || 'mongodb://localhost:27017',
-      'shopsphere_catalog',
+      process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0',
+      'ApniDukaan_catalog',
       {
         dropFirst: false,
         seedCategories: true,
@@ -189,7 +189,7 @@ async function healthCheck() {
   try {
     console.log('🏥 Performing health check...');
     
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017', {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0', {
       serverSelectionTimeoutMS: 5000,
     });
     
@@ -271,7 +271,7 @@ function validateEnvironment() {
 async function main() {
   const command = process.argv[2];
   
-  console.log('🛍️  ShopSphere Database Initialization Tool\n');
+  console.log('🛍️  ApniDukaan Database Initialization Tool\n');
   
   switch (command) {
     case 'init':

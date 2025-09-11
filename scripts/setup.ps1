@@ -1,4 +1,4 @@
-# ShopSphere E-commerce Platform Setup Script (PowerShell)
+# ApniDukaan E-commerce Platform Setup Script (PowerShell)
 # This script sets up the entire development environment on Windows
 
 param(
@@ -8,7 +8,7 @@ param(
 )
 
 if ($Help) {
-    Write-Host "ShopSphere E-commerce Platform Setup Script" -ForegroundColor Blue
+    Write-Host "ApniDukaan E-commerce Platform Setup Script" -ForegroundColor Blue
     Write-Host "Usage: .\scripts\setup.ps1 [options]" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Options:" -ForegroundColor Yellow
@@ -149,7 +149,7 @@ function New-EnvironmentFiles {
 NODE_ENV=development
 PORT=3000
 API_PORT=4000
-DATABASE_URL=mongodb://localhost:27017/shopsphere
+DATABASE_URL=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-super-secret-jwt-key-change-in-production
 "@ | Out-File -FilePath ".env" -Encoding UTF8
@@ -163,7 +163,7 @@ JWT_SECRET=your-super-secret-jwt-key-change-in-production
     if (-not (Test-Path "frontend/.env.local")) {
         @"
 NEXT_PUBLIC_API_URL=http://localhost:4000
-NEXT_PUBLIC_APP_NAME=ShopSphere
+NEXT_PUBLIC_APP_NAME=ApniDukaan
 NEXT_PUBLIC_APP_VERSION=1.0.0
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your-nextauth-secret-key
@@ -283,7 +283,7 @@ function New-StartupScript {
     
     $startupScript = @"
 @echo off
-echo 🚀 Starting ShopSphere E-commerce Platform...
+echo 🚀 Starting ApniDukaan E-commerce Platform...
 
 REM Start MongoDB (if installed locally)
 where mongod >nul 2>nul
@@ -313,7 +313,7 @@ pause
 # Main setup function
 function Start-Setup {
     Write-Host "==========================================" -ForegroundColor Cyan
-    Write-Host "  ShopSphere E-commerce Platform Setup" -ForegroundColor Cyan
+    Write-Host "  ApniDukaan E-commerce Platform Setup" -ForegroundColor Cyan
     Write-Host "==========================================" -ForegroundColor Cyan
     Write-Host ""
     

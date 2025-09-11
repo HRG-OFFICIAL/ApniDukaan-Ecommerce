@@ -176,7 +176,7 @@ export class SocialAuthService implements ISocialAuthService {
       const userResponse = await axios.get('https://api.github.com/user', {
         headers: {
           Authorization: `token ${data.accessToken}`,
-          'User-Agent': 'ShopSphere'
+          'User-Agent': 'ApniDukaan'
         }
       });
 
@@ -184,7 +184,7 @@ export class SocialAuthService implements ISocialAuthService {
       const emailResponse = await axios.get('https://api.github.com/user/emails', {
         headers: {
           Authorization: `token ${data.accessToken}`,
-          'User-Agent': 'ShopSphere'
+          'User-Agent': 'ApniDukaan'
         }
       });
 

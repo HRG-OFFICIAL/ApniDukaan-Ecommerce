@@ -533,7 +533,7 @@ describe('Order Management Service - Integration Tests', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('ShopSphere Order Management Service');
+      expect(response.body.message).toContain('ApniDukaan Order Management Service');
     });
   });
 

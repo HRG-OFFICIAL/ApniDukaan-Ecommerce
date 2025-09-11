@@ -13,7 +13,7 @@ export default async function globalSetup() {
   // Start in-memory MongoDB
   mongod = await MongoMemoryServer.create({
     instance: {
-      dbName: 'shopsphere_profiles_test',
+      dbName: 'ApniDukaan_profiles_test',
       port: 27018 // Use different port for tests
     }
   });

@@ -1,6 +1,6 @@
-# ShopSphere Order Management Service
+# ApniDukaan Order Management Service
 
-A comprehensive microservice for managing e-commerce orders, payments, shipping, and inventory coordination within the ShopSphere platform.
+A comprehensive microservice for managing e-commerce orders, payments, shipping, and inventory coordination within the ApniDukaan platform.
 
 ## 🚀 Features
 
@@ -203,7 +203,7 @@ interface IShippingInfo {
 4. **Database Setup**
    ```bash
    # Ensure MongoDB and Redis are running
-   # MongoDB: mongodb://localhost:27017
+   # MongoDB: MongoDB Atlas (Cloud)
    # Redis: redis://localhost:6379
    ```
 
@@ -230,7 +230,7 @@ interface IShippingInfo {
 ```bash
 PORT=3002                              # Server port
 NODE_ENV=development                   # Environment
-MONGODB_URI=mongodb://localhost:27017/shopsphere-orders
+MONGODB_URI=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_orders?retryWrites=true&w=majority&appName=Cluster0
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=your_secret_key
 ```
@@ -388,7 +388,7 @@ spec:
     spec:
       containers:
       - name: order-management-service
-        image: shopsphere/order-management-service:latest
+        image: ApniDukaan/order-management-service:latest
         ports:
         - containerPort: 3002
         env:
@@ -515,4 +515,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**ShopSphere Order Management Service** - Built with ❤️ for scalable e-commerce
+**ApniDukaan Order Management Service** - Built with ❤️ for scalable e-commerce

@@ -4,7 +4,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-ShopSphere is a full-stack e-commerce platform built with a microservices architecture. The system is designed for scalability and uses modern technologies including Next.js, Node.js microservices, GraphQL, MongoDB, Redis, Kafka, Docker, and Kubernetes.
+ApniDukaan is a full-stack e-commerce platform built with a microservices architecture. The system is designed for scalability and uses modern technologies including Next.js, Node.js microservices, GraphQL, MongoDB, Redis, Kafka, Docker, and Kubernetes.
 
 ## Architecture
 
@@ -169,10 +169,10 @@ The project uses npm workspaces to manage dependencies across all services. The 
 
 ### Database Strategy
 Each microservice has its own MongoDB database to maintain service isolation:
-- `shopsphere_catalog` - Products, categories, reviews
-- `shopsphere_users` - Users, profiles, wishlists  
-- `shopsphere_orders` - Orders, carts, order items
-- `shopsphere_payments` - Payments, payment methods, transactions
+- `ApniDukaan_catalog` - Products, categories, reviews
+- `ApniDukaan_users` - Users, profiles, wishlists  
+- `ApniDukaan_orders` - Orders, carts, order items
+- `ApniDukaan_payments` - Payments, payment methods, transactions
 
 ### Event-Driven Architecture
 Services communicate asynchronously through Kafka topics for:

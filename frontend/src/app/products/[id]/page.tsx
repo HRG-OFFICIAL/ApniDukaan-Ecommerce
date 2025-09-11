@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 // Disable static generation for this page since it uses Apollo Client
 export const dynamic = 'force-dynamic'
@@ -150,13 +150,20 @@ export default function ProductDetailPage() {
   const productId = params?.id as string
   const { product: apiProduct, loading, error, refetch } = useProduct(productId)
   
-  // Fetch related products
-  const { products: relatedProductsList } = useProducts({
-    filter: {
-      category: apiProduct?.category,
-    },
-    limit: 4
-  })
+  // Fetch related products - memoize filter to prevent infinite re-renders
+  const relatedProductsFilter = useMemo(() => {
+    // Only return filter when category exists to prevent unnecessary API calls
+    if (!apiProduct?.category) return null
+    
+    return {
+      filter: {
+        category: apiProduct.category,
+      },
+      limit: 4
+    }
+  }, [apiProduct?.category])
+  
+  const { products: relatedProductsList } = useProducts(relatedProductsFilter || {})
   
   // Use API data or fallback to mock data
   const product = apiError || error ? mockProduct : apiProduct
@@ -350,7 +357,7 @@ export default function ProductDetailPage() {
                           key={i}
                           className={cn(
                             "w-5 h-5",
-                            i < Math.floor(product?.rating || 0)
+                            i < Math.floor(product?.rating?.average || 0)
                               ? "text-yellow-400 fill-current"
                               : "text-gray-300"
                           )}
@@ -358,7 +365,7 @@ export default function ProductDetailPage() {
                       ))}
                     </div>
                     <span className="ml-2 text-sm text-gray-600">
-                      {product?.rating || 0} ({product?.reviewCount || 0} reviews)
+                      {product?.rating?.average || 0} ({product?.rating?.count || 0} reviews)
                     </span>
                   </div>
 

@@ -1,6 +1,6 @@
 # Reviews REST API
 
-The Reviews REST API provides comprehensive functionality for managing product reviews in the ShopSphere e-commerce platform. This API handles review creation, moderation, voting, and analytics with proper authentication and authorization.
+The Reviews REST API provides comprehensive functionality for managing product reviews in the ApniDukaan e-commerce platform. This API handles review creation, moderation, voting, and analytics with proper authentication and authorization.
 
 ## Overview
 

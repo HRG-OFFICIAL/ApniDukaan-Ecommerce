@@ -1,4 +1,4 @@
-# 🛠️ ShopSphere Development - Manual Assistance Guide
+# 🛠️ ApniDukaan Development - Manual Assistance Guide
 
 This guide provides step-by-step instructions for manually resolving common issues and providing assistance when the automated startup script needs help.
 
@@ -105,7 +105,7 @@ docker run -d --name mongodb-dev \
   -p 27017:27017 \
   -e MONGO_INITDB_ROOT_USERNAME=admin \
   -e MONGO_INITDB_ROOT_PASSWORD=password \
-  -e MONGO_INITDB_DATABASE=shopsphere \
+  -e MONGO_INITDB_DATABASE=ApniDukaan \
   mongo:7.0
 
 # Start Redis
@@ -257,7 +257,7 @@ telnet localhost 27017  # MongoDB (Ctrl+C to exit)
 telnet localhost 6379   # Redis (Ctrl+C to exit)
 
 # Verify environment variables
-echo $MONGODB_URI  # Should show: mongodb://localhost:27017/shopsphere
+echo $MONGODB_URI  # Should show: mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0
 echo $REDIS_URL    # Should show: redis://localhost:6379
 ```
 
@@ -281,7 +281,7 @@ PORT=3000
 API_PORT=4000
 
 # Database Configuration
-MONGODB_URI=mongodb://localhost:27017/shopsphere
+MONGODB_URI=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0
 REDIS_URL=redis://localhost:6379
 REDIS_PASSWORD=redis_password
 

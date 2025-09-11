@@ -17,7 +17,7 @@ const app = express();
 // Environment variables with defaults
 const PORT = process.env.PORT || 3004;
 const NODE_ENV = process.env.NODE_ENV || 'development';
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/shopsphere_profiles';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_profiles?retryWrites=true&w=majority&appName=Cluster0';
 const REDIS_URI = process.env.REDIS_URI || 'redis://localhost:6379';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const CORS_ORIGINS = process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000'];

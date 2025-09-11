@@ -1,6 +1,6 @@
 # Overview
 
-ShopSphere is a comprehensive e-commerce platform built with a microservices architecture. The system features a Next.js frontend and multiple Node.js backend services that handle different business domains including user management, product catalog, order processing, and payment handling. The platform is designed for scalability and uses modern technologies like MongoDB, Redis, GraphQL Federation, and TypeScript throughout the entire stack.
+ApniDukaan is a comprehensive e-commerce platform built with a microservices architecture. The system features a Next.js frontend and multiple Node.js backend services that handle different business domains including user management, product catalog, order processing, and payment handling. The platform is designed for scalability and uses modern technologies like MongoDB, Redis, GraphQL Federation, and TypeScript throughout the entire stack.
 
 # User Preferences
 

@@ -1,7 +1,7 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
-console.log('🚀 Starting ShopSphere E-commerce Application...\n');
+console.log('🚀 Starting ApniDukaan E-commerce Application...\n');
 
 // Start services
 const services = [

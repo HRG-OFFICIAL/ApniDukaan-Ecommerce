@@ -1,6 +1,6 @@
-# ShopSphere E-Commerce Development Tasks
+# ApniDukaan E-Commerce Development Tasks
 
-This document outlines all the manual development tasks required to complete the ShopSphere e-commerce platform. The project currently has the infrastructure setup, configuration files, and package definitions, but lacks the actual source code implementation.
+This document outlines all the manual development tasks required to complete the ApniDukaan e-commerce platform. The project currently has the infrastructure setup, configuration files, and package definitions, but lacks the actual source code implementation.
 
 ## Project Status
 

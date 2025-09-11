@@ -19,12 +19,7 @@ import {
   Truck,
   RotateCcw
 } from 'lucide-react'
-import { Button } from '../ui/Button'
-import { Badge } from '../ui/Badge'
-import { Logo } from '../ui/Logo'
-import { useCartStore } from '../../store/useCartStore'
-import { usePreferencesStore } from '../../store/usePreferencesStore'
-import { useAuthStore } from '../../store/useAuthStore'
+import { ThemeToggle } from '../ui/ThemeToggle'
 
 // Categories for mega menu
 const categoryGroups = [
@@ -54,36 +49,38 @@ const categoryGroups = [
     title: 'Home & Garden',
     items: [
       { name: 'Furniture', href: '/products?category=furniture' },
-      { name: 'Home Decor', href: '/products?category=home-decor' },
       { name: 'Kitchen', href: '/products?category=kitchen' },
-      { name: 'Garden Tools', href: '/products?category=garden-tools' },
-      { name: 'Appliances', href: '/products?category=appliances' },
-      { name: 'Bedding', href: '/products?category=bedding' }
+      { name: 'Bedding', href: '/products?category=bedding' },
+      { name: 'Decor', href: '/products?category=decor' },
+      { name: 'Garden', href: '/products?category=garden' },
+      { name: 'Tools', href: '/products?category=tools' }
     ]
   },
   {
-    title: 'Sports & Fitness',
+    title: 'Sports',
     items: [
-      { name: 'Exercise Equipment', href: '/products?category=exercise' },
-      { name: 'Sports Gear', href: '/products?category=sports-gear' },
-      { name: 'Outdoor Recreation', href: '/products?category=outdoor' },
-      { name: 'Athletic Wear', href: '/products?category=athletic-wear' },
-      { name: 'Supplements', href: '/products?category=supplements' },
-      { name: 'Yoga & Meditation', href: '/products?category=yoga' }
+      { name: 'Fitness', href: '/products?category=fitness' },
+      { name: 'Outdoor', href: '/products?category=outdoor' },
+      { name: 'Team Sports', href: '/products?category=team-sports' },
+      { name: 'Water Sports', href: '/products?category=water-sports' },
+      { name: 'Winter Sports', href: '/products?category=winter-sports' },
+      { name: 'Cycling', href: '/products?category=cycling' }
     ]
   }
 ]
 
 // Search suggestions
 const searchSuggestions = [
-  'iPhone 15',
-  'Samsung Galaxy',
-  'MacBook Pro',
-  'Nike Air Jordan',
-  'Sony Headphones',
-  'Kitchen Appliances',
-  'Furniture',
-  'Gaming Chair'
+  'iPhone 15 Pro',
+  'MacBook Air M2',
+  'Sony WH-1000XM5',
+  'Samsung Galaxy S24',
+  'Nike Air Max',
+  'Adidas Ultraboost',
+  'Canon EOS R5',
+  'PlayStation 5',
+  'Apple Watch Series 9',
+  'Dyson V15 Detect'
 ]
 
 interface EnhancedNavbarProps {
@@ -103,9 +100,11 @@ export function EnhancedNavbar({ className = '' }: EnhancedNavbarProps) {
   const categoriesRef = useRef<HTMLDivElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
 
-  const { items, itemCount } = useCartStore()
-  const { wishlist } = usePreferencesStore()
-  const { user, isAuthenticated, logout } = useAuthStore()
+  // Mock data for cart and user
+  const cartItemCount = 0
+  const wishlistCount = 0
+  const isAuthenticated = false
+  const user: { name?: string; email?: string } | null = null
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -136,70 +135,59 @@ export function EnhancedNavbar({ className = '' }: EnhancedNavbarProps) {
   }
 
   const handleSearchKeyDown = (e: React.KeyboardEvent) => {
-    const filteredSuggestions = searchSuggestions.filter(suggestion =>
-      suggestion.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-
     if (e.key === 'ArrowDown') {
       e.preventDefault()
       setSearchSuggestionIndex(prev => 
-        prev < filteredSuggestions.length - 1 ? prev + 1 : prev
+        prev < searchSuggestions.length - 1 ? prev + 1 : prev
       )
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      setSearchSuggestionIndex(prev => prev > -1 ? prev - 1 : prev)
+      setSearchSuggestionIndex(prev => prev > 0 ? prev - 1 : -1)
     } else if (e.key === 'Enter' && searchSuggestionIndex >= 0) {
       e.preventDefault()
-      setSearchQuery(filteredSuggestions[searchSuggestionIndex])
-      setSearchSuggestionIndex(-1)
-      setTimeout(() => {
-        const form = e.target as HTMLElement
-        form.closest('form')?.requestSubmit()
-      }, 100)
+      setSearchQuery(searchSuggestions[searchSuggestionIndex])
+      router.push(`/search?q=${encodeURIComponent(searchSuggestions[searchSuggestionIndex])}`)
+      setIsSearchFocused(false)
     } else if (e.key === 'Escape') {
       setIsSearchFocused(false)
-      setSearchSuggestionIndex(-1)
     }
   }
 
-  const handleLogout = () => {
-    logout()
-    setIsUserMenuOpen(false)
-    router.push('/')
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchQuery(suggestion)
+    router.push(`/search?q=${encodeURIComponent(suggestion)}`)
+    setIsSearchFocused(false)
   }
 
-  const filteredSearchSuggestions = searchSuggestions.filter(suggestion =>
-    searchQuery && suggestion.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const handleLogout = () => {
+    // Mock logout
+    setIsUserMenuOpen(false)
+  }
 
   return (
     <>
       {/* Top Bar */}
-      <div className="hidden lg:block bg-gray-50 border-b border-gray-200">
+      <div className="bg-blue-600 text-white text-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-10 text-sm">
+          <div className="flex items-center justify-between py-2">
             <div className="flex items-center space-x-6">
-              <div className="flex items-center text-gray-600">
-                <Phone className="h-4 w-4 mr-1" />
-                <span>+91 1800-123-4567</span>
+              <div className="flex items-center space-x-2">
+                <MapPin className="h-4 w-4" />
+                <span>Deliver to India</span>
               </div>
-              <div className="flex items-center text-gray-600">
-                <Mail className="h-4 w-4 mr-1" />
-                <span>support@apnidukaan.com</span>
+              <div className="flex items-center space-x-2">
+                <Phone className="h-4 w-4" />
+                <span>+91 98765 43210</span>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center text-gray-600">
-                <Truck className="h-4 w-4 mr-1" />
-                <span>Free shipping over ₹999</span>
+              <div className="flex items-center space-x-2">
+                <Mail className="h-4 w-4" />
+                <span>support@apnidukaan.com</span>
               </div>
-              <div className="flex items-center text-gray-600">
-                <Shield className="h-4 w-4 mr-1" />
-                <span>100% Secure Payment</span>
-              </div>
-              <div className="flex items-center text-gray-600">
-                <RotateCcw className="h-4 w-4 mr-1" />
-                <span>30-Day Returns</span>
+              <div className="flex items-center space-x-2">
+                <Globe className="h-4 w-4" />
+                <span>English</span>
               </div>
             </div>
           </div>
@@ -211,7 +199,12 @@ export function EnhancedNavbar({ className = '' }: EnhancedNavbarProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Logo variant="navbar" size="md" />
+            <Link href="/" className="flex items-center space-x-2">
+              <div className="h-8 w-8 rounded bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-center">
+                <span className="text-white font-bold text-lg">A</span>
+              </div>
+              <span className="font-bold text-xl text-gray-900">ApniDukaan</span>
+            </Link>
 
             {/* Search Bar */}
             <div className="hidden md:block flex-1 max-w-2xl mx-8" ref={searchRef}>
@@ -229,61 +222,35 @@ export function EnhancedNavbar({ className = '' }: EnhancedNavbarProps) {
                     placeholder="Search for products, brands, and more..."
                     className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-colors"
                   />
-                  <Button
+                  <button
                     type="submit"
-                    size="sm"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md transition-colors"
                   >
                     <Search className="h-4 w-4" />
-                  </Button>
+                  </button>
                 </div>
 
                 {/* Search Suggestions */}
                 {isSearchFocused && (searchQuery || true) && (
                   <div className="absolute top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
-                    {searchQuery ? (
-                      <>
-                        {/* Search Results */}
-                        {filteredSearchSuggestions.length > 0 && (
-                          <div className="p-2">
-                            <p className="text-xs text-gray-500 mb-2 px-2">Suggestions</p>
-                            {filteredSearchSuggestions.map((suggestion, index) => (
-                              <button
-                                key={suggestion}
-                                onClick={() => {
-                                  setSearchQuery(suggestion)
-                                  setTimeout(() => handleSearch({ preventDefault: () => {} } as any), 100)
-                                }}
-                                className={`w-full text-left px-3 py-2 rounded hover:bg-gray-50 flex items-center ${
-                                  index === searchSuggestionIndex ? 'bg-blue-50 text-blue-600' : ''
-                                }`}
-                              >
-                                <Search className="h-4 w-4 mr-2 text-gray-400" />
-                                {suggestion}
-                              </button>
-                            ))}
+                    {searchSuggestions
+                      .filter(suggestion => 
+                        suggestion.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                      .map((suggestion, index) => (
+                        <button
+                          key={suggestion}
+                          onClick={() => handleSuggestionClick(suggestion)}
+                          className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
+                            index === searchSuggestionIndex ? 'bg-blue-50' : ''
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <Search className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-900">{suggestion}</span>
                           </div>
-                        )}
-                      </>
-                    ) : (
-                      /* Popular Searches */
-                      <div className="p-2">
-                        <p className="text-xs text-gray-500 mb-2 px-2">Popular Searches</p>
-                        {searchSuggestions.slice(0, 6).map((suggestion) => (
-                          <button
-                            key={suggestion}
-                            onClick={() => {
-                              setSearchQuery(suggestion)
-                              setTimeout(() => handleSearch({ preventDefault: () => {} } as any), 100)
-                            }}
-                            className="w-full text-left px-3 py-2 rounded hover:bg-gray-50 flex items-center text-gray-700"
-                          >
-                            <Search className="h-4 w-4 mr-2 text-gray-400" />
-                            {suggestion}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                        </button>
+                      ))}
                   </div>
                 )}
               </form>
@@ -291,109 +258,72 @@ export function EnhancedNavbar({ className = '' }: EnhancedNavbarProps) {
 
             {/* Right Side Actions */}
             <div className="flex items-center space-x-4">
-              {/* Location */}
-              <div className="hidden lg:flex items-center text-sm text-gray-600">
-                <MapPin className="h-4 w-4 mr-1" />
-                <span>Delhi 110001</span>
-              </div>
+              {/* Cart */}
+              <Link href="/cart" className="relative p-2 text-gray-700 hover:text-blue-600 transition-colors">
+                <ShoppingCart className="h-6 w-6" />
+                {cartItemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartItemCount}
+                  </span>
+                )}
+              </Link>
 
               {/* Wishlist */}
-              <Link href="/wishlist" className="relative p-2 text-gray-600 hover:text-gray-900">
+              <Link href="/wishlist" className="relative p-2 text-gray-700 hover:text-red-600 transition-colors">
                 <Heart className="h-6 w-6" />
-                {wishlist.length > 0 && (
-                  <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs min-w-[20px] h-5 flex items-center justify-center">
-                    {wishlist.length}
-                  </Badge>
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {wishlistCount}
+                  </span>
                 )}
               </Link>
 
-              {/* Cart */}
-              <Link href="/cart" className="relative p-2 text-gray-600 hover:text-gray-900">
-                <ShoppingCart className="h-6 w-6" />
-                {itemCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs min-w-[20px] h-5 flex items-center justify-center">
-                    {itemCount}
-                  </Badge>
-                )}
-              </Link>
+              {/* Theme Toggle */}
+              <div className="flex items-center">
+                <ThemeToggle variant="icon" size="md" />
+              </div>
 
               {/* User Menu */}
               <div className="relative" ref={userMenuRef}>
-                <Button
-                  variant="ghost"
+                <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 p-2"
+                  className="flex items-center space-x-2 p-2 text-gray-700 hover:text-blue-600 transition-colors"
                 >
                   <User className="h-6 w-6" />
-                  {isAuthenticated && (
-                    <span className="hidden lg:inline text-sm">
-                      Hi, {user?.name?.split(' ')[0]}
-                    </span>
-                  )}
+                  <span className="hidden md:block">
+                    {isAuthenticated ? (user as any)?.name || 'Account' : 'Sign In'}
+                  </span>
                   <ChevronDown className="h-4 w-4" />
-                </Button>
+                </button>
 
-                {/* User Dropdown */}
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                     {isAuthenticated ? (
                       <>
-                        <div className="px-4 py-2 border-b border-gray-200">
-                          <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                          <p className="text-xs text-gray-500">{user?.email}</p>
-                        </div>
-                        <Link
-                          href="/account"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          My Account
+                        <Link href="/profile" className="block px-4 py-2 text-gray-700 hover:bg-gray-50">
+                          My Profile
                         </Link>
-                        <Link
-                          href="/orders"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
+                        <Link href="/orders" className="block px-4 py-2 text-gray-700 hover:bg-gray-50">
                           My Orders
                         </Link>
-                        <Link
-                          href="/wishlist"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
+                        <Link href="/wishlist" className="block px-4 py-2 text-gray-700 hover:bg-gray-50">
                           Wishlist
                         </Link>
-                        <Link
-                          href="/profile"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                          onClick={() => setIsUserMenuOpen(false)}
+                        <hr className="my-2" />
+                        <button
+                          onClick={handleLogout}
+                          className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50"
                         >
-                          Settings
-                        </Link>
-                        <div className="border-t border-gray-200 mt-1 pt-1">
-                          <button
-                            onClick={handleLogout}
-                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                          >
-                            Logout
-                          </button>
-                        </div>
+                          Sign Out
+                        </button>
                       </>
                     ) : (
                       <>
-                        <Link
-                          href="/auth/login"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          Login
+                        <Link href="/auth/login" className="block px-4 py-2 text-gray-700 hover:bg-gray-50">
+                          Sign In
                         </Link>
-                        <Link
-                          href="/auth/register"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          Sign Up
+                        <Link href="/auth/register" className="block px-4 py-2 text-gray-700 hover:bg-gray-50">
+                          Create Account
                         </Link>
                       </>
                     )}
@@ -402,47 +332,50 @@ export function EnhancedNavbar({ className = '' }: EnhancedNavbarProps) {
               </div>
 
               {/* Mobile Menu Button */}
-              <Button
-                variant="ghost"
+              <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2"
+                className="md:hidden p-2 text-gray-700 hover:text-blue-600 transition-colors"
               >
                 {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </Button>
+              </button>
             </div>
           </div>
-        </div>
 
-        {/* Categories Bar */}
-        <div className="hidden lg:block border-t border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center space-x-8 h-12">
-              {/* Categories Dropdown */}
-              <div className="relative" ref={categoriesRef}>
-                <Button
-                  variant="ghost"
-                  onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
-                  className="flex items-center space-x-1 text-sm font-medium"
-                >
-                  <Menu className="h-4 w-4" />
-                  <span>All Categories</span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
+          {/* Categories Menu */}
+          <div className="hidden md:block border-t border-gray-200">
+            <div className="flex items-center space-x-8 py-3" ref={categoriesRef}>
+              <button
+                onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
+                className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors"
+              >
+                <Menu className="h-5 w-5" />
+                <span>Categories</span>
+                <ChevronDown className="h-4 w-4" />
+              </button>
 
-                {/* Mega Menu */}
-                {isCategoriesOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-screen max-w-4xl bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                    <div className="grid grid-cols-4 gap-6 p-6">
+              <Link href="/products" className="text-gray-700 hover:text-blue-600 transition-colors">
+                All Products
+              </Link>
+              <Link href="/deals" className="text-gray-700 hover:text-blue-600 transition-colors">
+                Deals
+              </Link>
+              <Link href="/new-arrivals" className="text-gray-700 hover:text-blue-600 transition-colors">
+                New Arrivals
+              </Link>
+
+              {isCategoriesOpen && (
+                <div className="absolute top-full left-0 w-full bg-white border-t border-gray-200 shadow-lg z-50">
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                       {categoryGroups.map((group) => (
                         <div key={group.title}>
-                          <h3 className="font-semibold text-gray-900 mb-3">{group.title}</h3>
+                          <h3 className="font-semibold text-gray-900 mb-4">{group.title}</h3>
                           <ul className="space-y-2">
                             {group.items.map((item) => (
                               <li key={item.name}>
                                 <Link
                                   href={item.href}
-                                  className="text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                                  onClick={() => setIsCategoriesOpen(false)}
+                                  className="text-gray-600 hover:text-blue-600 transition-colors"
                                 >
                                   {item.name}
                                 </Link>
@@ -453,137 +386,70 @@ export function EnhancedNavbar({ className = '' }: EnhancedNavbarProps) {
                       ))}
                     </div>
                   </div>
-                )}
-              </div>
-
-              {/* Quick Links */}
-              <div className="flex items-center space-x-6">
-                <Link href="/products?filter=new" className="text-sm text-gray-600 hover:text-gray-900">
-                  New Arrivals
-                </Link>
-                <Link href="/products?filter=bestseller" className="text-sm text-gray-600 hover:text-gray-900">
-                  Bestsellers
-                </Link>
-                <Link href="/products?filter=sale" className="text-sm text-red-600 hover:text-red-700 font-medium">
-                  Sale
-                </Link>
-                <Link href="/categories" className="text-sm text-gray-600 hover:text-gray-900">
-                  Categories
-                </Link>
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-200">
-            <div className="px-4 py-6 space-y-6">
+          <div className="md:hidden border-t border-gray-200 bg-white">
+            <div className="px-4 py-4 space-y-4">
               {/* Mobile Search */}
               <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search products..."
-                  className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search for products..."
+                    className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md"
+                  >
+                    <Search className="h-4 w-4" />
+                  </button>
+                </div>
               </form>
 
-              {/* Mobile Navigation Links */}
-              <div className="space-y-4">
-                <Link
-                  href="/products"
-                  className="block text-base font-medium text-gray-900"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  All Products
-                </Link>
-                <Link
-                  href="/categories"
-                  className="block text-base font-medium text-gray-900"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Categories
-                </Link>
-                <Link
-                  href="/products?filter=new"
-                  className="block text-base font-medium text-gray-900"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  New Arrivals
-                </Link>
-                <Link
-                  href="/products?filter=sale"
-                  className="block text-base font-medium text-red-600"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Sale
-                </Link>
+              {/* Mobile Categories */}
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">Categories</h3>
+                <div className="space-y-2">
+                  {categoryGroups.map((group) => (
+                    <div key={group.title}>
+                      <h4 className="font-medium text-gray-700 mb-1">{group.title}</h4>
+                      <ul className="ml-4 space-y-1">
+                        {group.items.slice(0, 3).map((item) => (
+                          <li key={item.name}>
+                            <Link
+                              href={item.href}
+                              className="text-gray-600 hover:text-blue-600 transition-colors text-sm"
+                            >
+                              {item.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {/* Mobile User Actions */}
-              <div className="border-t border-gray-200 pt-6">
-                {isAuthenticated ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center">
-                      <User className="h-8 w-8 text-gray-400 mr-3" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                        <p className="text-sm text-gray-500">{user?.email}</p>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Link
-                        href="/account"
-                        className="block text-base text-gray-900"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        My Account
-                      </Link>
-                      <Link
-                        href="/orders"
-                        className="block text-base text-gray-900"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        My Orders
-                      </Link>
-                      <button
-                        onClick={() => {
-                          handleLogout()
-                          setIsMobileMenuOpen(false)
-                        }}
-                        className="block text-base text-red-600"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Link
-                      href="/auth/login"
-                      className="block text-base font-medium text-blue-600"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Login
-                    </Link>
-                    <Link
-                      href="/auth/register"
-                      className="block text-base font-medium text-gray-900"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Sign Up
-                    </Link>
-                  </div>
-                )}
+              {/* Mobile Links */}
+              <div className="space-y-2">
+                <Link href="/products" className="block text-gray-700 hover:text-blue-600 transition-colors">
+                  All Products
+                </Link>
+                <Link href="/deals" className="block text-gray-700 hover:text-blue-600 transition-colors">
+                  Deals
+                </Link>
+                <Link href="/new-arrivals" className="block text-gray-700 hover:text-blue-600 transition-colors">
+                  New Arrivals
+                </Link>
               </div>
             </div>
           </div>

@@ -2,6 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force light theme across the entire application */
+:root {
+  --color-scheme: light;
+  color-scheme: light;
+}
+
+html, html.light {
+  background-color: #f9fafb; /* gray-50 */
+  color: #111827; /* gray-900 */
+  color-scheme: light;
+}
+
+/* Ensure no dark theme can override */
+html.dark {
+  background-color: #f9fafb !important; /* gray-50 */
+  color: #111827 !important; /* gray-900 */
+  color-scheme: light !important;
+}
+
+body {
+  background-color: #f9fafb; /* gray-50 */
+  color: #111827; /* gray-900 */
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Override any dark theme styles */
+.dark body {
+  background-color: #f9fafb !important; /* gray-50 */
+  color: #111827 !important; /* gray-900 */
+}
+
+/* Ensure all components use light theme colors */
+.light {
+  --tw-bg-opacity: 1;
+  --tw-text-opacity: 1;
+}
+
+/* Theme toggle visibility fixes */
+.theme-toggle {
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+.theme-toggle:hover {
+  @apply text-gray-900 dark:text-white;
+}
+
+.theme-toggle svg {
+  @apply text-current;
+  stroke-width: 2;
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
@@ -19,6 +70,15 @@
 body {
   color: rgb(var(--foreground-rgb));
   background: #f9fafb; /* Light gray background instead of dark gradient */
+}
+
+/* Force light mode by default */
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 @layer utilities {

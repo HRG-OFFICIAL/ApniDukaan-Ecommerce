@@ -1,8 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: shopsphere-ingress
-  namespace: shopsphere
+  name: ApniDukaan-ingress
+  namespace: ApniDukaan
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -12,12 +12,12 @@ metadata:
 spec:
   tls:
   - hosts:
-    - shopsphere.com
-    - www.shopsphere.com
-    - api.shopsphere.com
-    secretName: shopsphere-tls
+    - ApniDukaan.com
+    - www.ApniDukaan.com
+    - api.ApniDukaan.com
+    secretName: ApniDukaan-tls
   rules:
-  - host: shopsphere.com
+  - host: ApniDukaan.com
     http:
       paths:
       - path: /(.*)
@@ -27,7 +27,7 @@ spec:
             name: frontend
             port:
               number: 3000
-  - host: www.shopsphere.com
+  - host: www.ApniDukaan.com
     http:
       paths:
       - path: /(.*)
@@ -37,7 +37,7 @@ spec:
             name: frontend
             port:
               number: 3000
-  - host: api.shopsphere.com
+  - host: api.ApniDukaan.com
     http:
       paths:
       - path: /(.*)

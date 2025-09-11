@@ -262,9 +262,9 @@ class ShippingService {
     try {
       // Mock warehouse address (in production, this would be dynamic)
       const fromAddress: IShippingAddress = {
-        firstName: 'ShopSphere',
+        firstName: 'ApniDukaan',
         lastName: 'Warehouse',
-        company: 'ShopSphere Inc',
+        company: 'ApniDukaan Inc',
         addressLine1: '123 Warehouse Blvd',
         city: 'Commerce',
         state: 'CA',
