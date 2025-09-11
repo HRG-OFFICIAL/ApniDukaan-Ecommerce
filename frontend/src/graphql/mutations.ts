@@ -4,13 +4,17 @@ import { gql } from '@apollo/client';
 export const LOGIN = gql`
   mutation Login($email: String!, $password: String!) {
     login(email: $email, password: $password) {
-      token
+      accessToken
       refreshToken
       user {
         id
         email
         name
         role
+        avatar
+        phone
+        createdAt
+        updatedAt
       }
     }
   }
@@ -19,13 +23,17 @@ export const LOGIN = gql`
 export const REGISTER = gql`
   mutation Register($input: RegisterInput!) {
     register(input: $input) {
-      token
+      accessToken
       refreshToken
       user {
         id
         email
         name
         role
+        avatar
+        phone
+        createdAt
+        updatedAt
       }
     }
   }
@@ -40,7 +48,7 @@ export const LOGOUT = gql`
 export const REFRESH_TOKEN = gql`
   mutation RefreshToken($refreshToken: String!) {
     refreshToken(refreshToken: $refreshToken) {
-      token
+      accessToken
       refreshToken
     }
   }
@@ -55,6 +63,12 @@ export const FORGOT_PASSWORD = gql`
 export const RESET_PASSWORD = gql`
   mutation ResetPassword($token: String!, $password: String!) {
     resetPassword(token: $token, password: $password)
+  }
+`;
+
+export const VERIFY_EMAIL = gql`
+  mutation VerifyEmail($token: String!) {
+    verifyEmail(token: $token)
   }
 `;
 

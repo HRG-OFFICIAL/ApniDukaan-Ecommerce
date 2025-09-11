@@ -1,5 +1,40 @@
 import { gql } from '@apollo/client';
 
+// User Subscriptions
+export const USER_UPDATED = gql`
+  subscription UserUpdated {
+    userUpdated {
+      id
+      email
+      name
+      role
+      avatar
+      phone
+      addresses {
+        id
+        type
+        street
+        city
+        state
+        zipCode
+        country
+        isDefault
+      }
+      preferences {
+        theme
+        language
+        currency
+        notifications {
+          email
+          push
+          sms
+        }
+      }
+      updatedAt
+    }
+  }
+`;
+
 // Order Subscriptions
 export const ORDER_STATUS_UPDATED = gql`
   subscription OrderStatusUpdated($orderId: ID!) {

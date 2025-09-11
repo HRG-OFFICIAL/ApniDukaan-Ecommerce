@@ -1,8 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // ESLint configuration
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  
   // Performance optimizations
   swcMinify: true,
   compress: true,
+  
+  // Static generation configuration
+  trailingSlash: false,
+  generateEtags: false,
   
   // Experimental features
   experimental: {

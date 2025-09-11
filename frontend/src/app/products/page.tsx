@@ -1,17 +1,32 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { 
-  Filter, 
-  Search 
-} from 'lucide-react'
-import ProductCard from '../../components/product/ProductCard'
-import { Product } from '../../types'
-import MainLayout from '../../components/layout/MainLayout'
 
-// Mock data for demonstration
-const mockProducts: Product[] = [
+// Disable static generation for this page since it uses Apollo Client
+export const dynamic = 'force-dynamic'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { 
+  Search,
+  Grid,
+  List,
+  SlidersHorizontal,
+  AlertCircle
+} from 'lucide-react'
+import ProductCard from '../../components/ProductCard'
+import { Product } from '../../graphql/types'
+import { useProductsStore } from '../../store/useProductsStore'
+import { usePreferencesStore } from '../../store/usePreferencesStore'
+import { useProducts, useProductFilters } from '../../hooks/useProductsAPI'
+import { Button } from '../../components/ui/Button'
+import { Loading } from '../../components/ui/LoadingSpinner'
+import { Pagination } from '../../components/ui/Pagination'
+import { Breadcrumb } from '../../components/ui/Breadcrumb'
+import MainLayout from '../../components/layout/MainLayout'
+import { SyncErrorAlert } from '../../components/ui/ApiErrorAlert'
+import toast from 'react-hot-toast'
+
+// Fallback mock data in case API fails
+const fallbackProducts: Product[] = [
   {
     id: '1',
     name: 'Premium Wireless Headphones',
@@ -24,7 +39,11 @@ const mockProducts: Product[] = [
     reviewCount: 128,
     stock: 15,
     isBestseller: true,
-    isOnSale: true
+    isOnSale: true,
+    isNew: false,
+    reviews: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
   {
     id: '2',
@@ -36,7 +55,12 @@ const mockProducts: Product[] = [
     rating: 4.2,
     reviewCount: 64,
     stock: 42,
-    isNew: true
+    isBestseller: false,
+    isOnSale: false,
+    isNew: true,
+    reviews: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
   {
     id: '3',
@@ -47,7 +71,13 @@ const mockProducts: Product[] = [
     category: 'Electronics',
     rating: 4.7,
     reviewCount: 201,
-    stock: 8
+    stock: 8,
+    isBestseller: false,
+    isOnSale: false,
+    isNew: false,
+    reviews: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
   {
     id: '4',
@@ -60,7 +90,12 @@ const mockProducts: Product[] = [
     rating: 4.8,
     reviewCount: 87,
     stock: 12,
-    isOnSale: true
+    isBestseller: false,
+    isOnSale: true,
+    isNew: false,
+    reviews: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
   {
     id: '5',
@@ -72,7 +107,12 @@ const mockProducts: Product[] = [
     rating: 4.4,
     reviewCount: 156,
     stock: 25,
-    isNew: true
+    isBestseller: false,
+    isOnSale: false,
+    isNew: true,
+    reviews: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
   {
     id: '6',
@@ -84,7 +124,12 @@ const mockProducts: Product[] = [
     rating: 4.6,
     reviewCount: 93,
     stock: 18,
-    isBestseller: true
+    isBestseller: true,
+    isOnSale: false,
+    isNew: false,
+    reviews: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   }
 ]
 
@@ -110,132 +155,286 @@ const sortOptions = [
 
 function ProductsContent() {
   const searchParams = useSearchParams()
-  const [products, setProducts] = useState<Product[]>(mockProducts)
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>(mockProducts)
+  const router = useRouter()
+  
+  const {
+    searchQuery,
+    currentPage,
+    setSearchQuery,
+    setCurrentPage,
+    setLoading
+  } = useProductsStore()
+  
+  const { viewMode, setViewMode, addToSearchHistory } = usePreferencesStore()
+  
   const [selectedCategory, setSelectedCategory] = useState('All Categories')
-  const [sortBy, setSortBy] = useState('featured')
-  const [searchQuery, setSearchQuery] = useState('')
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 })
   const [showFilters, setShowFilters] = useState(false)
+  const [itemsPerPage] = useState(12)
+  const [sortBy, setSortBy] = useState('featured')
+  const [apiError, setApiError] = useState<string | null>(null)
+  
+  // Real API integration
+  const { filters, sort, updateFilter, updateSort, clearFilters } = useProductFilters()
+  const {
+    products: apiProducts,
+    loading: apiLoading,
+    error: apiErrorData,
+    totalCount,
+    hasMore,
+    fetchMore,
+    refetch
+  } = useProducts({
+    filter: {
+      ...filters,
+      category: selectedCategory !== 'All Categories' ? selectedCategory : undefined,
+      minPrice: priceRange.min > 0 ? priceRange.min : undefined,
+      maxPrice: priceRange.max < 1000 ? priceRange.max : undefined,
+    },
+    sort,
+    search: searchQuery,
+    limit: itemsPerPage,
+    offset: (currentPage - 1) * itemsPerPage,
+  })
+  
+  // Use API data or fallback to mock data
+  const displayProducts = apiError || apiErrorData ? fallbackProducts : apiProducts
+  const loading = apiLoading
+  const totalProducts = apiError || apiErrorData ? fallbackProducts.length : totalCount
 
-  // Initialize filters from URL params
+  // Handle API errors
   useEffect(() => {
-    const search = searchParams.get('search')
+    if (apiErrorData) {
+      const errorMessage = apiErrorData.message || 'Failed to fetch products'
+      console.error('API Error:', apiErrorData)
+      setApiError(errorMessage)
+      toast.error(`API Error: ${errorMessage}. Using fallback data.`)
+    } else {
+      setApiError(null)
+    }
+  }, [apiErrorData])
+
+  // Initialize from URL params
+  useEffect(() => {
+    const search = searchParams.get('q')
     const category = searchParams.get('category')
     const filter = searchParams.get('filter')
+    const sortParam = searchParams.get('sort')
     
-    if (search) setSearchQuery(search)
+    if (search && search !== searchQuery) {
+      setSearchQuery(search)
+      addToSearchHistory(search)
+    }
     if (category) setSelectedCategory(category)
+    
+    // Apply filters from URL
     if (filter) {
-      // Handle special filters like 'new', 'bestseller', 'sale'
-      let filtered = mockProducts
       switch (filter) {
         case 'new':
-          filtered = mockProducts.filter(p => p.isNew)
+          updateFilter('isNew', true)
           break
         case 'bestseller':
-          filtered = mockProducts.filter(p => p.isBestseller)
+          updateFilter('isBestseller', true)
           break
         case 'sale':
-          filtered = mockProducts.filter(p => p.isOnSale)
+          updateFilter('isOnSale', true)
           break
       }
-      setProducts(filtered)
     }
-  }, [searchParams])
-
-  // Apply filters
-  useEffect(() => {
-    let filtered = products
-
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(product => {
-        const categoryName = typeof product.category === 'string' 
-          ? product.category 
-          : product.category.name
-        
-        return (
-          product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          categoryName.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      })
+    
+    // Apply sort from URL
+    if (sortParam) {
+      const sortOption = sortOptions.find(opt => opt.value === sortParam)
+      if (sortOption) {
+        switch (sortParam) {
+          case 'price-low':
+            updateSort('price', 'ASC')
+            break
+          case 'price-high':
+            updateSort('price', 'DESC')
+            break
+          case 'rating':
+            updateSort('rating', 'DESC')
+            break
+          case 'newest':
+            updateSort('createdAt', 'DESC')
+            break
+          default:
+            updateSort('createdAt', 'DESC')
+        }
+        setSortBy(sortParam)
+      }
     }
+  }, [searchParams, setSearchQuery, addToSearchHistory, updateFilter, updateSort, searchQuery])
 
-    // Category filter
-    if (selectedCategory !== 'All Categories') {
-      filtered = filtered.filter(product => {
-        const categoryName = typeof product.category === 'string' 
-          ? product.category 
-          : product.category.name
-        return categoryName === selectedCategory
-      })
+  // Handle search with URL update
+  const handleSearch = (query: string) => {
+    setSearchQuery(query)
+    addToSearchHistory(query)
+    
+    const params = new URLSearchParams(searchParams)
+    if (query) {
+      params.set('q', query)
+    } else {
+      params.delete('q')
     }
-
-    // Price range filter
-    filtered = filtered.filter(product => 
-      product.price >= priceRange.min && product.price <= priceRange.max
-    )
-
-    // Sorting
-    switch (sortBy) {
+    router.push(`/products?${params.toString()}`)
+  }
+  
+  // Handle category change with URL update
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category)
+    
+    const params = new URLSearchParams(searchParams)
+    if (category !== 'All Categories') {
+      params.set('category', category)
+    } else {
+      params.delete('category')
+    }
+    router.push(`/products?${params.toString()}`)
+  }
+  
+  // Handle sort change with URL update
+  const handleSortChange = (sortValue: string) => {
+    setSortBy(sortValue)
+    
+    // Update API sort
+    switch (sortValue) {
       case 'price-low':
-        filtered.sort((a, b) => a.price - b.price)
+        updateSort('price', 'ASC')
         break
       case 'price-high':
-        filtered.sort((a, b) => b.price - a.price)
+        updateSort('price', 'DESC')
         break
       case 'rating':
-        filtered.sort((a, b) => {
-          const aRating = typeof a.rating === 'number' ? a.rating : a.rating.average
-          const bRating = typeof b.rating === 'number' ? b.rating : b.rating.average
-          return bRating - aRating
-        })
+        updateSort('rating', 'DESC')
         break
       case 'newest':
-        filtered.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0))
-        break
-      case 'popular':
-        filtered.sort((a, b) => b.reviewCount - a.reviewCount)
+        updateSort('createdAt', 'DESC')
         break
       default:
-        // Featured - prioritize bestsellers and new items
-        filtered.sort((a, b) => {
-          if (a.isBestseller && !b.isBestseller) return -1
-          if (!a.isBestseller && b.isBestseller) return 1
-          if (a.isNew && !b.isNew) return -1
-          if (!a.isNew && b.isNew) return 1
-          const aRating = typeof a.rating === 'number' ? a.rating : a.rating.average
-          const bRating = typeof b.rating === 'number' ? b.rating : b.rating.average
-          return bRating - aRating
-        })
+        updateSort('createdAt', 'DESC')
     }
-
-    setFilteredProducts(filtered)
-  }, [products, searchQuery, selectedCategory, sortBy, priceRange])
+    
+    const params = new URLSearchParams(searchParams)
+    params.set('sort', sortValue)
+    router.push(`/products?${params.toString()}`)
+  }
+  
+  // Handle price range change
+  const handlePriceRangeChange = (newRange: { min: number; max: number }) => {
+    setPriceRange(newRange)
+  }
+  
+  // Apply filters function (simplified)
+  // const applyFilters = () => {
+  //   // This will trigger the useEffect that applies filters
+  // }
+  
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSearchQuery('')
+    setSelectedCategory('All Categories')
+    setPriceRange({ min: 0, max: 1000 })
+    setSortBy('featured')
+    setCurrentPage(1)
+    
+    // Clear API filters
+    clearFilters()
+    updateSort('createdAt', 'DESC')
+    
+    // Clear URL params
+    router.push('/products')
+  }
+  
+  // Handle load more products
+  const handleLoadMore = () => {
+    if (hasMore && !loading) {
+      fetchMore()
+    }
+  }
+  
+  // Retry API call on error
+  const retryApiCall = () => {
+    setApiError(null)
+    refetch()
+  }
+  
+  // Pagination logic - API handles pagination
+  const totalPages = Math.ceil(totalProducts / itemsPerPage)
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   return (
     <MainLayout>
       <div className="bg-white">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          {/* Breadcrumb */}
+          <Breadcrumb 
+            items={[
+              { label: 'Products' }
+            ]} 
+            className="mb-8" 
+          />
+          
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-gray-200 pb-6">
-            <div>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between border-b border-gray-200 pb-6">
+            <div className="flex-1">
               <h1 className="text-4xl font-bold tracking-tight text-gray-900">Products</h1>
               <p className="mt-4 text-base text-gray-500">
-                Discover our amazing collection of {filteredProducts.length} products
+                {loading ? (
+                  <Loading size="sm" text="Loading products..." />
+                ) : (
+                  `Discover our amazing collection of ${totalProducts} products`
+                )}
               </p>
+              
+              {/* API Error Display */}
+              {apiError && (
+                <div className="mt-4">
+                  <SyncErrorAlert
+                    error={apiError}
+                    onRetry={retryApiCall}
+                  />
+                </div>
+              )}
             </div>
             
-            {/* Mobile filter button */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="lg:hidden flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              <Filter className="h-5 w-5" />
-              <span>Filters</span>
-            </button>
+            {/* View Toggle & Mobile Filter */}
+            <div className="flex items-center space-x-4 mt-4 lg:mt-0">
+              {/* View Mode Toggle */}
+              <div className="hidden sm:flex items-center border border-gray-300 rounded-md p-1">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className="px-3"
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className="px-3"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Mobile Filter Button */}
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+                className="lg:hidden"
+              >
+                <SlidersHorizontal className="h-4 w-4 mr-2" />
+                Filters
+              </Button>
+            </div>
           </div>
 
           <div className="pt-6 lg:grid lg:grid-cols-4 lg:gap-x-8">
@@ -250,8 +449,8 @@ function ProductsContent() {
                       type="text"
                       placeholder="Search products..."
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                      onChange={(e) => handleSearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     />
                     <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                   </div>
@@ -268,8 +467,8 @@ function ProductsContent() {
                           name="category"
                           value={category}
                           checked={selectedCategory === category}
-                          onChange={(e) => setSelectedCategory(e.target.value)}
-                          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                          onChange={(e) => handleCategoryChange(e.target.value)}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                         />
                         <span className="ml-3 text-sm text-gray-600">{category}</span>
                       </label>
@@ -286,7 +485,7 @@ function ProductsContent() {
                         type="number"
                         placeholder="Min"
                         value={priceRange.min}
-                        onChange={(e) => setPriceRange(prev => ({ ...prev, min: Number(e.target.value) }))}
+                      onChange={(e) => handlePriceRangeChange({ min: Number(e.target.value), max: priceRange.max })}
                         className="w-20 px-2 py-1 border border-gray-300 rounded-md text-sm"
                       />
                       <span className="text-gray-500">to</span>
@@ -294,7 +493,7 @@ function ProductsContent() {
                         type="number"
                         placeholder="Max"
                         value={priceRange.max}
-                        onChange={(e) => setPriceRange(prev => ({ ...prev, max: Number(e.target.value) }))}
+                      onChange={(e) => handlePriceRangeChange({ min: priceRange.min, max: Number(e.target.value) })}
                         className="w-20 px-2 py-1 border border-gray-300 rounded-md text-sm"
                       />
                     </div>
@@ -305,30 +504,53 @@ function ProductsContent() {
                 <div>
                   <h3 className="text-sm font-medium text-gray-900">Quick Filters</h3>
                   <div className="mt-2 space-y-2">
-                    <button 
-                      onClick={() => setProducts(mockProducts.filter(p => p.isNew))}
-                      className="block text-left text-sm text-primary-600 hover:text-primary-500"
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        updateFilter('isNew', true)
+                        const params = new URLSearchParams(searchParams)
+                        params.set('filter', 'new')
+                        router.push(`/products?${params.toString()}`)
+                      }}
+                      className="w-full justify-start text-primary-600 hover:text-primary-500 h-8"
                     >
                       New Arrivals
-                    </button>
-                    <button 
-                      onClick={() => setProducts(mockProducts.filter(p => p.isBestseller))}
-                      className="block text-left text-sm text-primary-600 hover:text-primary-500"
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        updateFilter('isBestseller', true)
+                        const params = new URLSearchParams(searchParams)
+                        params.set('filter', 'bestseller')
+                        router.push(`/products?${params.toString()}`)
+                      }}
+                      className="w-full justify-start text-primary-600 hover:text-primary-500 h-8"
                     >
                       Bestsellers
-                    </button>
-                    <button 
-                      onClick={() => setProducts(mockProducts.filter(p => p.isOnSale))}
-                      className="block text-left text-sm text-primary-600 hover:text-primary-500"
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        updateFilter('isOnSale', true)
+                        const params = new URLSearchParams(searchParams)
+                        params.set('filter', 'sale')
+                        router.push(`/products?${params.toString()}`)
+                      }}
+                      className="w-full justify-start text-primary-600 hover:text-primary-500 h-8"
                     >
                       On Sale
-                    </button>
-                    <button 
-                      onClick={() => setProducts(mockProducts)}
-                      className="block text-left text-sm text-gray-600 hover:text-gray-500"
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearAllFilters}
+                      className="w-full justify-start text-gray-600 hover:text-gray-500 h-8"
                     >
                       Clear Filters
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -339,12 +561,12 @@ function ProductsContent() {
               {/* Sort */}
               <div className="flex items-center justify-between mb-6">
                 <p className="text-sm text-gray-700">
-                  Showing {filteredProducts.length} products
+                  Showing {displayProducts.length} of {totalProducts} products
                 </p>
                 <div className="flex items-center space-x-4">
                   <select
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
+                    onChange={(e) => handleSortChange(e.target.value)}
                     className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-primary-500 focus:border-primary-500"
                   >
                     {sortOptions.map((option) => (
@@ -357,12 +579,36 @@ function ProductsContent() {
               </div>
 
               {/* Products Grid */}
-              {filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
+              {loading ? (
+                <div className="flex justify-center items-center py-12">
+                  <Loading size="lg" text="Loading products..." />
                 </div>
+              ) : displayProducts.length > 0 ? (
+                <>
+                  <div className={`grid gap-6 ${
+                    viewMode === 'grid' 
+                      ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
+                      : 'grid-cols-1'
+                  }`}>
+                    {displayProducts.map((product) => (
+                      <ProductCard 
+                        key={product.id} 
+                        product={product}
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="mt-12 flex justify-center">
+                      <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                      />
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-12">
                   <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -370,17 +616,13 @@ function ProductsContent() {
                   </svg>
                   <h3 className="mt-2 text-sm font-medium text-gray-900">No products found</h3>
                   <p className="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria.</p>
-                  <button 
-                    onClick={() => {
-                      setSearchQuery('')
-                      setSelectedCategory('All Categories')
-                      setPriceRange({ min: 0, max: 1000 })
-                      setProducts(mockProducts)
-                    }}
+                  <Button
+                    variant="ghost"
+                    onClick={clearAllFilters}
                     className="mt-4 text-sm font-medium text-primary-600 hover:text-primary-500"
                   >
                     Clear all filters
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>

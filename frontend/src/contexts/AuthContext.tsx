@@ -34,9 +34,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: false,
     isLoading: false
   })
+  const [isClient, setIsClient] = useState(false)
 
   // Load persisted state only on client side
   useEffect(() => {
+    setIsClient(true)
     if (typeof window !== 'undefined') {
       try {
         const persistedAuth = localStorage.getItem('auth-storage')
@@ -52,14 +54,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Persist state changes only on client side
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (isClient && typeof window !== 'undefined') {
       try {
         localStorage.setItem('auth-storage', JSON.stringify(state))
       } catch (error) {
         console.error('Error persisting auth:', error)
       }
     }
-  }, [state])
+  }, [isClient, state])
 
   const login = (user: User, token: string) => {
     setState({ user, token, isAuthenticated: true, isLoading: false })
