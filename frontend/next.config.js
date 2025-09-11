@@ -9,6 +9,9 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   
+  // Allow all hosts for Replit proxy environment
+  assetPrefix: '',
+  
   // Performance optimizations
   compress: true,
   
@@ -19,7 +22,7 @@ const nextConfig = {
   // Experimental features
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000', 'localhost:4000']
+      allowedOrigins: ['*']
     },
     optimizePackageImports: ['lucide-react', '@heroicons/react', 'framer-motion', 'react-hot-toast'],
     scrollRestoration: true,
@@ -109,7 +112,7 @@ const nextConfig = {
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'DENY',
+            value: 'SAMEORIGIN',
           },
           {
             key: 'X-Content-Type-Options',
