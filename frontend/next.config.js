@@ -90,7 +90,7 @@ const nextConfig = {
   env: {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL || `https://${process.env.REPLIT_DEV_DOMAIN || 'localhost:5000'}`,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production',
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '',
     NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'ApniDukaan',
   },
   
@@ -98,8 +98,12 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/api/:path*',
-        destination: 'http://localhost:4000/api/:path*',
+        source: '/api/catalog/:path*',
+        destination: 'http://localhost:4001/api/:path*',
+      },
+      {
+        source: '/catalog/:path*',
+        destination: 'http://localhost:4001/api/:path*',
       },
     ]
   },
