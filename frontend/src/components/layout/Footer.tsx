@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { usePreferencesStore } from '../../store/usePreferencesStore'
 import { ThemeToggle } from '../ui/ThemeToggle'
+import { Logo } from '../ui/Logo'
 
 const footerLinks = {
   company: {
@@ -127,12 +128,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
           {/* Brand Column */}
           <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center space-x-2 mb-6">
-              <div className="h-10 w-10 rounded bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">A</span>
-              </div>
-              <span className="text-2xl font-bold text-white">ApniDukaan</span>
-            </Link>
+            <Logo variant="footer" size="lg" className="mb-6" />
             
             <p className="text-gray-400 mb-6 max-w-sm">
               Your ultimate e-commerce destination. Discover amazing products, 
