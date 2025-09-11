@@ -37,9 +37,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     itemCount: 0,
     total: 0
   })
+  const [isClient, setIsClient] = useState(false)
 
   // Load persisted cart only on client side
   useEffect(() => {
+    setIsClient(true)
     if (typeof window !== 'undefined') {
       try {
         const persistedCart = localStorage.getItem('cart-storage')
@@ -55,7 +57,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Persist cart changes only on client side
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (isClient && typeof window !== 'undefined') {
       try {
         localStorage.setItem('cart-storage', JSON.stringify({
           items: state.items,
@@ -66,7 +68,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         console.error('Error persisting cart:', error)
       }
     }
-  }, [state.items, state.itemCount, state.total])
+  }, [isClient, state.items, state.itemCount, state.total])
 
   // Update derived values when items change
   useEffect(() => {

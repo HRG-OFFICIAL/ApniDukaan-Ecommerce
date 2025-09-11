@@ -7,19 +7,29 @@ export const GET_PRODUCTS = gql`
       id
       name
       description
+      shortDescription
       price
       originalPrice
       images
       category
+      subcategory
+      brand
       rating
       reviewCount
       stock
+      sku
+      colors
+      sizes
       isBestseller
       isOnSale
       isNew
+      isFeatured
+      isActive
+      tags
       createdAt
       updatedAt
     }
+    totalCount
   }
 `;
 

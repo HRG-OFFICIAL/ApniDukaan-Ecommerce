@@ -38,7 +38,29 @@ body {
   }
   
   .input-field {
-    @apply w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 bg-white;
+  }
+  
+  /* Fix input text visibility */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  textarea,
+  select {
+    @apply text-gray-900 bg-white;
+  }
+  
+  /* Dark mode input styles */
+  .dark input[type="text"],
+  .dark input[type="email"],
+  .dark input[type="password"],
+  .dark input[type="tel"],
+  .dark input[type="number"],
+  .dark textarea,
+  .dark select {
+    @apply text-gray-100 bg-gray-700;
   }
   
   .card {

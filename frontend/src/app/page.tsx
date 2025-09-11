@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { sampleProducts, categories } from '../lib/data'
 import ProductCard from '../components/ProductCard'
 import Header from '../components/Header'
+import Footer from '../components/layout/Footer'
 import { ArrowRight, Zap, Gift } from 'lucide-react'
 
 export default function Home() {
@@ -81,25 +82,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="bg-gray-800 text-gray-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                {['About', 'Help', 'Policy', 'Social'].map(title => (
-                    <div key={title}>
-                        <h3 className="font-semibold text-white mb-4">{title}</h3>
-                        <ul className="space-y-2 text-sm">
-                            <li><Link href="#" className="hover:text-white">Link 1</Link></li>
-                            <li><Link href="#" className="hover:text-white">Link 2</Link></li>
-                            <li><Link href="#" className="hover:text-white">Link 3</Link></li>
-                        </ul>
-                    </div>
-                ))}
-            </div>
-            <div className="mt-12 border-t border-gray-700 pt-8 text-center text-sm">
-                <p>&copy; {new Date().getFullYear()} ApniDukaan.com. All Rights Reserved.</p>
-            </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

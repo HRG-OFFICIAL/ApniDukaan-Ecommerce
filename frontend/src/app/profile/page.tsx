@@ -11,14 +11,14 @@ import {
   Plus,
   Trash2
 } from 'lucide-react';
-import { useUser, useProfile } from '../../hooks/useAuth';
+import { useAuthAPI } from '../../hooks/useAuthAPI';
+import { ProtectedRoute } from '../../components/auth/ProtectedRoute';
 import { Button } from '../../components/ui/Button';
 import MainLayout from '../../components/layout/MainLayout';
-import { UpdateProfileInput, AddressInput, UserPreferences } from '../../graphql/types';
+import { UpdateProfileInput, AddressInput, UserPreferences, Address } from '../../graphql/types';
 
-export default function ProfilePage() {
-  const { user, loading: userLoading } = useUser();
-  const { updateProfile, addAddress, deleteAddress, loading: profileLoading } = useProfile();
+function ProfilePageContent() {
+  const { user, updateProfile, loading } = useAuthAPI();
   
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
@@ -93,30 +93,26 @@ export default function ProfilePage() {
     }
   };
 
-  if (userLoading) {
+  // Temporary placeholder functions for addresses (these would need proper implementation)
+  const addAddress = async (address: AddressInput) => {
+    console.log('Adding address:', address);
+    // This would be implemented with the proper GraphQL mutation
+    return { success: false };
+  };
+  
+  const deleteAddress = async (id: string) => {
+    console.log('Deleting address:', id);
+    // This would be implemented with the proper GraphQL mutation
+    return { success: false };
+  };
+
+  if (loading) {
     return (
       <MainLayout>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
             <div className="h-64 bg-gray-200 rounded"></div>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  if (!user) {
-    return (
-      <MainLayout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
-            <User className="mx-auto h-24 w-24 text-gray-400 mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Please Log In</h1>
-            <p className="text-gray-600 mb-8">You need to be logged in to view your profile.</p>
-            <Button href="/auth/login">
-              Log In
-            </Button>
           </div>
         </div>
       </MainLayout>
@@ -190,7 +186,7 @@ export default function ProfilePage() {
                           value={formData.name || ''}
                           onChange={(e) => handleInputChange('name', e.target.value)}
                           disabled={!isEditing}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 text-gray-900 bg-white"
                         />
                       </div>
 
@@ -216,7 +212,7 @@ export default function ProfilePage() {
                           value={formData.phone || ''}
                           onChange={(e) => handleInputChange('phone', e.target.value)}
                           disabled={!isEditing}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 text-gray-900 bg-white"
                         />
                       </div>
 
@@ -237,7 +233,7 @@ export default function ProfilePage() {
                       <div className="flex justify-end">
                         <Button
                           onClick={handleSaveProfile}
-                          disabled={profileLoading}
+                          disabled={loading}
                         >
                           <Save className="h-4 w-4 mr-2" />
                           Save Changes
@@ -273,7 +269,7 @@ export default function ProfilePage() {
                             type="text"
                             value={newAddress.street}
                             onChange={(e) => setNewAddress(prev => ({ ...prev, street: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                           />
                         </div>
                         <div>
@@ -284,7 +280,7 @@ export default function ProfilePage() {
                             type="text"
                             value={newAddress.city}
                             onChange={(e) => setNewAddress(prev => ({ ...prev, city: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                           />
                         </div>
                         <div>
@@ -295,7 +291,7 @@ export default function ProfilePage() {
                             type="text"
                             value={newAddress.state}
                             onChange={(e) => setNewAddress(prev => ({ ...prev, state: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                           />
                         </div>
                         <div>
@@ -306,7 +302,7 @@ export default function ProfilePage() {
                             type="text"
                             value={newAddress.zipCode}
                             onChange={(e) => setNewAddress(prev => ({ ...prev, zipCode: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                           />
                         </div>
                       </div>
@@ -319,7 +315,7 @@ export default function ProfilePage() {
 
                     {/* Existing Addresses */}
                     <div className="space-y-4">
-                      {user.addresses.map((address) => (
+                      {user?.addresses?.map((address: Address) => (
                         <div key={address.id} className="border border-gray-200 rounded-lg p-4">
                           <div className="flex items-center justify-between">
                             <div>
@@ -400,7 +396,7 @@ export default function ProfilePage() {
                         <select
                           value={formData.preferences?.language || 'en'}
                           onChange={(e) => handlePreferenceChange('language', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                         >
                           <option value="en">English</option>
                           <option value="es">Spanish</option>
@@ -416,7 +412,7 @@ export default function ProfilePage() {
                         <select
                           value={formData.preferences?.currency || 'USD'}
                           onChange={(e) => handlePreferenceChange('currency', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                         >
                           <option value="USD">USD ($)</option>
                           <option value="EUR">EUR (€)</option>
@@ -429,7 +425,7 @@ export default function ProfilePage() {
                     <div className="flex justify-end">
                       <Button
                         onClick={handleSaveProfile}
-                        disabled={profileLoading}
+                        disabled={loading}
                       >
                         <Save className="h-4 w-4 mr-2" />
                         Save Preferences
@@ -476,5 +472,13 @@ export default function ProfilePage() {
         </div>
       </div>
     </MainLayout>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <ProtectedRoute>
+      <ProfilePageContent />
+    </ProtectedRoute>
   );
 }

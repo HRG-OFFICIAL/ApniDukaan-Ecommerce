@@ -14,6 +14,10 @@ import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../../components/ui/Button';
 import MainLayout from '../../components/layout/MainLayout';
 import { PaymentMethod, Address } from '../../graphql/types';
+import { CouponManager, Coupon } from '../../components/checkout/SimpleCouponManager';
+import { AddressManager, Address as AddressType } from '../../components/checkout/AddressManager';
+import { FadeIn, SlideIn, AnimatedProgress } from '../../components/ui/Animations';
+import { Badge } from '../../components/ui/Badge';
 
 interface CheckoutFormData {
   email: string;
@@ -23,6 +27,8 @@ interface CheckoutFormData {
   sameAsShipping: boolean;
   couponCode: string;
   notes: string;
+  selectedAddressId?: string;
+  appliedCoupons: Coupon[];
 }
 
 export default function CheckoutPage() {
@@ -33,6 +39,20 @@ export default function CheckoutPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [addresses, setAddresses] = useState<AddressType[]>([
+    {
+      id: '1',
+      type: 'home',
+      name: 'John Doe',
+      street: '123 Main Street, Apt 4B',
+      city: 'New Delhi',
+      state: 'Delhi',
+      zipCode: '110001',
+      country: 'India',
+      isDefault: true
+    }
+  ]);
+
   const [formData, setFormData] = useState<CheckoutFormData>({
     email: user?.email || '',
     shippingAddress: {
@@ -58,7 +78,9 @@ export default function CheckoutPage() {
     paymentMethod: PaymentMethod.CREDIT_CARD,
     sameAsShipping: true,
     couponCode: '',
-    notes: ''
+    notes: '',
+    selectedAddressId: '1',
+    appliedCoupons: []
   });
 
   useEffect(() => {
@@ -119,6 +141,92 @@ export default function CheckoutPage() {
   const handlePreviousStep = () => {
     setCurrentStep(prev => prev - 1);
     setError(null);
+  };
+
+  // Address management handlers
+  const handleSelectAddress = (addressId: string) => {
+    setFormData(prev => ({ ...prev, selectedAddressId: addressId }));
+  };
+
+  const handleAddAddress = (address: Omit<AddressType, 'id'>) => {
+    const newAddress = { ...address, id: Date.now().toString() };
+    setAddresses(prev => [...prev, newAddress]);
+    setFormData(prev => ({ ...prev, selectedAddressId: newAddress.id }));
+  };
+
+  const handleEditAddress = (addressId: string, address: Omit<AddressType, 'id'>) => {
+    setAddresses(prev => prev.map(addr => 
+      addr.id === addressId ? { ...address, id: addressId } : addr
+    ));
+  };
+
+  const handleDeleteAddress = (addressId: string) => {
+    setAddresses(prev => prev.filter(addr => addr.id !== addressId));
+    if (formData.selectedAddressId === addressId) {
+      setFormData(prev => ({ ...prev, selectedAddressId: undefined }));
+    }
+  };
+
+  // Coupon management handlers
+  const handleApplyCoupon = async (couponCode: string): Promise<{ success: boolean; coupon?: Coupon; error?: string }> => {
+    // Simulate coupon validation
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const mockCoupons: Coupon[] = [
+      {
+        id: '1',
+        code: 'WELCOME10',
+        type: 'percentage',
+        value: 10,
+        description: 'Welcome discount - 10% off your first order',
+        minOrderAmount: 0,
+        expiresAt: '2024-12-31T23:59:59Z',
+        usageLimit: 1,
+        usedCount: 0,
+        isActive: true
+      },
+      {
+        id: '2',
+        code: 'SAVE50',
+        type: 'fixed_amount',
+        value: 50,
+        description: 'Fixed ₹50 off on orders over ₹500',
+        minOrderAmount: 500,
+        expiresAt: '2024-06-30T23:59:59Z',
+        usageLimit: undefined,
+        usedCount: 234,
+        isActive: true
+      }
+    ];
+    
+    const coupon = mockCoupons.find(c => c.code === couponCode);
+    
+    if (!coupon) {
+      return { success: false, error: 'Invalid coupon code' };
+    }
+    
+    if (coupon.minOrderAmount && cart && cart.subtotal < coupon.minOrderAmount) {
+      return { success: false, error: `Minimum order amount is ₹${coupon.minOrderAmount}` };
+    }
+    
+    const isAlreadyApplied = formData.appliedCoupons.find(c => c.id === coupon.id);
+    if (isAlreadyApplied) {
+      return { success: false, error: 'Coupon already applied' };
+    }
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      appliedCoupons: [...prev.appliedCoupons, coupon] 
+    }));
+    
+    return { success: true, coupon };
+  };
+
+  const handleRemoveCoupon = (couponId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      appliedCoupons: prev.appliedCoupons.filter(c => c.id !== couponId)
+    }));
   };
 
   const handlePlaceOrder = async () => {
@@ -233,7 +341,7 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {/* Step 1: Contact & Shipping */}
+        {/* Step 1: Contact & Shipping */}
                 {currentStep === 1 && (
                   <div className="space-y-6">
                     <h2 className="text-lg font-semibold text-gray-900">Contact & Shipping Information</h2>
@@ -251,55 +359,16 @@ export default function CheckoutPage() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Street Address *
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.shippingAddress.street}
-                          onChange={(e) => handleAddressChange('shipping', 'street', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          City *
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.shippingAddress.city}
-                          onChange={(e) => handleAddressChange('shipping', 'city', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          State *
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.shippingAddress.state}
-                          onChange={(e) => handleAddressChange('shipping', 'state', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          ZIP Code *
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.shippingAddress.zipCode}
-                          onChange={(e) => handleAddressChange('shipping', 'zipCode', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          required
-                        />
-                      </div>
+                    {/* Address selection & management */}
+                    <div className="space-y-4">
+                      <AddressManager
+                        addresses={addresses}
+                        selectedAddressId={formData.selectedAddressId}
+                        onSelectAddress={handleSelectAddress}
+                        onAddAddress={handleAddAddress}
+                        onEditAddress={handleEditAddress}
+                        onDeleteAddress={handleDeleteAddress}
+                      />
                     </div>
                   </div>
                 )}
@@ -332,18 +401,13 @@ export default function CheckoutPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id="sameAsShipping"
-                        checked={formData.sameAsShipping}
-                        onChange={(e) => handleSameAsShippingChange(e.target.checked)}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                      />
-                      <label htmlFor="sameAsShipping" className="ml-2 text-sm text-gray-700">
-                        Billing address same as shipping address
-                      </label>
-                    </div>
+                    {/* Coupon manager */}
+                    <CouponManager
+                      currentTotal={cart?.total || 0}
+                      appliedCoupons={formData.appliedCoupons}
+                      onApplyCoupon={handleApplyCoupon}
+                      onRemoveCoupon={handleRemoveCoupon}
+                    />
                   </div>
                 )}
 

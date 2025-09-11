@@ -13,37 +13,38 @@ import {
   Truck,
   Shield
 } from 'lucide-react';
-import { useCartWithOperations } from '../../hooks/useCart';
+import { useCartAPI } from '../../hooks/useCartAPI';
 import { Button } from '../../components/ui/Button';
 import MainLayout from '../../components/layout/MainLayout';
+import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 
 export default function CartPage() {
-  const { cart, loading, updateCartItem, removeFromCart, clearCart } = useCartWithOperations();
+  const { cart, loading, updateQuantity, removeItem, clearCart, syncError, retrySync, isAuthenticated, isSynced } = useCartAPI();
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
 
-  const handleQuantityChange = async (itemId: string, newQuantity: number) => {
+  const handleQuantityChange = async (productId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
     
-    setUpdatingItems(prev => new Set(prev).add(itemId));
+    setUpdatingItems(prev => new Set(prev).add(productId));
     try {
-      await updateCartItem(itemId, newQuantity);
+      await updateQuantity(productId, newQuantity);
     } finally {
       setUpdatingItems(prev => {
         const newSet = new Set(prev);
-        newSet.delete(itemId);
+        newSet.delete(productId);
         return newSet;
       });
     }
   };
 
-  const handleRemoveItem = async (itemId: string) => {
-    setUpdatingItems(prev => new Set(prev).add(itemId));
+  const handleRemoveItem = async (productId: string) => {
+    setUpdatingItems(prev => new Set(prev).add(productId));
     try {
-      await removeFromCart(itemId);
+      await removeItem(productId);
     } finally {
       setUpdatingItems(prev => {
         const newSet = new Set(prev);
-        newSet.delete(itemId);
+        newSet.delete(productId);
         return newSet;
       });
     }
@@ -105,6 +106,26 @@ export default function CartPage() {
             Clear Cart
           </Button>
         </div>
+        
+        {/* Sync Error Display */}
+        {syncError && (
+          <div className="mb-6">
+            <ApiErrorAlert
+              error={syncError}
+              onRetry={retrySync}
+              title="Cart Sync Issue"
+              variant="warning"
+              context="Your cart is saved locally and will sync when the connection is restored."
+            />
+          </div>
+        )}
+        
+        {/* Sync Status */}
+        {isAuthenticated && (
+          <div className="mb-4 text-sm text-gray-600">
+            Status: {isSynced ? '✅ Synced with server' : '📱 Local cart only'}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
@@ -120,8 +141,8 @@ export default function CartPage() {
                     <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
                       <div className="flex-shrink-0">
                         <Image
-                          src={item.product.images[0] || '/placeholder-product.jpg'}
-                          alt={item.product.name}
+                          src={item.image || '/placeholder-product.jpg'}
+                          alt={item.name}
                           width={80}
                           height={80}
                           className="rounded-lg object-cover"
@@ -130,13 +151,13 @@ export default function CartPage() {
                       
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-medium text-gray-900 truncate">
-                          {item.product.name}
+                          {item.name}
                         </h3>
                         <p className="text-sm text-gray-500">
                           ${item.price.toFixed(2)} each
                         </p>
                         <p className="text-sm text-gray-500">
-                          Stock: {item.product.stock} available
+                          Max available: {item.maxStock}
                         </p>
                       </div>
                       
@@ -144,8 +165,8 @@ export default function CartPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                          disabled={updatingItems.has(item.id) || item.quantity <= 1}
+                          onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
+                          disabled={updatingItems.has(item.productId) || item.quantity <= 1}
                         >
                           <Minus className="h-4 w-4" />
                         </Button>
@@ -157,8 +178,8 @@ export default function CartPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                          disabled={updatingItems.has(item.id) || item.quantity >= item.product.stock}
+                          onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
+                          disabled={updatingItems.has(item.productId) || item.quantity >= item.maxStock}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
@@ -171,8 +192,8 @@ export default function CartPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleRemoveItem(item.id)}
-                          disabled={updatingItems.has(item.id)}
+                          onClick={() => handleRemoveItem(item.productId)}
+                          disabled={updatingItems.has(item.productId)}
                           className="text-red-600 hover:text-red-700 mt-1"
                         >
                           <Trash2 className="h-4 w-4" />

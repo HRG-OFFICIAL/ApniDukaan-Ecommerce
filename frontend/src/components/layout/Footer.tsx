@@ -1,199 +1,256 @@
-import Link from 'next/link'
+'use client'
 
-const navigation = {
-  shop: [
-    { name: 'All Products', href: '/products' },
-    { name: 'New Arrivals', href: '/products?filter=new' },
-    { name: 'Best Sellers', href: '/products?filter=bestseller' },
-    { name: 'Sale Items', href: '/products?filter=sale' },
-    { name: 'Categories', href: '/categories' },
-  ],
-  support: [
-    { name: 'Help Center', href: '/support' },
-    { name: 'Contact Us', href: '/contact' },
-    { name: 'Shipping Info', href: '/shipping' },
-    { name: 'Returns', href: '/returns' },
-    { name: 'Size Guide', href: '/size-guide' },
-  ],
-  company: [
-    { name: 'About', href: '/about' },
-    { name: 'Careers', href: '/careers' },
-    { name: 'Press', href: '/press' },
-    { name: 'Blog', href: '/blog' },
-    { name: 'Investors', href: '/investors' },
-  ],
-  legal: [
-    { name: 'Privacy Policy', href: '/privacy' },
-    { name: 'Terms of Service', href: '/terms' },
-    { name: 'Cookie Policy', href: '/cookies' },
-    { name: 'Accessibility', href: '/accessibility' },
-  ],
+import Link from 'next/link'
+import { 
+  Facebook, 
+  Twitter, 
+  Instagram, 
+  Youtube,
+  Mail,
+  Phone,
+  MapPin,
+  CreditCard,
+  Shield,
+  Truck,
+  RotateCcw,
+  Heart
+} from 'lucide-react'
+import { usePreferencesStore } from '../../store/usePreferencesStore'
+import { ThemeToggle } from '../ui/ThemeToggle'
+
+const footerLinks = {
+  company: {
+    title: 'Company',
+    links: [
+      { name: 'About Us', href: '/about' },
+      { name: 'Careers', href: '/careers' },
+      { name: 'Press', href: '/press' },
+      { name: 'Blog', href: '/blog' },
+      { name: 'Contact', href: '/contact' }
+    ]
+  },
+  customer: {
+    title: 'Customer Care',
+    links: [
+      { name: 'Help Center', href: '/help' },
+      { name: 'Track Your Order', href: '/track-order' },
+      { name: 'Returns & Refunds', href: '/returns' },
+      { name: 'Size Guide', href: '/size-guide' },
+      { name: 'Gift Cards', href: '/gift-cards' }
+    ]
+  },
+  policies: {
+    title: 'Policies',
+    links: [
+      { name: 'Privacy Policy', href: '/privacy' },
+      { name: 'Terms of Service', href: '/terms' },
+      { name: 'Cookie Policy', href: '/cookies' },
+      { name: 'Shipping Policy', href: '/shipping' },
+      { name: 'Return Policy', href: '/return-policy' }
+    ]
+  },
+  categories: {
+    title: 'Categories',
+    links: [
+      { name: 'Electronics', href: '/categories/electronics' },
+      { name: 'Clothing', href: '/categories/clothing' },
+      { name: 'Home & Garden', href: '/categories/home-garden' },
+      { name: 'Sports', href: '/categories/sports' },
+      { name: 'Books', href: '/categories/books' }
+    ]
+  }
 }
 
+const features = [
+  {
+    icon: Truck,
+    title: 'Free Shipping',
+    description: 'On orders over $50'
+  },
+  {
+    icon: RotateCcw,
+    title: 'Easy Returns',
+    description: '30-day return policy'
+  },
+  {
+    icon: Shield,
+    title: 'Secure Payment',
+    description: '100% secure checkout'
+  },
+  {
+    icon: Heart,
+    title: '24/7 Support',
+    description: 'Dedicated support team'
+  }
+]
+
+const paymentMethods = [
+  'Visa', 'Mastercard', 'American Express', 'PayPal', 'Apple Pay', 'Google Pay'
+]
+
+const socialLinks = [
+  { name: 'Facebook', icon: Facebook, href: 'https://facebook.com' },
+  { name: 'Twitter', icon: Twitter, href: 'https://twitter.com' },
+  { name: 'Instagram', icon: Instagram, href: 'https://instagram.com' },
+  { name: 'YouTube', icon: Youtube, href: 'https://youtube.com' }
+]
+
 export default function Footer() {
+  const { currency } = usePreferencesStore()
+  
   return (
-    <footer className="bg-white border-t border-gray-200" aria-labelledby="footer-heading">
-      <h2 id="footer-heading" className="sr-only">
-        Footer
-      </h2>
-      <div className="mx-auto max-w-7xl px-6 pb-8 pt-16 sm:pt-24 lg:px-8 lg:pt-32">
-        <div className="xl:grid xl:grid-cols-3 xl:gap-8">
-          {/* Brand Section */}
-          <div className="space-y-8">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded bg-gradient-to-r from-primary-600 to-accent-600 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">S</span>
-              </div>
-              <span className="font-bold text-xl text-gray-900">ShopSphere</span>
-            </Link>
-            <p className="text-sm leading-6 text-gray-600">
-              Your ultimate e-commerce destination powered by modern microservices architecture. 
-              Experience seamless shopping with cutting-edge technologies.
-            </p>
-            <div className="flex space-x-6">
-              {/* Social Media Icons */}
-              <a href="#" className="text-gray-400 hover:text-gray-500">
-                <span className="sr-only">Facebook</span>
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
-                </svg>
-              </a>
-              <a href="#" className="text-gray-400 hover:text-gray-500">
-                <span className="sr-only">Instagram</span>
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fillRule="evenodd" d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 6.62 5.367 11.987 11.988 11.987s11.987-5.367 11.987-11.987C24.014 5.367 18.647.001 12.017.001zM8.449 16.988c-1.297 0-2.448-.49-3.323-1.297C4.25 14.81 3.885 13.65 3.885 12.4c0-1.297.49-2.448 1.297-3.323C5.957 8.25 7.117 7.885 8.367 7.885c1.297 0 2.448.49 3.323 1.297.875.875 1.24 2.035 1.24 3.285 0 1.297-.49 2.448-1.297 3.323-.874.875-2.034 1.24-3.284 1.24zm7.49-10.556h-2.875v2.875h2.875V6.432zm-3.49 6.556c0-.875-.365-1.615-.948-2.198-.583-.583-1.323-.948-2.198-.948-.875 0-1.615.365-2.198.948-.583.583-.948 1.323-.948 2.198 0 .875.365 1.615.948 2.198.583.583 1.323.948 2.198.948.875 0 1.615-.365 2.198-.948.583-.583.948-1.323.948-2.198z" clipRule="evenodd" />
-                </svg>
-              </a>
-              <a href="#" className="text-gray-400 hover:text-gray-500">
-                <span className="sr-only">Twitter</span>
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
-                </svg>
-              </a>
-              <a href="#" className="text-gray-400 hover:text-gray-500">
-                <span className="sr-only">GitHub</span>
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-                </svg>
-              </a>
-            </div>
-          </div>
-          
-          {/* Navigation Links */}
-          <div className="mt-16 grid grid-cols-2 gap-8 xl:col-span-2 xl:mt-0">
-            <div className="md:grid md:grid-cols-2 md:gap-8">
-              <div>
-                <h3 className="text-sm font-semibold leading-6 text-gray-900">Shop</h3>
-                <ul role="list" className="mt-6 space-y-4">
-                  {navigation.shop.map((item) => (
-                    <li key={item.name}>
-                      <Link href={item.href} className="text-sm leading-6 text-gray-600 hover:text-gray-900">
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-10 md:mt-0">
-                <h3 className="text-sm font-semibold leading-6 text-gray-900">Support</h3>
-                <ul role="list" className="mt-6 space-y-4">
-                  {navigation.support.map((item) => (
-                    <li key={item.name}>
-                      <Link href={item.href} className="text-sm leading-6 text-gray-600 hover:text-gray-900">
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            <div className="md:grid md:grid-cols-2 md:gap-8">
-              <div>
-                <h3 className="text-sm font-semibold leading-6 text-gray-900">Company</h3>
-                <ul role="list" className="mt-6 space-y-4">
-                  {navigation.company.map((item) => (
-                    <li key={item.name}>
-                      <Link href={item.href} className="text-sm leading-6 text-gray-600 hover:text-gray-900">
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-10 md:mt-0">
-                <h3 className="text-sm font-semibold leading-6 text-gray-900">Legal</h3>
-                <ul role="list" className="mt-6 space-y-4">
-                  {navigation.legal.map((item) => (
-                    <li key={item.name}>
-                      <Link href={item.href} className="text-sm leading-6 text-gray-600 hover:text-gray-900">
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+    <footer className="bg-gray-900 text-gray-300">
+      {/* Features Section */}
+      <div className="border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {features.map((feature) => {
+              const Icon = feature.icon
+              return (
+                <div key={feature.title} className="text-center">
+                  <div className="flex justify-center mb-4">
+                    <div className="bg-blue-600 p-3 rounded-full">
+                      <Icon className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                  <h3 className="font-semibold text-white mb-2">{feature.title}</h3>
+                  <p className="text-sm text-gray-400">{feature.description}</p>
+                </div>
+              )
+            })}
           </div>
         </div>
-        
-        {/* Newsletter Signup */}
-        <div className="mt-16 border-t border-gray-900/10 pt-8 sm:mt-20 lg:mt-24">
-          <div className="xl:grid xl:grid-cols-3 xl:gap-8">
-            <div>
-              <h3 className="text-sm font-semibold leading-6 text-gray-900">
-                Subscribe to our newsletter
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-gray-600">
-                Get the latest news, updates, and exclusive offers delivered straight to your inbox.
-              </p>
+      </div>
+
+      {/* Main Footer Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
+          {/* Brand Column */}
+          <div className="lg:col-span-2">
+            <Link href="/" className="flex items-center space-x-2 mb-6">
+              <div className="h-10 w-10 rounded bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+                <span className="text-white font-bold text-lg">A</span>
+              </div>
+              <span className="text-2xl font-bold text-white">ApniDukaan</span>
+            </Link>
+            
+            <p className="text-gray-400 mb-6 max-w-sm">
+              Your ultimate e-commerce destination. Discover amazing products, 
+              unbeatable prices, and exceptional service.
+            </p>
+            
+            {/* Contact Info */}
+            <div className="space-y-3 mb-6">
+              <div className="flex items-center space-x-3">
+                <MapPin className="h-5 w-5 text-blue-400" />
+                <span className="text-sm">123 Commerce St, City, State 12345</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Phone className="h-5 w-5 text-blue-400" />
+                <span className="text-sm">+1 (555) 123-4567</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Mail className="h-5 w-5 text-blue-400" />
+                <span className="text-sm">support@apnidukaan.com</span>
+              </div>
             </div>
-            <form className="mt-6 sm:flex sm:max-w-md xl:mt-0 xl:col-span-2">
-              <label htmlFor="email-address" className="sr-only">
-                Email address
-              </label>
+
+            {/* Social Links */}
+            <div className="flex space-x-4">
+              {socialLinks.map((social) => {
+                const Icon = social.icon
+                return (
+                  <a
+                    key={social.name}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-gray-800 dark:bg-gray-700 p-2 rounded-full hover:bg-blue-600 transition-colors"
+                    aria-label={social.name}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </a>
+                )
+              })}
+            </div>
+
+            {/* Theme Toggle */}
+            <div className="mt-6">
+              <p className="text-sm text-gray-400 mb-3">Theme Preference</p>
+              <ThemeToggle variant="compact" />
+            </div>
+          </div>
+
+          {/* Footer Links */}
+          {Object.entries(footerLinks).map(([key, section]) => (
+            <div key={key}>
+              <h3 className="font-semibold text-white mb-4">{section.title}</h3>
+              <ul className="space-y-2">
+                {section.links.map((link) => (
+                  <li key={link.name}>
+                    <Link 
+                      href={link.href} 
+                      className="text-gray-400 hover:text-white transition-colors text-sm"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Newsletter Signup */}
+        <div className="mt-12 pt-8 border-t border-gray-800">
+          <div className="max-w-md">
+            <h3 className="font-semibold text-white mb-4">Stay Updated</h3>
+            <p className="text-gray-400 mb-4 text-sm">
+              Subscribe to get special offers, new arrivals and exclusive deals.
+            </p>
+            <form className="flex space-x-2">
               <input
                 type="email"
-                name="email-address"
-                id="email-address"
-                autoComplete="email"
-                required
-                className="w-full min-w-0 appearance-none rounded-md border-0 bg-white px-3 py-1.5 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:w-64 sm:text-sm sm:leading-6"
                 placeholder="Enter your email"
+                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
               />
-              <div className="mt-4 sm:ml-4 sm:mt-0 sm:flex-shrink-0">
-                <button
-                  type="submit"
-                  className="flex w-full items-center justify-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                >
-                  Subscribe
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
+              >
+                Subscribe
+              </button>
             </form>
           </div>
         </div>
-        
-        {/* Bottom Section */}
-        <div className="mt-8 border-t border-gray-900/10 pt-8 md:flex md:items-center md:justify-between">
-          <div className="flex space-x-6 md:order-2">
+      </div>
+
+      {/* Bottom Footer */}
+      <div className="border-t border-gray-800 bg-gray-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6">
+              <p className="text-sm text-gray-400">
+                © {new Date().getFullYear()} ApniDukaan. All rights reserved.
+              </p>
+              <div className="flex items-center space-x-4 text-xs text-gray-500">
+                <span>Currency: {currency}</span>
+                <span>•</span>
+                <span>English (US)</span>
+              </div>
+            </div>
+            
             {/* Payment Methods */}
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500">We accept:</span>
-              <div className="flex space-x-2">
-                <div className="h-6 w-10 bg-gray-100 rounded border flex items-center justify-center">
-                  <span className="text-xs font-semibold text-gray-600">VISA</span>
-                </div>
-                <div className="h-6 w-10 bg-gray-100 rounded border flex items-center justify-center">
-                  <span className="text-xs font-semibold text-gray-600">MC</span>
-                </div>
-                <div className="h-6 w-10 bg-gray-100 rounded border flex items-center justify-center">
-                  <span className="text-xs font-semibold text-gray-600">PP</span>
-                </div>
+              <span className="text-sm text-gray-400 mr-2">We accept:</span>
+              <div className="flex items-center space-x-1">
+                <CreditCard className="h-6 w-6 text-gray-400" />
+                <span className="text-xs text-gray-500">
+                  {paymentMethods.join(', ')}
+                </span>
               </div>
             </div>
           </div>
-          <p className="mt-8 text-xs leading-5 text-gray-500 md:order-1 md:mt-0">
-            &copy; {new Date().getFullYear()} ShopSphere, Inc. All rights reserved.
-          </p>
         </div>
       </div>
     </footer>

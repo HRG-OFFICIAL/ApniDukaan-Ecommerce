@@ -5,13 +5,21 @@ import { RetryLink } from '@apollo/client/link/retry';
 
 // HTTP link to GraphQL endpoint
 const httpLink = createHttpLink({
-  uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:4000/graphql',
+  uri: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/graphql',
 });
 
 // Auth link to add JWT token to requests
 const authLink = setContext((_, { headers }) => {
   // Get the authentication token from local storage if it exists
-  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+  // Only access localStorage on the client side
+  let token = null;
+  if (typeof window !== 'undefined') {
+    try {
+      token = localStorage.getItem('authToken');
+    } catch (error) {
+      console.warn('Failed to access localStorage:', error);
+    }
+  }
   
   // Return the headers to the context so httpLink can read them
   return {
@@ -35,12 +43,16 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
   if (networkError) {
     console.error(`[Network error]: ${networkError}`);
     
-    // Handle 401 errors by clearing auth token
+    // Handle 401 errors by clearing auth token (only on client side)
     if ('statusCode' in networkError && networkError.statusCode === 401) {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('refreshToken');
-        window.location.href = '/auth/login';
+        try {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('refreshToken');
+          window.location.href = '/auth/login';
+        } catch (error) {
+          console.warn('Failed to clear auth tokens:', error);
+        }
       }
     }
   }
@@ -106,11 +118,15 @@ const apolloClient = new ApolloClient({
   defaultOptions: {
     watchQuery: {
       errorPolicy: 'all',
+      fetchPolicy: 'cache-and-network',
     },
     query: {
       errorPolicy: 'all',
+      fetchPolicy: 'cache-first',
     },
   },
+  ssrMode: false, // This is for client-side only
+  assumeImmutableResults: true,
   devtools: {
     enabled: process.env.NODE_ENV === 'development',
   },

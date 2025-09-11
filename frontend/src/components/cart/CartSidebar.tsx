@@ -2,26 +2,40 @@
 
 import { Fragment } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { X, Minus, Plus, Trash2 } from 'lucide-react'
-import { useCartStore } from '../../contexts/CartContext'
+import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react'
+import { useCartStore } from '../../store/useCartStore'
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatCurrency } from '../../utils/format'
+import { Button } from '../ui/Button'
 
 export default function CartSidebar() {
-  const { isOpen, items, total, itemCount, toggleCart, updateQuantity, removeItem, clearCart } = useCartStore()
+  const { 
+    isOpen, 
+    items, 
+    total, 
+    subtotal,
+    tax,
+    shipping,
+    discount,
+    itemCount, 
+    closeCart, 
+    updateQuantity, 
+    removeItem, 
+    clearCart 
+  } = useCartStore()
 
-  const handleQuantityChange = (itemId: string, newQuantity: number) => {
+  const handleQuantityChange = (productId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
-      removeItem(itemId)
+      removeItem(productId)
     } else {
-      updateQuantity(itemId, newQuantity)
+      updateQuantity(productId, newQuantity)
     }
   }
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={toggleCart}>
+      <Dialog as="div" className="relative z-50" onClose={closeCart}>
         <Transition.Child
           as={Fragment}
           enter="ease-in-out duration-500"
@@ -60,7 +74,7 @@ export default function CartSidebar() {
                       <button
                         type="button"
                         className="relative rounded-md text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-white"
-                        onClick={toggleCart}
+                        onClick={closeCart}
                       >
                         <span className="absolute -inset-2.5" />
                         <span className="sr-only">Close panel</span>
@@ -80,16 +94,14 @@ export default function CartSidebar() {
                       {items.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full">
                           <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                            <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                            </svg>
+                            <ShoppingBag className="w-12 h-12 text-gray-400" />
                           </div>
                           <h3 className="text-lg font-medium text-gray-900 mb-2">Your cart is empty</h3>
                           <p className="text-gray-500 text-center mb-6">Add some products to get started!</p>
                           <Link
                             href="/products"
-                            onClick={toggleCart}
-                            className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-md font-medium transition-colors"
+                            onClick={closeCart}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium transition-colors"
                           >
                             Continue Shopping
                           </Link>
@@ -115,7 +127,7 @@ export default function CartSidebar() {
                                     <div>
                                       <div className="flex justify-between text-base font-medium text-gray-900">
                                         <h3>
-                                          <Link href={`/products/${item.productId}`} onClick={toggleCart}>
+                                        <Link href={`/products/${item.productId}`} onClick={closeCart}>
                                             {item.name}
                                           </Link>
                                         </h3>
@@ -125,19 +137,19 @@ export default function CartSidebar() {
                                     <div className="flex flex-1 items-end justify-between text-sm">
                                       <div className="flex items-center space-x-2">
                                         <button
-                                          onClick={() => handleQuantityChange(item.id, (item.quantity || 1) - 1)}
-                                          className="p-1 rounded-md hover:bg-gray-100 transition-colors"
-                                          disabled={(item.quantity || 1) <= 1}
+                                          onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
+                                          className="p-1 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50"
+                                          disabled={item.quantity <= 1}
                                         >
                                           <Minus className="h-4 w-4 text-gray-600" />
                                         </button>
-                                        <span className="text-gray-500 min-w-[2rem] text-center">
-                                          {item.quantity || 1}
+                                        <span className="text-gray-500 min-w-[2rem] text-center font-medium">
+                                          {item.quantity}
                                         </span>
                                         <button
-                                          onClick={() => handleQuantityChange(item.id, (item.quantity || 1) + 1)}
-                                          className="p-1 rounded-md hover:bg-gray-100 transition-colors"
-                                          disabled={(item.quantity || 1) >= item.maxStock}
+                                          onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
+                                          className="p-1 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50"
+                                          disabled={item.quantity >= item.maxStock}
                                         >
                                           <Plus className="h-4 w-4 text-gray-600" />
                                         </button>
@@ -146,8 +158,9 @@ export default function CartSidebar() {
                                       <div className="flex">
                                         <button
                                           type="button"
-                                          onClick={() => removeItem(item.id)}
+                                          onClick={() => removeItem(item.productId)}
                                           className="font-medium text-red-600 hover:text-red-500 transition-colors"
+                                          title="Remove item"
                                         >
                                           <Trash2 className="h-5 w-5" />
                                         </button>
@@ -161,37 +174,77 @@ export default function CartSidebar() {
 
                           {/* Cart Footer */}
                           <div className="border-t border-gray-200 px-4 py-6 sm:px-6 mt-6">
-                            <div className="flex justify-between text-base font-medium text-gray-900">
-                              <p>Subtotal</p>
-                              <p>{formatCurrency(total)}</p>
+                            {/* Price Breakdown */}
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm text-gray-600">
+                                <p>Subtotal</p>
+                                <p>{formatCurrency(subtotal)}</p>
+                              </div>
+                              
+                              {shipping > 0 && (
+                                <div className="flex justify-between text-sm text-gray-600">
+                                  <p>Shipping</p>
+                                  <p>{formatCurrency(shipping)}</p>
+                                </div>
+                              )}
+                              
+                              {tax > 0 && (
+                                <div className="flex justify-between text-sm text-gray-600">
+                                  <p>Tax</p>
+                                  <p>{formatCurrency(tax)}</p>
+                                </div>
+                              )}
+                              
+                              {discount > 0 && (
+                                <div className="flex justify-between text-sm text-green-600">
+                                  <p>Discount</p>
+                                  <p>-{formatCurrency(discount)}</p>
+                                </div>
+                              )}
                             </div>
-                            <p className="mt-0.5 text-sm text-gray-500">Shipping and taxes calculated at checkout.</p>
+                            
+                            <div className="border-t border-gray-200 mt-4 pt-4">
+                              <div className="flex justify-between text-base font-medium text-gray-900">
+                                <p>Total</p>
+                                <p>{formatCurrency(total)}</p>
+                              </div>
+                            </div>
+                            
+                            {shipping === 0 && subtotal > 0 && subtotal < 50 && (
+                              <p className="mt-2 text-sm text-blue-600">
+                                Add {formatCurrency(50 - subtotal)} more for free shipping!
+                              </p>
+                            )}
                             
                             {items.length > 1 && (
-                              <button
+                              <Button
+                                variant="ghost"
                                 onClick={clearCart}
-                                className="mt-4 w-full text-center text-sm text-red-600 hover:text-red-500 font-medium"
+                                className="mt-4 w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                                size="sm"
                               >
                                 Clear Cart
-                              </button>
+                              </Button>
                             )}
                             
                             <div className="mt-6">
-                              <Link
+                              <Button
                                 href="/checkout"
-                                onClick={toggleCart}
-                                className="flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 transition-colors w-full"
+                                onClick={closeCart}
+                                className="w-full bg-blue-600 hover:bg-blue-700"
+                                size="lg"
                               >
-                                Checkout
-                              </Link>
+                                Proceed to Checkout
+                              </Button>
                             </div>
+                            
                             <div className="mt-6 flex justify-center text-center text-sm text-gray-500">
                               <p>
                                 or{' '}
                                 <button
                                   type="button"
-                                  className="font-medium text-primary-600 hover:text-primary-500"
-                                  onClick={toggleCart}
+                                  className="font-medium text-blue-600 hover:text-blue-500"
+                                  onClick={closeCart}
                                 >
                                   Continue Shopping
                                   <span aria-hidden="true"> &rarr;</span>

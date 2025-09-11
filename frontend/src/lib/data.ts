@@ -1,4 +1,4 @@
-import { Product, Category } from '../types';
+import { Product } from '../graphql/types';
 import { Shirt, Tv, Home, Dumbbell, Book, ToyBrick } from 'lucide-react';
 
 export const sampleProducts: Product[] = [
@@ -13,7 +13,12 @@ export const sampleProducts: Product[] = [
     rating: 4.2,
     reviewCount: 1284,
     stock: 25,
-    isBestseller: true
+    isBestseller: true,
+    isOnSale: false,
+    isNew: false,
+    reviews: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
   {
     id: '2',
@@ -26,7 +31,12 @@ export const sampleProducts: Product[] = [
     rating: 4.1,
     reviewCount: 8924,
     stock: 15,
-    isNew: true
+    isBestseller: false,
+    isOnSale: false,
+    isNew: true,
+    reviews: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
   {
     id: '3',
@@ -38,7 +48,13 @@ export const sampleProducts: Product[] = [
     category: "Accessories",
     rating: 4.3,
     reviewCount: 15647,
-    stock: 30
+    stock: 30,
+    isBestseller: false,
+    isOnSale: false,
+    isNew: false,
+    reviews: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
   {
     id: '4',
@@ -51,9 +67,20 @@ export const sampleProducts: Product[] = [
     rating: 4.4,
     reviewCount: 1573,
     stock: 8,
-    isOnSale: true
+    isBestseller: false,
+    isOnSale: true,
+    isNew: false,
+    reviews: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   }
 ];
+
+export interface Category {
+  name: string;
+  icon: React.ElementType;
+  count: number;
+}
 
 export const categories: Category[] = [
   { name: "Electronics", icon: Tv, count: 245 },
