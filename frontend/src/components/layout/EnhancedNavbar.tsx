@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Badge } from '../ui/Badge'
+import { Logo } from '../ui/Logo'
 import { useCartStore } from '../../store/useCartStore'
 import { usePreferencesStore } from '../../store/usePreferencesStore'
 import { useAuthStore } from '../../store/useAuthStore'
@@ -210,19 +211,7 @@ export function EnhancedNavbar({ className = '' }: EnhancedNavbarProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center">
-              <Link href="/" className="flex-shrink-0">
-                <div className="flex items-center">
-                  <div className="bg-blue-600 text-white p-2 rounded-lg mr-2">
-                    <Globe className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h1 className="text-xl font-bold text-gray-900">ApniDukaan</h1>
-                    <p className="text-xs text-gray-500 leading-none">Your Store, Your Way</p>
-                  </div>
-                </div>
-              </Link>
-            </div>
+            <Logo variant="navbar" size="md" />
 
             {/* Search Bar */}
             <div className="hidden md:block flex-1 max-w-2xl mx-8" ref={searchRef}>

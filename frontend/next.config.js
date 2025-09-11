@@ -1,4 +1,8 @@
 /** @type {import('next').NextConfig} */
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+})
+
 const nextConfig = {
   // ESLint configuration
   eslint: {
@@ -18,7 +22,19 @@ const nextConfig = {
     serverActions: {
       allowedOrigins: ['localhost:3000', 'localhost:4000']
     },
-    optimizePackageImports: ['lucide-react', '@heroicons/react'],
+    optimizePackageImports: ['lucide-react', '@heroicons/react', 'framer-motion', 'react-hot-toast'],
+    optimizeCss: true,
+    scrollRestoration: true,
+  },
+  
+  // Performance optimizations
+  modularizeImports: {
+    'lucide-react': {
+      transform: 'lucide-react/dist/esm/icons/{{kebabCase member}}',
+    },
+    '@heroicons/react/24/outline': {
+      transform: '@heroicons/react/24/outline/{{member}}',
+    },
   },
   
   // Image optimization
@@ -123,4 +139,4 @@ const nextConfig = {
   // },
 }
 
-module.exports = nextConfig
+module.exports = withBundleAnalyzer(nextConfig)
