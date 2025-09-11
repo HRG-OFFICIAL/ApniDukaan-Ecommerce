@@ -2,7 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { connectDatabase, logger, kafkaProducerService } from '@apnidukaan/shared';
+import mongoose from 'mongoose';
+import { logger, kafkaProducerService } from '@apnidukaan/shared';
 
 // Import routes
 import productRoutes from './routes/products';
@@ -15,10 +16,20 @@ async function startServer() {
   const PORT = process.env.PORT || 4001;
 
   try {
-    // Connect to MongoDB Atlas
-    await connectDatabase({
-      uri: process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_catalog?retryWrites=true&w=majority&appName=Cluster0',
-      dbName: 'catalog_db'
+    // Connect to MongoDB Atlas using default mongoose connection
+    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0';
+    await mongoose.connect(mongoUri, {
+      dbName: 'apnidukaan'
+    });
+    
+    logger.info('Database connected successfully', {
+      service: 'apnidukaan-service',
+      environment: process.env.NODE_ENV || 'development',
+      version: '1.0.0',
+      database: 'apnidukaan',
+      host: mongoose.connection.host,
+      port: mongoose.connection.port,
+      action: 'database_connect'
     });
 
     // Initialize Kafka Producer

@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Product, IProduct } from '../models/Product';
 import { Review } from '../models/Review';
 import { logger } from '@apnidukaan/shared';
@@ -119,6 +120,14 @@ export class ProductService {
 
       // Execute query
       const skip = (page - 1) * limit;
+      
+      // Debug logging
+      console.log('=== ProductService.getProducts Debug ===');
+      console.log('Query:', JSON.stringify(query, null, 2));
+      console.log('Sort:', JSON.stringify(sortObj, null, 2));
+      console.log('Page:', page, 'Limit:', limit, 'Skip:', skip);
+      console.log('Database name:', mongoose.connection.db?.databaseName);
+      
       const [products, total] = await Promise.all([
         Product.find(query)
           .populate('category', 'name slug')
@@ -128,6 +137,10 @@ export class ProductService {
           .limit(limit),
         Product.countDocuments(query)
       ]);
+      
+      console.log('Results - Products found:', products.length, 'Total count:', total);
+      console.log('First product:', products[0] ? products[0].name : 'No products');
+      console.log('=== End Debug ===');
 
       const pages = Math.ceil(total / limit);
 

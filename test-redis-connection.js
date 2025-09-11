@@ -28,7 +28,7 @@ async function testRedisConnection() {
     console.log(`✅ Set/Get test: ${value}`);
 
     // Test JSON operations
-    const testData = { name: 'ShopSphere', version: '1.0.0', features: ['ecommerce', 'microservices'] };
+    const testData = { name: 'ApniDukaan', version: '1.0.0', features: ['ecommerce', 'microservices'] };
     await client.set('test:json', JSON.stringify(testData));
     const jsonValue = await client.get('test:json');
     const parsedData = JSON.parse(jsonValue);
@@ -54,7 +54,7 @@ async function testRedisConnection() {
 
     console.log('🎉 Redis is fully functional!');
     console.log('✅ All operations working correctly');
-    console.log('✅ Ready for ShopSphere integration\n');
+    console.log('✅ Ready for ApniDukaan integration\n');
 
     return true;
 
@@ -104,7 +104,7 @@ async function testRedisCloud() {
 
 // Main test function
 async function runTests() {
-  console.log('🚀 ShopSphere Redis Connection Test\n');
+  console.log('🚀 ApniDukaan Redis Connection Test\n');
   
   const localRedis = await testRedisConnection();
   
@@ -119,12 +119,12 @@ async function runTests() {
 
   if (localRedis) {
     console.log('🎯 Next Steps:');
-    console.log('   1. Redis is ready for ShopSphere');
+    console.log('   1. Redis is ready for ApniDukaan');
     console.log('   2. Caching will be enabled');
     console.log('   3. Session management will work');
     console.log('   4. Performance will be improved');
   } else {
-    console.log('⚠️  ShopSphere will work without Redis, but with limited features:');
+    console.log('⚠️  ApniDukaan will work without Redis, but with limited features:');
     console.log('   - No caching (slower performance)');
     console.log('   - No session persistence');
     console.log('   - No real-time features');

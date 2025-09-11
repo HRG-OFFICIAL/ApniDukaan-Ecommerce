@@ -880,8 +880,8 @@ export class AuthService implements IAuthService {
       if (data.method === MfaMethod.TOTP) {
         // Generate TOTP secret
         const secret = speakeasy.generateSecret({
-          name: `ShopSphere (${user.email})`,
-          issuer: 'ShopSphere'
+          name: `ApniDukaan (${user.email})`,
+          issuer: 'ApniDukaan'
         });
 
         // Generate QR code
@@ -1225,17 +1225,17 @@ export class AuthService implements IAuthService {
     
     try {
       await this.emailTransporter.sendMail({
-        from: process.env.FROM_EMAIL || 'noreply@shopsphere.com',
+        from: process.env.FROM_EMAIL || 'noreply@apnidukaan.com',
         to: user.email,
         subject: 'Verify Your Email Address',
         html: `
-          <h1>Welcome to ShopSphere!</h1>
+          <h1>Welcome to ApniDukaan!</h1>
           <p>Hello ${user.profile.firstName},</p>
-          <p>Thank you for registering with ShopSphere. Please click the link below to verify your email address:</p>
+          <p>Thank you for registering with ApniDukaan. Please click the link below to verify your email address:</p>
           <a href="${verificationUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a>
-          <p>If you didn't create an account with ShopSphere, please ignore this email.</p>
+          <p>If you didn't create an account with ApniDukaan, please ignore this email.</p>
           <p>This link will expire in 24 hours.</p>
-          <p>Best regards,<br>The ShopSphere Team</p>
+          <p>Best regards,<br>The ApniDukaan Team</p>
         `
       });
     } catch (error) {
@@ -1248,17 +1248,17 @@ export class AuthService implements IAuthService {
 
     try {
       await this.emailTransporter.sendMail({
-        from: process.env.FROM_EMAIL || 'noreply@shopsphere.com',
+        from: process.env.FROM_EMAIL || 'noreply@apnidukaan.com',
         to: user.email,
-        subject: 'Welcome to ShopSphere!',
+        subject: 'Welcome to ApniDukaan!',
         html: `
-          <h1>Welcome to ShopSphere!</h1>
+          <h1>Welcome to ApniDukaan!</h1>
           <p>Hello ${user.profile.firstName},</p>
-          <p>Your email has been verified successfully. Welcome to the ShopSphere community!</p>
+          <p>Your email has been verified successfully. Welcome to the ApniDukaan community!</p>
           <p>You can now start shopping and enjoying all the features we have to offer.</p>
           <a href="${process.env.FRONTEND_URL}/dashboard" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go to Dashboard</a>
           <p>If you have any questions, feel free to contact our support team.</p>
-          <p>Happy shopping!<br>The ShopSphere Team</p>
+          <p>Happy shopping!<br>The ApniDukaan Team</p>
         `
       });
     } catch (error) {
@@ -1275,17 +1275,17 @@ export class AuthService implements IAuthService {
 
     try {
       await this.emailTransporter.sendMail({
-        from: process.env.FROM_EMAIL || 'noreply@shopsphere.com',
+        from: process.env.FROM_EMAIL || 'noreply@apnidukaan.com',
         to: user.email,
         subject: 'Reset Your Password',
         html: `
           <h1>Password Reset Request</h1>
           <p>Hello ${user.profile.firstName},</p>
-          <p>You requested a password reset for your ShopSphere account. Click the link below to reset your password:</p>
+          <p>You requested a password reset for your ApniDukaan account. Click the link below to reset your password:</p>
           <a href="${resetUrl}" style="background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a>
           <p>If you didn't request a password reset, please ignore this email. Your password will remain unchanged.</p>
           <p>This link will expire in 30 minutes.</p>
-          <p>Best regards,<br>The ShopSphere Team</p>
+          <p>Best regards,<br>The ApniDukaan Team</p>
         `
       });
     } catch (error) {

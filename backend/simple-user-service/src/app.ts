@@ -49,7 +49,7 @@ app.use(express.urlencoded({ extended: true }));
 // Database connection
 const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/shopsphere_users';
+    const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_users?retryWrites=true&w=majority&appName=Cluster0';
     
     await mongoose.connect(mongoURI, {
       maxPoolSize: 10,

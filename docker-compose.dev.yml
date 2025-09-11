@@ -8,11 +8,11 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=password
-      - MONGO_INITDB_DATABASE=shopsphere
+      - MONGO_INITDB_DATABASE=ApniDukaan
     volumes:
       - mongodb_dev_data:/data/db
     networks:
-      - shopsphere-dev-network
+      - ApniDukaan-dev-network
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
@@ -30,7 +30,7 @@ services:
       - redis_dev_data:/data
     command: redis-server --appendonly yes --requirepass redis_password
     networks:
-      - shopsphere-dev-network
+      - ApniDukaan-dev-network
     healthcheck:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
       interval: 10s
@@ -52,7 +52,7 @@ services:
       - zookeeper_dev_data:/var/lib/zookeeper/data
       - zookeeper_dev_logs:/var/lib/zookeeper/log
     networks:
-      - shopsphere-dev-network
+      - ApniDukaan-dev-network
 
   # Kafka for event streaming
   kafka:
@@ -79,7 +79,7 @@ services:
     volumes:
       - kafka_dev_data:/var/lib/kafka/data
     networks:
-      - shopsphere-dev-network
+      - ApniDukaan-dev-network
     healthcheck:
       test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
       interval: 10s
@@ -100,5 +100,5 @@ volumes:
     driver: local
 
 networks:
-  shopsphere-dev-network:
+  ApniDukaan-dev-network:
     driver: bridge

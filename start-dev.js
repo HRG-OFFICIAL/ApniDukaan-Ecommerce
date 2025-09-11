@@ -228,7 +228,7 @@ async function waitForService(url, serviceName, timeout = 30000) {
         if (serviceName === 'MongoDB') {
           // Try multiple approaches to check MongoDB
           try {
-            await execAsync('mongosh --eval "db.adminCommand({ping: 1})" --quiet mongodb://localhost:27017/test', { timeout: 5000 });
+            await execAsync('mongosh --eval "db.adminCommand({ping: 1})" --quiet mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster0', { timeout: 5000 });  
           } catch (mongoError) {
             // Fallback: Check if port is open
             await execAsync('netstat -an | findstr :27017', { timeout: 3000 });
@@ -298,7 +298,7 @@ async function startDatabases() {
     log('Waiting for infrastructure to be ready...', colors.yellow, '⏳');
     
     // Wait for services to be ready with health checks
-    const mongoReady = await waitForService('mongodb://localhost:27017', 'MongoDB', 45000);
+    const mongoReady = await waitForService('mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster0', 'MongoDB Atlas', 45000);
     const redisReady = await waitForService('redis://localhost:6379', 'Redis', 30000);
     const kafkaReady = await waitForService('kafka://localhost:9092', 'Kafka', 60000);
     
@@ -416,7 +416,7 @@ function startService(service) {
 }
 
 async function startAllServices() {
-  log('🚀 Starting ShopSphere E-commerce Application...\n', colors.bright + colors.cyan);
+  log('🚀 Starting ApniDukaan E-commerce Application...\n', colors.bright + colors.cyan);
   
   // Clean up any existing processes on required ports first (unless --no-cleanup flag is used)
   if (!process.argv.includes('--no-cleanup')) {
@@ -462,7 +462,7 @@ async function startAllServices() {
     
     if (databasesStarted) {
       console.log(colors.blue + '\n🗄️  Infrastructure URLs:' + colors.reset);
-      console.log(`  MongoDB: mongodb://localhost:27017`);
+      console.log(`  MongoDB: MongoDB Atlas (Cloud)`);
       console.log(`  Redis: redis://localhost:6379`);
       console.log(`  Kafka: kafka://localhost:9092`);
       console.log(`  Zookeeper: zookeeper://localhost:2181`);

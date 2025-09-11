@@ -1,6 +1,6 @@
-# 🚀 ShopSphere Quick Start Guide
+# 🚀 ApniDukaan Quick Start Guide
 
-## Get ShopSphere Running in 5 Minutes!
+## Get ApniDukaan Running in 5 Minutes!
 
 ### Prerequisites
 - Node.js 18+ installed
@@ -98,7 +98,7 @@ GET  /api/payments              - Payment methods
 
 ### Project Structure
 ```
-shopsphere-ecommerce/
+ApniDukaan-ecommerce/
 ├── frontend/                 # Next.js React app
 ├── backend/
 │   ├── api-gateway/         # Central API router

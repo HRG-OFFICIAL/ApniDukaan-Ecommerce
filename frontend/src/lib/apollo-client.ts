@@ -3,6 +3,18 @@ import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
 import { RetryLink } from '@apollo/client/link/retry';
 
+// Load Apollo Client error messages for better debugging
+// Only load in development to avoid build-time errors
+if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+  try {
+    const { loadErrorMessages, loadDevMessages } = require('@apollo/client/dev');
+    loadDevMessages();
+    loadErrorMessages();
+  } catch (error) {
+    // Silently ignore errors during build
+  }
+}
+
 // HTTP link to GraphQL endpoint
 const httpLink = createHttpLink({
   uri: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/graphql',

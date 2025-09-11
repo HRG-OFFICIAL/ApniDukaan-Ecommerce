@@ -7,7 +7,7 @@ Create `.env.local` in the frontend directory:
 ```bash
 # API Configuration
 NEXT_PUBLIC_API_URL=http://localhost:4000
-NEXT_PUBLIC_APP_NAME=ShopSphere
+NEXT_PUBLIC_APP_NAME=ApniDukaan
 NEXT_PUBLIC_APP_VERSION=1.0.0
 
 # Authentication

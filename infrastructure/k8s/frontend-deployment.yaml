@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: shopsphere
+  namespace: ApniDukaan
 spec:
   replicas: 3
   selector:
@@ -15,14 +15,14 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: shopsphere/frontend:latest
+        image: ApniDukaan/frontend:latest
         ports:
         - containerPort: 3000
         env:
         - name: NODE_ENV
           valueFrom:
             configMapKeyRef:
-              name: shopsphere-config
+              name: ApniDukaan-config
               key: NODE_ENV
         - name: NEXT_PUBLIC_API_URL
           value: "http://api-gateway:4000/graphql"
@@ -51,7 +51,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend
-  namespace: shopsphere
+  namespace: ApniDukaan
 spec:
   selector:
     app: frontend

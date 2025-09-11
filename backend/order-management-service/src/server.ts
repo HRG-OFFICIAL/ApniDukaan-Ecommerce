@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * ShopSphere E-commerce Platform
+ * ApniDukaan E-commerce Platform
  * Order Management Service
  * Server Entry Point
  */
@@ -30,7 +30,7 @@ process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
 });
 
 // Log startup information
-logger.info('Starting ShopSphere Order Management Service...', {
+logger.info('Starting ApniDukaan Order Management Service...', {
   nodeVersion: process.version,
   platform: process.platform,
   arch: process.arch,

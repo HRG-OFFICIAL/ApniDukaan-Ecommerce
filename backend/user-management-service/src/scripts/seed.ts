@@ -192,7 +192,7 @@ const DEFAULT_ROLES = [
 
 // Default admin user
 const DEFAULT_ADMIN = {
-  email: 'admin@shopsphere.com',
+  email: 'admin@ApniDukaan.com',
   username: 'superadmin',
   password: 'SuperAdmin123!',
   profile: {

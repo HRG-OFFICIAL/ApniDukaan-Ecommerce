@@ -1,8 +1,8 @@
-// MongoDB Initialization Script for ShopSphere
+// MongoDB Initialization Script for ApniDukaan
 // This script creates databases and initial collections for all microservices
 
 // Create databases and collections for each service
-db = db.getSiblingDB('shopsphere_catalog');
+db = db.getSiblingDB('ApniDukaan_catalog');
 db.createCollection('products');
 db.createCollection('categories');
 db.createCollection('reviews');
@@ -48,7 +48,7 @@ db.categories.insertMany([
 ]);
 
 // User service database
-db = db.getSiblingDB('shopsphere_users');
+db = db.getSiblingDB('ApniDukaan_users');
 db.createCollection('users');
 db.createCollection('profiles');
 db.createCollection('wishlists');
@@ -60,7 +60,7 @@ db.profiles.createIndex({ "userId": 1 }, { unique: true });
 db.wishlists.createIndex({ "userId": 1 });
 
 // Order service database
-db = db.getSiblingDB('shopsphere_orders');
+db = db.getSiblingDB('ApniDukaan_orders');
 db.createCollection('orders');
 db.createCollection('carts');
 db.createCollection('order_items');
@@ -73,7 +73,7 @@ db.carts.createIndex({ "userId": 1 }, { unique: true });
 db.order_items.createIndex({ "orderId": 1 });
 
 // Payment service database
-db = db.getSiblingDB('shopsphere_payments');
+db = db.getSiblingDB('ApniDukaan_payments');
 db.createCollection('payments');
 db.createCollection('payment_methods');
 db.createCollection('transactions');

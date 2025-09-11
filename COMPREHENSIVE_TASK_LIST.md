@@ -1,4 +1,4 @@
-# 🚀 **COMPREHENSIVE TASK LIST TO GET SHOPSPHERE RUNNING**
+# 🚀 **COMPREHENSIVE TASK LIST TO GET ApniDukaan RUNNING**
 
 ## ✅ **COMPLETED TASKS (AUTOMATED)**
 
@@ -53,7 +53,7 @@ Create these files manually (they're blocked by .gitignore):
 NODE_ENV=development
 PORT=3000
 API_PORT=4000
-DATABASE_URL=mongodb://localhost:27017/shopsphere
+DATABASE_URL=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-super-secret-jwt-key-change-in-production
 JWT_EXPIRES_IN=7d
@@ -62,7 +62,7 @@ JWT_EXPIRES_IN=7d
 **Create `frontend/.env.local`:**
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:4000
-NEXT_PUBLIC_APP_NAME=ShopSphere
+NEXT_PUBLIC_APP_NAME=ApniDukaan
 NEXT_PUBLIC_APP_VERSION=1.0.0
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your-nextauth-secret-key
@@ -75,7 +75,7 @@ Create these files in each service directory:
 **`backend/catalog-service/.env`:**
 ```bash
 PORT=4001
-MONGODB_URI=mongodb://localhost:27017/shopsphere_catalog
+MONGODB_URI=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_catalog?retryWrites=true&w=majority&appName=Cluster0
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-super-secret-jwt-key-change-in-production
 ```
@@ -83,7 +83,7 @@ JWT_SECRET=your-super-secret-jwt-key-change-in-production
 **`backend/user-service/.env`:**
 ```bash
 PORT=4002
-MONGODB_URI=mongodb://localhost:27017/shopsphere_users
+MONGODB_URI=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_users?retryWrites=true&w=majority&appName=Cluster0
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-super-secret-jwt-key-change-in-production
 ```
@@ -91,7 +91,7 @@ JWT_SECRET=your-super-secret-jwt-key-change-in-production
 **`backend/order-service/.env`:**
 ```bash
 PORT=4003
-MONGODB_URI=mongodb://localhost:27017/shopsphere_orders
+MONGODB_URI=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_orders?retryWrites=true&w=majority&appName=Cluster0
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-super-secret-jwt-key-change-in-production
 ```

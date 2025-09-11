@@ -89,7 +89,7 @@ const proxyOptions = {
   },
   onProxyRes: (proxyRes: any, req: express.Request, res: express.Response) => {
     // Add some headers
-    res.setHeader('X-Powered-By', 'ShopSphere API Gateway');
+    res.setHeader('X-Powered-By', 'ApniDukaan API Gateway');
   }
 };
 
@@ -149,14 +149,14 @@ app.get('/health', async (req, res) => {
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'ShopSphere API Gateway',
+    message: 'ApniDukaan API Gateway',
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth/*',
       products: '/api/products/*',
       orders: '/api/orders/* (coming soon)'
     },
-    documentation: 'https://github.com/shopsphere/api-docs',
+    documentation: 'https://github.com/ApniDukaan/api-docs',
     timestamp: new Date().toISOString()
   });
 });
@@ -188,7 +188,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 // Start server
 app.listen(PORT, () => {
-  logger.info(`ShopSphere API Gateway running on port ${PORT}`);
+  logger.info(`ApniDukaan API Gateway running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
   logger.info('Service mappings:', services);
 });

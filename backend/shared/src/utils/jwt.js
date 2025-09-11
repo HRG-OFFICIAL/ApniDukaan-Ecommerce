@@ -28,8 +28,8 @@ class JWTService {
         try {
             const options = {
                 expiresIn: this.accessTokenExpiry,
-                issuer: 'shopsphere',
-                audience: 'shopsphere-client'
+                issuer: 'ApniDukaan',
+                audience: 'ApniDukaan-client'
             };
             return jsonwebtoken_1.default.sign(payload, this.accessTokenSecret, options);
         }
@@ -49,8 +49,8 @@ class JWTService {
         try {
             const options = {
                 expiresIn: this.refreshTokenExpiry,
-                issuer: 'shopsphere',
-                audience: 'shopsphere-refresh'
+                issuer: 'ApniDukaan',
+                audience: 'ApniDukaan-refresh'
             };
             return jsonwebtoken_1.default.sign(payload, this.refreshTokenSecret, options);
         }
@@ -75,8 +75,8 @@ class JWTService {
     verifyAccessToken(token) {
         try {
             const decoded = jsonwebtoken_1.default.verify(token, this.accessTokenSecret, {
-                issuer: 'shopsphere',
-                audience: 'shopsphere-client'
+                issuer: 'ApniDukaan',
+                audience: 'ApniDukaan-client'
             });
             return decoded;
         }
@@ -99,8 +99,8 @@ class JWTService {
     verifyRefreshToken(token) {
         try {
             const decoded = jsonwebtoken_1.default.verify(token, this.refreshTokenSecret, {
-                issuer: 'shopsphere',
-                audience: 'shopsphere-refresh'
+                issuer: 'ApniDukaan',
+                audience: 'ApniDukaan-refresh'
             });
             return decoded;
         }
@@ -201,8 +201,8 @@ class JWTService {
         try {
             return jsonwebtoken_1.default.sign(payload, this.accessTokenSecret, {
                 expiresIn: '1y', // Long-lived for API keys
-                issuer: 'shopsphere',
-                audience: 'shopsphere-services'
+                issuer: 'ApniDukaan',
+                audience: 'ApniDukaan-services'
             });
         }
         catch (error) {
@@ -216,8 +216,8 @@ class JWTService {
     verifyApiKey(token) {
         try {
             const decoded = jsonwebtoken_1.default.verify(token, this.accessTokenSecret, {
-                issuer: 'shopsphere',
-                audience: 'shopsphere-services'
+                issuer: 'ApniDukaan',
+                audience: 'ApniDukaan-services'
             });
             return decoded;
         }
@@ -239,8 +239,8 @@ class JWTService {
         try {
             return jsonwebtoken_1.default.sign(payload, this.accessTokenSecret, {
                 expiresIn: '1h', // Short-lived for security
-                issuer: 'shopsphere',
-                audience: 'shopsphere-password-reset'
+                issuer: 'ApniDukaan',
+                audience: 'ApniDukaan-password-reset'
             });
         }
         catch (error) {
@@ -254,8 +254,8 @@ class JWTService {
     verifyPasswordResetToken(token) {
         try {
             const decoded = jsonwebtoken_1.default.verify(token, this.accessTokenSecret, {
-                issuer: 'shopsphere',
-                audience: 'shopsphere-password-reset'
+                issuer: 'ApniDukaan',
+                audience: 'ApniDukaan-password-reset'
             });
             return decoded;
         }
@@ -284,8 +284,8 @@ class JWTService {
         try {
             return jsonwebtoken_1.default.sign(payload, this.accessTokenSecret, {
                 expiresIn: '24h',
-                issuer: 'shopsphere',
-                audience: 'shopsphere-email-verification'
+                issuer: 'ApniDukaan',
+                audience: 'ApniDukaan-email-verification'
             });
         }
         catch (error) {
@@ -299,8 +299,8 @@ class JWTService {
     verifyEmailVerificationToken(token) {
         try {
             const decoded = jsonwebtoken_1.default.verify(token, this.accessTokenSecret, {
-                issuer: 'shopsphere',
-                audience: 'shopsphere-email-verification'
+                issuer: 'ApniDukaan',
+                audience: 'ApniDukaan-email-verification'
             });
             return decoded;
         }

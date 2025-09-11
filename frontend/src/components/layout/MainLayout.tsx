@@ -34,12 +34,12 @@ export default function MainLayout({
   }, [pageTitle])
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900 light">
       <SkipLinks />
       {/* Global Loading Overlay */}
       {isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-25 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 flex items-center space-x-3">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-25 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 flex items-center space-x-3 shadow-xl border border-gray-200">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
             <span className="text-gray-900 font-medium">Loading...</span>
           </div>

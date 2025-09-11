@@ -393,3 +393,137 @@ export const UPDATE_USER_ROLE = gql`
     }
   }
 `;
+
+// Additional Admin Mutations
+export const BULK_UPDATE_PRODUCTS = gql`
+  mutation BulkUpdateProducts($productIds: [ID!]!, $updates: ProductUpdateInput!) {
+    bulkUpdateProducts(productIds: $productIds, updates: $updates) {
+      success
+      updatedCount
+      errors
+    }
+  }
+`;
+
+export const BULK_DELETE_PRODUCTS = gql`
+  mutation BulkDeleteProducts($productIds: [ID!]!) {
+    bulkDeleteProducts(productIds: $productIds) {
+      success
+      deletedCount
+      errors
+    }
+  }
+`;
+
+export const BULK_UPDATE_ORDERS = gql`
+  mutation BulkUpdateOrders($orderIds: [ID!]!, $status: OrderStatus!) {
+    bulkUpdateOrders(orderIds: $orderIds, status: $status) {
+      success
+      updatedCount
+      errors
+    }
+  }
+`;
+
+export const BULK_UPDATE_USERS = gql`
+  mutation BulkUpdateUsers($userIds: [ID!]!, $updates: UserUpdateInput!) {
+    bulkUpdateUsers(userIds: $userIds, updates: $updates) {
+      success
+      updatedCount
+      errors
+    }
+  }
+`;
+
+export const BULK_DELETE_USERS = gql`
+  mutation BulkDeleteUsers($userIds: [ID!]!) {
+    bulkDeleteUsers(userIds: $userIds) {
+      success
+      deletedCount
+      errors
+    }
+  }
+`;
+
+export const CREATE_USER = gql`
+  mutation CreateUser($input: CreateUserInput!) {
+    createUser(input: $input) {
+      id
+      email
+      name
+      role
+      isActive
+      createdAt
+    }
+  }
+`;
+
+export const UPDATE_USER = gql`
+  mutation UpdateUser($id: ID!, $input: UpdateUserInput!) {
+    updateUser(id: $id, input: $input) {
+      id
+      email
+      name
+      role
+      isActive
+      phone
+      updatedAt
+    }
+  }
+`;
+
+export const DELETE_USER = gql`
+  mutation DeleteUser($id: ID!) {
+    deleteUser(id: $id)
+  }
+`;
+
+export const ACTIVATE_USER = gql`
+  mutation ActivateUser($id: ID!) {
+    activateUser(id: $id) {
+      id
+      isActive
+      updatedAt
+    }
+  }
+`;
+
+export const DEACTIVATE_USER = gql`
+  mutation DeactivateUser($id: ID!) {
+    deactivateUser(id: $id) {
+      id
+      isActive
+      updatedAt
+    }
+  }
+`;
+
+export const EXPORT_ORDERS = gql`
+  mutation ExportOrders($filter: OrderFilter, $format: ExportFormat!) {
+    exportOrders(filter: $filter, format: $format) {
+      success
+      downloadUrl
+      expiresAt
+    }
+  }
+`;
+
+export const EXPORT_USERS = gql`
+  mutation ExportUsers($filter: UserFilter, $format: ExportFormat!) {
+    exportUsers(filter: $filter, format: $format) {
+      success
+      downloadUrl
+      expiresAt
+    }
+  }
+`;
+
+export const EXPORT_PRODUCTS = gql`
+  mutation ExportProducts($filter: ProductFilter, $format: ExportFormat!) {
+    exportProducts(filter: $filter, format: $format) {
+      success
+      downloadUrl
+      expiresAt
+    }
+  }
+`;

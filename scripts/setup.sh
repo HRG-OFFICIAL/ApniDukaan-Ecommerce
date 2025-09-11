@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# ShopSphere E-commerce Platform Setup Script
+# ApniDukaan E-commerce Platform Setup Script
 # This script sets up the entire development environment
 
 set -e
 
-echo "🚀 Setting up ShopSphere E-commerce Platform..."
+echo "🚀 Setting up ApniDukaan E-commerce Platform..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -118,7 +118,7 @@ create_env_files() {
     if [ ! -f "frontend/.env.local" ]; then
         cat > frontend/.env.local << EOF
 NEXT_PUBLIC_API_URL=http://localhost:4000
-NEXT_PUBLIC_APP_NAME=ShopSphere
+NEXT_PUBLIC_APP_NAME=ApniDukaan
 NEXT_PUBLIC_APP_VERSION=1.0.0
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your-nextauth-secret-key
@@ -211,9 +211,9 @@ create_startup_script() {
     cat > start-dev.sh << 'EOF'
 #!/bin/bash
 
-# ShopSphere Development Startup Script
+# ApniDukaan Development Startup Script
 
-echo "🚀 Starting ShopSphere E-commerce Platform..."
+echo "🚀 Starting ApniDukaan E-commerce Platform..."
 
 # Start MongoDB (if installed locally)
 if command -v mongod &> /dev/null; then
@@ -240,7 +240,7 @@ EOF
 # Main setup function
 main() {
     echo "=========================================="
-    echo "  ShopSphere E-commerce Platform Setup"
+    echo "  ApniDukaan E-commerce Platform Setup"
     echo "=========================================="
     echo ""
     

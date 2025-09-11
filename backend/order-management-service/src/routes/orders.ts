@@ -627,9 +627,9 @@ router.get('/:orderId/shipping/rates',
 
       // Mock warehouse address
       const fromAddress = {
-        firstName: 'ShopSphere',
+        firstName: 'ApniDukaan',
         lastName: 'Warehouse',
-        company: 'ShopSphere Inc',
+        company: 'ApniDukaan Inc',
         addressLine1: '123 Warehouse Blvd',
         city: 'Commerce',
         state: 'CA',

@@ -1,4 +1,4 @@
-# 🚀 MongoDB Atlas Setup Guide for ShopSphere
+# 🚀 MongoDB Atlas Setup Guide for ApniDukaan
 
 ## ✅ **Your MongoDB Atlas Connection**
 
@@ -15,7 +15,7 @@ npm install
 node scripts/seed-atlas-data.js
 ```
 
-### **Step 2: Start ShopSphere with Atlas**
+### **Step 2: Start ApniDukaan with Atlas**
 ```bash
 # Start all services with MongoDB Atlas
 node start-with-atlas.js
@@ -46,16 +46,16 @@ node start-with-atlas.js
 
 ### **Connection Details**
 - **Cluster**: Cluster0
-- **Database**: shopsphere
+- **Database**: ApniDukaan
 - **Collections**: products, categories, users, orders, carts
 - **Security**: Username/password authentication
 - **SSL**: Enabled (secure connection)
 
 ### **Service-Specific Databases**
-- **Catalog Service**: `shopsphere_catalog`
-- **User Service**: `shopsphere_users`
-- **Order Service**: `shopsphere_orders`
-- **Payment Service**: `shopsphere_payments`
+- **Catalog Service**: `ApniDukaan_catalog`
+- **User Service**: `ApniDukaan_users`
+- **Order Service**: `ApniDukaan_orders`
+- **Payment Service**: `ApniDukaan_payments`
 
 ## 📦 **Sample Data Included**
 
@@ -116,7 +116,7 @@ db.products.aggregate([
 # Test connection
 node -e "
 const mongoose = require('mongoose');
-mongoose.connect('mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/shopsphere?retryWrites=true&w=majority&appName=Cluster0')
+mongoose.connect('mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/ApniDukaan?retryWrites=true&w=majority&appName=Cluster0')
   .then(() => console.log('✅ Connected to MongoDB Atlas'))
   .catch(err => console.error('❌ Connection failed:', err));
 "
@@ -191,4 +191,4 @@ If you encounter issues:
 4. Review service logs
 5. Test individual services
 
-**Your ShopSphere application is now powered by MongoDB Atlas! 🎉**
+**Your ApniDukaan application is now powered by MongoDB Atlas! 🎉**

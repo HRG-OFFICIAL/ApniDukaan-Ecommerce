@@ -204,7 +204,7 @@ export default function ShowcasePage() {
                     <Star className="h-4 w-4 mr-2" />
                     {showAnimations ? 'Hide' : 'Show'} Animations
                   </Button>
-                  <ThemeToggle variant="compact" />
+                  <ThemeToggle variant="button" />
                 </div>
               </div>
             </FadeIn>

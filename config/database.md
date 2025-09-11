@@ -33,21 +33,21 @@ sudo systemctl enable postgresql
 psql -U postgres
 
 -- Create database
-CREATE DATABASE shopsphere;
+CREATE DATABASE ApniDukaan;
 
 -- Create user
-CREATE USER shopsphere_user WITH PASSWORD 'your_secure_password';
+CREATE USER ApniDukaan_user WITH PASSWORD 'your_secure_password';
 
 -- Grant privileges
-GRANT ALL PRIVILEGES ON DATABASE shopsphere TO shopsphere_user;
+GRANT ALL PRIVILEGES ON DATABASE ApniDukaan TO ApniDukaan_user;
 
 -- Connect to the database
-\c shopsphere
+\c ApniDukaan
 
 -- Grant schema privileges
-GRANT ALL ON SCHEMA public TO shopsphere_user;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO shopsphere_user;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO shopsphere_user;
+GRANT ALL ON SCHEMA public TO ApniDukaan_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ApniDukaan_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ApniDukaan_user;
 
 -- Exit
 \q
@@ -56,11 +56,11 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO shopsphere_user;
 ### 4. Environment Variables
 Add to your `.env` file:
 ```bash
-POSTGRES_URL=postgresql://shopsphere_user:your_secure_password@localhost:5432/shopsphere
+POSTGRES_URL=postgresql://ApniDukaan_user:your_secure_password@localhost:5432/ApniDukaan
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
-POSTGRES_DB=shopsphere
-POSTGRES_USER=shopsphere_user
+POSTGRES_DB=ApniDukaan
+POSTGRES_USER=ApniDukaan_user
 POSTGRES_PASSWORD=your_secure_password
 ```
 
@@ -96,10 +96,10 @@ sudo systemctl enable mongod
 ### 3. Environment Variables
 Add to your `.env` file:
 ```bash
-MONGODB_URI=mongodb://localhost:27017/shopsphere
+MONGODB_URI=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0
 MONGODB_HOST=localhost
 MONGODB_PORT=27017
-MONGODB_DB=shopsphere
+MONGODB_DB=ApniDukaan
 ```
 
 ## Redis Setup
@@ -143,10 +143,10 @@ REDIS_PASSWORD=
 ### Development
 ```bash
 # PostgreSQL
-DATABASE_URL=postgresql://shopsphere_user:password@localhost:5432/shopsphere
+DATABASE_URL=postgresql://ApniDukaan_user:password@localhost:5432/ApniDukaan
 
 # MongoDB
-MONGODB_URI=mongodb://localhost:27017/shopsphere
+MONGODB_URI=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0
 
 # Redis
 REDIS_URL=redis://localhost:6379
@@ -155,10 +155,10 @@ REDIS_URL=redis://localhost:6379
 ### Production
 ```bash
 # PostgreSQL (example with cloud provider)
-DATABASE_URL=postgresql://user:password@host:5432/shopsphere?sslmode=require
+DATABASE_URL=postgresql://user:password@host:5432/ApniDukaan?sslmode=require
 
 # MongoDB (example with MongoDB Atlas)
-MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/shopsphere?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/ApniDukaan?retryWrites=true&w=majority
 
 # Redis (example with cloud provider)
 REDIS_URL=redis://user:password@host:6379

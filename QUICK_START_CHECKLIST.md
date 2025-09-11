@@ -1,4 +1,4 @@
-# 🚀 Quick Start Checklist - ShopSphere Development
+# 🚀 Quick Start Checklist - ApniDukaan Development
 
 ## ⚡ **Immediate Actions to Help Your Development Environment**
 

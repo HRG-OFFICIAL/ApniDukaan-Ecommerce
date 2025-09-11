@@ -64,7 +64,7 @@ A full-stack e-commerce platform built with microservices architecture, featurin
 ### 1. Clone the Repository
 ```bash
 git clone <repository-url>
-cd shopsphere-ecommerce
+cd apnidukaan-ecommerce
 ```
 
 ### 2. Install Dependencies
@@ -117,7 +117,7 @@ node start-simple.js
 ## 📁 Project Structure
 
 ```
-shopsphere-ecommerce/
+apnidukaan-ecommerce/
 ├── frontend/                 # Next.js frontend application
 │   ├── src/
 │   │   ├── app/             # App router pages
@@ -146,7 +146,7 @@ Create a `.env` file in the root directory:
 
 ```env
 # Database Configuration
-MONGODB_URI=mongodb://localhost:27017
+MONGODB_URI=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0
 REDIS_URL=redis://localhost:6379
 
 # Service Ports
@@ -254,7 +254,7 @@ npm run dev
 ```
 
 #### Database Connection Issues
-- Ensure MongoDB is running on `mongodb://localhost:27017`
+- Ensure MongoDB Atlas is accessible (cloud database)
 - Check Redis connection on `redis://localhost:6379`
 - Verify environment variables in `.env` file
 

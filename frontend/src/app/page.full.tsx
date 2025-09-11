@@ -68,7 +68,7 @@ export default function Home() {
         <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-              Welcome to <span className="text-accent-300">ShopSphere</span>
+              Welcome to <span className="text-accent-300">ApniDukaan</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-primary-100">
               Your ultimate e-commerce destination powered by modern microservices architecture.
@@ -97,7 +97,7 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Why Choose ShopSphere?
+              Why Choose ApniDukaan?
             </h2>
             <p className="mt-6 text-lg leading-8 text-gray-600">
               Built with modern technologies and best practices for exceptional performance and user experience.

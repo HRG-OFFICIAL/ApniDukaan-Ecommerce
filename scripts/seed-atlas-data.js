@@ -101,7 +101,7 @@ async function seedData() {
         name: 'Electronics',
         slug: 'electronics',
         description: 'Electronic devices and gadgets',
-        image: '/images/categories/electronics.jpg',
+        image: 'https://via.placeholder.com/300x200/007ACC/FFFFFF?text=Electronics',
         isActive: true,
         sortOrder: 1
       },
@@ -109,7 +109,7 @@ async function seedData() {
         name: 'Clothing',
         slug: 'clothing',
         description: 'Fashion and apparel',
-        image: '/images/categories/clothing.jpg',
+        image: 'https://via.placeholder.com/300x200/FF6B9D/FFFFFF?text=Clothing',
         isActive: true,
         sortOrder: 2
       },
@@ -117,25 +117,49 @@ async function seedData() {
         name: 'Home & Garden',
         slug: 'home-garden',
         description: 'Home improvement and garden supplies',
-        image: '/images/categories/home-garden.jpg',
+        image: 'https://via.placeholder.com/300x200/4ECDC4/FFFFFF?text=Home+Garden',
         isActive: true,
         sortOrder: 3
       },
       {
-        name: 'Sports',
-        slug: 'sports',
+        name: 'Sports & Fitness',
+        slug: 'sports-fitness',
         description: 'Sports equipment and fitness gear',
-        image: '/images/categories/sports.jpg',
+        image: 'https://via.placeholder.com/300x200/45B7D1/FFFFFF?text=Sports+Fitness',
         isActive: true,
         sortOrder: 4
       },
       {
-        name: 'Books',
-        slug: 'books',
+        name: 'Books & Media',
+        slug: 'books-media',
         description: 'Books and educational materials',
-        image: '/images/categories/books.jpg',
+        image: 'https://via.placeholder.com/300x200/96CEB4/FFFFFF?text=Books+Media',
         isActive: true,
         sortOrder: 5
+      },
+      {
+        name: 'Health & Beauty',
+        slug: 'health-beauty',
+        description: 'Health and beauty products',
+        image: 'https://via.placeholder.com/300x200/FFEAA7/000000?text=Health+Beauty',
+        isActive: true,
+        sortOrder: 6
+      },
+      {
+        name: 'Food & Beverages',
+        slug: 'food-beverages',
+        description: 'Food and beverage products',
+        image: 'https://via.placeholder.com/300x200/DDA0DD/FFFFFF?text=Food+Beverages',
+        isActive: true,
+        sortOrder: 7
+      },
+      {
+        name: 'Automotive',
+        slug: 'automotive',
+        description: 'Automotive parts and accessories',
+        image: 'https://via.placeholder.com/300x200/2C3E50/FFFFFF?text=Automotive',
+        isActive: true,
+        sortOrder: 8
       }
     ]);
     console.log(`✅ Created ${categories.length} categories`);

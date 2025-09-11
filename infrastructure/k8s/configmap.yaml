@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: shopsphere-config
-  namespace: shopsphere
+  name: ApniDukaan-config
+  namespace: ApniDukaan
 data:
   NODE_ENV: "production"
   API_GATEWAY_PORT: "4000"
@@ -11,13 +11,13 @@ data:
   ORDER_SERVICE_PORT: "4003"
   PAYMENT_SERVICE_PORT: "4004"
   KAFKA_BROKERS: "kafka:9092"
-  KAFKA_CLIENT_ID: "shopsphere"
-  KAFKA_GROUP_ID: "shopsphere-group"
+  KAFKA_CLIENT_ID: "ApniDukaan"
+  KAFKA_GROUP_ID: "ApniDukaan-group"
   REDIS_URL: "redis://redis:6379"
-  MONGODB_DB_CATALOG: "shopsphere_catalog"
-  MONGODB_DB_USERS: "shopsphere_users"
-  MONGODB_DB_ORDERS: "shopsphere_orders"
-  MONGODB_DB_PAYMENTS: "shopsphere_payments"
+  MONGODB_DB_CATALOG: "ApniDukaan_catalog"
+  MONGODB_DB_USERS: "ApniDukaan_users"
+  MONGODB_DB_ORDERS: "ApniDukaan_orders"
+  MONGODB_DB_PAYMENTS: "ApniDukaan_payments"
   AWS_REGION: "us-east-1"
   RATE_LIMIT_WINDOW_MS: "900000"
   RATE_LIMIT_MAX_REQUESTS: "100"

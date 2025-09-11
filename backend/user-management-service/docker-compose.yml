@@ -6,14 +6,14 @@ services:
       context: .
       dockerfile: Dockerfile
       target: production
-    container_name: shopsphere-user-management
+    container_name: ApniDukaan-user-management
     restart: unless-stopped
     ports:
       - "3001:3001"
     environment:
       NODE_ENV: development
       PORT: 3001
-      MONGODB_URI: mongodb://mongodb:27017/shopsphere_users
+      MONGODB_URI: mongodb://mongodb:27017/ApniDukaan_users
       REDIS_URL: redis://redis:6379
     env_file:
       - .env
@@ -21,7 +21,7 @@ services:
       - mongodb
       - redis
     networks:
-      - shopsphere-network
+      - ApniDukaan-network
     volumes:
       - ./uploads:/app/uploads
       - ./logs:/app/logs
@@ -34,23 +34,23 @@ services:
 
   mongodb:
     image: mongo:6.0
-    container_name: shopsphere-mongo-users
+    container_name: ApniDukaan-mongo-users
     restart: unless-stopped
     ports:
       - "27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password123
-      MONGO_INITDB_DATABASE: shopsphere_users
+      MONGO_INITDB_DATABASE: ApniDukaan_users
     volumes:
       - mongodb_data:/data/db
       - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
-      - shopsphere-network
+      - ApniDukaan-network
 
   redis:
     image: redis:7-alpine
-    container_name: shopsphere-redis-users
+    container_name: ApniDukaan-redis-users
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -58,7 +58,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - shopsphere-network
+      - ApniDukaan-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 30s
@@ -70,5 +70,5 @@ volumes:
   redis_data:
 
 networks:
-  shopsphere-network:
+  ApniDukaan-network:
     driver: bridge

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useMemo } from 'react'
 
 // Disable static generation for this page since it uses Apollo Client
 export const dynamic = 'force-dynamic'
@@ -176,6 +176,15 @@ function ProductsContent() {
   
   // Real API integration
   const { filters, sort, updateFilter, updateSort, clearFilters } = useProductFilters()
+  
+  // Memoize the filter object to prevent unnecessary re-renders
+  const memoizedFilter = useMemo(() => ({
+    ...filters,
+    category: selectedCategory !== 'All Categories' ? selectedCategory : undefined,
+    minPrice: priceRange.min > 0 ? priceRange.min : undefined,
+    maxPrice: priceRange.max < 1000 ? priceRange.max : undefined,
+  }), [filters, selectedCategory, priceRange.min, priceRange.max])
+  
   const {
     products: apiProducts,
     loading: apiLoading,
@@ -185,12 +194,7 @@ function ProductsContent() {
     fetchMore,
     refetch
   } = useProducts({
-    filter: {
-      ...filters,
-      category: selectedCategory !== 'All Categories' ? selectedCategory : undefined,
-      minPrice: priceRange.min > 0 ? priceRange.min : undefined,
-      maxPrice: priceRange.max < 1000 ? priceRange.max : undefined,
-    },
+    filter: memoizedFilter,
     sort,
     search: searchQuery,
     limit: itemsPerPage,
@@ -221,11 +225,14 @@ function ProductsContent() {
     const filter = searchParams.get('filter')
     const sortParam = searchParams.get('sort')
     
+    // Only update if values have actually changed
     if (search && search !== searchQuery) {
       setSearchQuery(search)
       addToSearchHistory(search)
     }
-    if (category) setSelectedCategory(category)
+    if (category && category !== selectedCategory) {
+      setSelectedCategory(category)
+    }
     
     // Apply filters from URL
     if (filter) {
@@ -243,29 +250,29 @@ function ProductsContent() {
     }
     
     // Apply sort from URL
-    if (sortParam) {
+    if (sortParam && sortParam !== sortBy) {
       const sortOption = sortOptions.find(opt => opt.value === sortParam)
       if (sortOption) {
         switch (sortParam) {
           case 'price-low':
-            updateSort('price', 'ASC')
+            updateSort('price_asc')
             break
           case 'price-high':
-            updateSort('price', 'DESC')
+            updateSort('price_desc')
             break
           case 'rating':
-            updateSort('rating', 'DESC')
+            updateSort('rating_desc')
             break
           case 'newest':
-            updateSort('createdAt', 'DESC')
+            updateSort('created_desc')
             break
           default:
-            updateSort('createdAt', 'DESC')
+            updateSort('featured')
         }
         setSortBy(sortParam)
       }
     }
-  }, [searchParams, setSearchQuery, addToSearchHistory, updateFilter, updateSort, searchQuery])
+  }, [searchParams, searchQuery, selectedCategory, sortBy])
 
   // Handle search with URL update
   const handleSearch = (query: string) => {
@@ -301,19 +308,19 @@ function ProductsContent() {
     // Update API sort
     switch (sortValue) {
       case 'price-low':
-        updateSort('price', 'ASC')
+        updateSort('price_asc')
         break
       case 'price-high':
-        updateSort('price', 'DESC')
+        updateSort('price_desc')
         break
       case 'rating':
-        updateSort('rating', 'DESC')
+        updateSort('rating_desc')
         break
       case 'newest':
-        updateSort('createdAt', 'DESC')
+        updateSort('created_desc')
         break
       default:
-        updateSort('createdAt', 'DESC')
+        updateSort('created_desc')
     }
     
     const params = new URLSearchParams(searchParams)
@@ -341,7 +348,7 @@ function ProductsContent() {
     
     // Clear API filters
     clearFilters()
-    updateSort('createdAt', 'DESC')
+    updateSort('created_desc')
     
     // Clear URL params
     router.push('/products')
@@ -406,20 +413,23 @@ function ProductsContent() {
             {/* View Toggle & Mobile Filter */}
             <div className="flex items-center space-x-4 mt-4 lg:mt-0">
               {/* View Mode Toggle */}
-              <div className="hidden sm:flex items-center border border-gray-300 rounded-md p-1">
+              <div className="hidden sm:flex items-center border border-gray-300 rounded-md p-1 bg-white shadow-sm">
                 <Button
                   variant={viewMode === 'grid' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('grid')}
-                  className="px-3"
+                  className="px-3 py-2 min-w-[40px] border-0 mr-1"
+                  aria-label="Grid view"
                 >
                   <Grid className="h-4 w-4" />
                 </Button>
+                <div className="w-px h-6 bg-gray-300 mx-1"></div>
                 <Button
                   variant={viewMode === 'list' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('list')}
-                  className="px-3"
+                  className="px-3 py-2 min-w-[40px] border-0 ml-1"
+                  aria-label="List view"
                 >
                   <List className="h-4 w-4" />
                 </Button>
@@ -589,18 +599,19 @@ function ProductsContent() {
                     viewMode === 'grid' 
                       ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
                       : 'grid-cols-1'
-                  }`}>
+                  }`} style={{ minHeight: '200px' }}>
                     {displayProducts.map((product) => (
                       <ProductCard 
                         key={product.id} 
                         product={product}
+                        viewMode={viewMode}
                       />
                     ))}
                   </div>
                   
                   {/* Pagination */}
                   {totalPages > 1 && (
-                    <div className="mt-12 flex justify-center">
+                    <div className="mt-12 flex justify-center bg-white p-4 rounded-lg border border-gray-200">
                       <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}

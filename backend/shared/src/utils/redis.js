@@ -7,7 +7,7 @@ class RedisCache {
     constructor() {
         this.isConnected = false;
         this.defaultTTL = 3600; // 1 hour
-        this.keyPrefix = 'shopsphere:';
+        this.keyPrefix = 'ApniDukaan:';
         const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
         this.client = (0, redis_1.createClient)({
             url: redisUrl,

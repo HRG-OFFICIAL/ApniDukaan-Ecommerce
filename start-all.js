@@ -3,7 +3,7 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
-console.log('🚀 Starting ShopSphere E-commerce Platform...\n');
+console.log('🚀 Starting ApniDukaan E-commerce Platform...\n');
 
 // Services to start
 const services = [

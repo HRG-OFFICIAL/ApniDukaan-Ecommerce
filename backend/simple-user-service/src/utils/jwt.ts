@@ -29,7 +29,7 @@ export class JWTService {
 
     return jwt.sign(payload, this.accessSecret, {
       expiresIn: this.accessExpiry,
-      issuer: 'shopsphere'
+      issuer: 'ApniDukaan'
     } as jwt.SignOptions);
   }
 
@@ -40,19 +40,19 @@ export class JWTService {
 
     return jwt.sign(payload, this.refreshSecret, {
       expiresIn: this.refreshExpiry,
-      issuer: 'shopsphere'
+      issuer: 'ApniDukaan'
     } as jwt.SignOptions);
   }
 
   verifyAccessToken(token: string): JWTPayload {
     return jwt.verify(token, this.accessSecret, {
-      issuer: 'shopsphere'
+      issuer: 'ApniDukaan'
     }) as JWTPayload;
   }
 
   verifyRefreshToken(token: string): any {
     return jwt.verify(token, this.refreshSecret, {
-      issuer: 'shopsphere'
+      issuer: 'ApniDukaan'
     });
   }
 }

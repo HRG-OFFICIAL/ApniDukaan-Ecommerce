@@ -1,4 +1,4 @@
-# ShopSphere Environment Configuration Guide
+# ApniDukaan Environment Configuration Guide
 
 ## Main Environment Variables
 
@@ -11,8 +11,8 @@ PORT=3000
 API_PORT=4000
 
 # Database Configuration
-DATABASE_URL=mongodb://localhost:27017/shopsphere
-POSTGRES_URL=postgresql://postgres:password@localhost:5432/shopsphere
+DATABASE_URL=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0
+POSTGRES_URL=postgresql://postgres:password@localhost:5432/ApniDukaan
 REDIS_URL=redis://localhost:6379
 
 # JWT Configuration
@@ -31,7 +31,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
-FROM_EMAIL=noreply@shopsphere.com
+FROM_EMAIL=noreply@ApniDukaan.com
 
 # File Upload
 UPLOAD_DIR=uploads
@@ -67,7 +67,7 @@ ENABLE_EMAIL_NOTIFICATIONS=true
 ### Catalog Service (.env)
 ```bash
 PORT=4001
-MONGODB_URI=mongodb://localhost:27017/shopsphere_catalog
+MONGODB_URI=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_catalog?retryWrites=true&w=majority&appName=Cluster0
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-super-secret-jwt-key-change-in-production
 ```
@@ -84,7 +84,7 @@ PAYMENT_SERVICE_URL=http://localhost:4004
 ### User Service (.env)
 ```bash
 PORT=4002
-MONGODB_URI=mongodb://localhost:27017/shopsphere_users
+MONGODB_URI=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_users?retryWrites=true&w=majority&appName=Cluster0
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-super-secret-jwt-key-change-in-production
 ```
@@ -92,7 +92,7 @@ JWT_SECRET=your-super-secret-jwt-key-change-in-production
 ### Order Service (.env)
 ```bash
 PORT=4003
-MONGODB_URI=mongodb://localhost:27017/shopsphere_orders
+MONGODB_URI=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_orders?retryWrites=true&w=majority&appName=Cluster0
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-super-secret-jwt-key-change-in-production
 ```
@@ -110,6 +110,6 @@ PAYPAL_CLIENT_SECRET=your_paypal_client_secret
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:4000
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
-NEXT_PUBLIC_APP_NAME=ShopSphere
+NEXT_PUBLIC_APP_NAME=ApniDukaan
 NEXT_PUBLIC_APP_VERSION=1.0.0
 ```

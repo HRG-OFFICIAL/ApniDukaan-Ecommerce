@@ -323,3 +323,138 @@ export const GET_DASHBOARD_STATS = gql`
     }
   }
 `;
+
+// Additional Admin Queries
+export const GET_ALL_PRODUCTS = gql`
+  query GetAllProducts($filter: ProductFilter, $sort: ProductSort, $search: String, $limit: Int, $offset: Int) {
+    products(filter: $filter, sort: $sort, search: $search, limit: $limit, offset: $offset) {
+      id
+      name
+      description
+      price
+      originalPrice
+      images
+      category
+      subcategory
+      brand
+      stock
+      sku
+      isActive
+      isFeatured
+      isOnSale
+      rating
+      reviewCount
+      tags
+      colors
+      sizes
+      createdAt
+      updatedAt
+    }
+    totalCount
+  }
+`;
+
+export const GET_PRODUCT_ANALYTICS = gql`
+  query GetProductAnalytics($period: String) {
+    productAnalytics(period: $period) {
+      totalProducts
+      activeProducts
+      outOfStockProducts
+      lowStockProducts
+      topSellingProducts {
+        id
+        name
+        sales
+        revenue
+      }
+      categoryBreakdown {
+        category
+        count
+        revenue
+      }
+    }
+  }
+`;
+
+export const GET_ORDER_ANALYTICS = gql`
+  query GetOrderAnalytics($period: String) {
+    orderAnalytics(period: $period) {
+      totalOrders
+      totalRevenue
+      averageOrderValue
+      ordersByStatus {
+        status
+        count
+      }
+      ordersByPaymentMethod {
+        method
+        count
+      }
+      topCustomers {
+        id
+        name
+        email
+        orderCount
+        totalSpent
+      }
+    }
+  }
+`;
+
+export const GET_USER_ANALYTICS = gql`
+  query GetUserAnalytics($period: String) {
+    userAnalytics(period: $period) {
+      totalUsers
+      activeUsers
+      newUsers
+      usersByRole {
+        role
+        count
+      }
+      userGrowth {
+        date
+        count
+      }
+      topUsers {
+        id
+        name
+        email
+        orderCount
+        totalSpent
+        lastLoginAt
+      }
+    }
+  }
+`;
+
+export const GET_SYSTEM_LOGS = gql`
+  query GetSystemLogs($filter: LogFilter, $limit: Int, $offset: Int) {
+    systemLogs(filter: $filter, limit: $limit, offset: $offset) {
+      id
+      level
+      message
+      timestamp
+      userId
+      action
+      metadata
+    }
+    totalCount
+  }
+`;
+
+export const GET_AUDIT_LOGS = gql`
+  query GetAuditLogs($filter: AuditFilter, $limit: Int, $offset: Int) {
+    auditLogs(filter: $filter, limit: $limit, offset: $offset) {
+      id
+      userId
+      action
+      resource
+      resourceId
+      timestamp
+      ipAddress
+      userAgent
+      metadata
+    }
+    totalCount
+  }
+`;

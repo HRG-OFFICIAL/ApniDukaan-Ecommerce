@@ -21,7 +21,7 @@ services:
     depends_on:
       - api-gateway
     networks:
-      - shopsphere-network
+      - ApniDukaan-network
 
   # API Gateway
   api-gateway:
@@ -42,7 +42,7 @@ services:
       - order-service
       - payment-service
     networks:
-      - shopsphere-network
+      - ApniDukaan-network
 
   # Catalog Service
   catalog-service:
@@ -53,13 +53,13 @@ services:
       - "4001:4001"
     environment:
       - NODE_ENV=production
-      - MONGODB_URI=mongodb://mongodb:27017/shopsphere_catalog
+      - MONGODB_URI=mongodb://mongodb:27017/ApniDukaan_catalog
       - REDIS_URL=redis://redis:6379
     depends_on:
       - mongodb
       - redis
     networks:
-      - shopsphere-network
+      - ApniDukaan-network
 
   # User Service
   user-service:
@@ -70,13 +70,13 @@ services:
       - "4002:4002"
     environment:
       - NODE_ENV=production
-      - MONGODB_URI=mongodb://mongodb:27017/shopsphere_users
+      - MONGODB_URI=mongodb://mongodb:27017/ApniDukaan_users
       - REDIS_URL=redis://redis:6379
     depends_on:
       - mongodb
       - redis
     networks:
-      - shopsphere-network
+      - ApniDukaan-network
 
   # Order Service
   order-service:
@@ -87,13 +87,13 @@ services:
       - "4003:4003"
     environment:
       - NODE_ENV=production
-      - MONGODB_URI=mongodb://mongodb:27017/shopsphere_orders
+      - MONGODB_URI=mongodb://mongodb:27017/ApniDukaan_orders
       - REDIS_URL=redis://redis:6379
     depends_on:
       - mongodb
       - redis
     networks:
-      - shopsphere-network
+      - ApniDukaan-network
 
   # Payment Service
   payment-service:
@@ -108,7 +108,7 @@ services:
       - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID}
       - PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET}
     networks:
-      - shopsphere-network
+      - ApniDukaan-network
 
   # MongoDB
   mongodb:
@@ -122,7 +122,7 @@ services:
       - mongodb_data:/data/db
       - ./infrastructure/docker/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
-      - shopsphere-network
+      - ApniDukaan-network
 
   # Redis
   redis:
@@ -132,7 +132,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - shopsphere-network
+      - ApniDukaan-network
 
   # Nginx (Reverse Proxy)
   nginx:
@@ -147,14 +147,14 @@ services:
       - frontend
       - api-gateway
     networks:
-      - shopsphere-network
+      - ApniDukaan-network
 
 volumes:
   mongodb_data:
   redis_data:
 
 networks:
-  shopsphere-network:
+  ApniDukaan-network:
     driver: bridge
 ```
 
@@ -239,9 +239,9 @@ CMD ["npm", "start"]
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: shopsphere
+  name: ApniDukaan
   labels:
-    name: shopsphere
+    name: ApniDukaan
 ```
 
 ### 2. ConfigMap
@@ -250,11 +250,11 @@ metadata:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: shopsphere-config
-  namespace: shopsphere
+  name: ApniDukaan-config
+  namespace: ApniDukaan
 data:
   NODE_ENV: "production"
-  MONGODB_URI: "mongodb://mongodb:27017/shopsphere"
+  MONGODB_URI: "mongodb://mongodb:27017/ApniDukaan"
   REDIS_URL: "redis://redis:6379"
   JWT_SECRET: "your-jwt-secret"
 ```
@@ -266,7 +266,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: shopsphere
+  namespace: ApniDukaan
 spec:
   replicas: 3
   selector:
@@ -279,7 +279,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: shopsphere/frontend:latest
+        image: ApniDukaan/frontend:latest
         ports:
         - containerPort: 3000
         env:
@@ -311,7 +311,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: frontend-service
-  namespace: shopsphere
+  namespace: ApniDukaan
 spec:
   selector:
     app: frontend
@@ -327,8 +327,8 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: shopsphere-ingress
-  namespace: shopsphere
+  name: ApniDukaan-ingress
+  namespace: ApniDukaan
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -337,11 +337,11 @@ metadata:
 spec:
   tls:
   - hosts:
-    - shopsphere.com
-    - www.shopsphere.com
-    secretName: shopsphere-tls
+    - ApniDukaan.com
+    - www.ApniDukaan.com
+    secretName: ApniDukaan-tls
   rules:
-  - host: shopsphere.com
+  - host: ApniDukaan.com
     http:
       paths:
       - path: /
@@ -351,7 +351,7 @@ spec:
             name: frontend-service
             port:
               number: 3000
-  - host: api.shopsphere.com
+  - host: api.ApniDukaan.com
     http:
       paths:
       - path: /
@@ -444,8 +444,8 @@ PORT=3000
 API_PORT=4000
 
 # Database URLs (use cloud providers)
-DATABASE_URL=mongodb+srv://user:pass@cluster.mongodb.net/shopsphere
-POSTGRES_URL=postgresql://user:pass@host:5432/shopsphere
+DATABASE_URL=mongodb+srv://user:pass@cluster.mongodb.net/ApniDukaan
+POSTGRES_URL=postgresql://user:pass@host:5432/ApniDukaan
 REDIS_URL=redis://user:pass@host:6379
 
 # JWT Secrets (use strong, unique secrets)
@@ -481,7 +481,7 @@ CORS_ORIGIN=https://yourdomain.com,https://www.yourdomain.com
 
 # Logging
 LOG_LEVEL=info
-LOG_FILE=/var/log/shopsphere/app.log
+LOG_FILE=/var/log/ApniDukaan/app.log
 ```
 
 ## Monitoring and Logging
@@ -512,7 +512,7 @@ const logger = winston.createLogger({
     winston.format.errors({ stack: true }),
     winston.format.json()
   ),
-  defaultMeta: { service: 'shopsphere' },
+  defaultMeta: { service: 'ApniDukaan' },
   transports: [
     new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
     new winston.transports.File({ filename: 'logs/combined.log' }),

@@ -18,26 +18,23 @@ interface ThemeProviderProps {
   defaultTheme?: Theme
 }
 
-export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProviderProps) {
+export function ThemeProvider({ children, defaultTheme = 'light' }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(defaultTheme)
   const [actualTheme, setActualTheme] = useState<'light' | 'dark'>('light')
   const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
     setIsClient(true)
-    // Load theme from localStorage on mount (client-side only)
     if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem('theme') as Theme
-      if (savedTheme) {
-        setTheme(savedTheme)
-      } else {
-        // Check system preference
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        setTheme('system')
-        setActualTheme(systemPrefersDark ? 'dark' : 'light')
-      }
+      // Get theme from localStorage or use default
+      const savedTheme = localStorage.getItem('theme') as Theme || defaultTheme
+      setTheme(savedTheme)
+      setActualTheme(savedTheme === 'system' ? 
+        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : 
+        savedTheme
+      )
     }
-  }, [])
+  }, [defaultTheme])
 
   useEffect(() => {
     if (!isClient || typeof window === 'undefined') return
@@ -61,10 +58,12 @@ export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProvid
       mediaQuery.addEventListener('change', handler)
       return () => mediaQuery.removeEventListener('change', handler)
     } else {
-      setActualTheme(theme)
-      root.classList.toggle('dark', theme === 'dark')
+      const resolvedTheme = theme as 'light' | 'dark'
+      setActualTheme(resolvedTheme)
+      root.classList.toggle('dark', resolvedTheme === 'dark')
     }
   }, [isClient, theme])
+
 
   useEffect(() => {
     // Save theme to localStorage (client-side only)
