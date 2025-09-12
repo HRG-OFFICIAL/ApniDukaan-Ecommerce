@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import { ArrowRight, Zap, Gift, Store } from 'lucide-react'
 import { sampleProducts, categories } from '../lib/data'

@@ -196,7 +196,9 @@ export function ProductDetails({ product, onEdit, onDelete, onClose }: ProductDe
                 <div className="space-y-3">
                   <div>
                     <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Category</label>
-                    <p className="text-sm text-gray-900">{product.category}</p>
+                    <p className="text-sm text-gray-900">
+                      {product.category || 'Category'}
+                    </p>
                   </div>
 
                   {product.subcategory && (

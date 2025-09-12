@@ -59,6 +59,38 @@ A full-stack e-commerce platform built with microservices architecture, featurin
 - MongoDB (local or cloud)
 - Redis (optional, for caching)
 
+## 📁 Project Structure
+
+```
+apnidukaan-ecommerce/
+├── 📁 frontend/           # Next.js frontend application
+├── 📁 backend/            # Microservices backend
+│   ├── api-gateway/       # API Gateway service
+│   ├── catalog-service/   # Product catalog service
+│   ├── user-service/      # User management service
+│   ├── order-service/     # Order processing service
+│   ├── cart-service/      # Shopping cart service
+│   ├── payment-service/   # Payment processing service
+│   ├── notification-service/ # Notification service
+│   └── shared/            # Shared utilities and types
+├── 📁 docs/               # All documentation
+├── 📁 scripts/            # Utility scripts
+├── 📁 tests/              # Test files
+├── 📁 infrastructure/     # Docker, K8s, Terraform configs
+└── 📄 README.md           # This file
+```
+
+## 📚 Documentation
+
+All documentation is organized in the `docs/` folder:
+- **Quick Start**: `docs/QUICK_START.md`
+- **Development**: `docs/DEVELOPMENT_TASKS.md`
+- **Deployment**: `docs/DEPLOYMENT_GUIDE.md`
+- **Configuration**: `docs/backend-setup.md`, `docs/database.md`
+- **Testing**: `docs/QUICK_TEST_GUIDE.md`
+
+See `docs/README.md` for a complete documentation index.
+
 ## 🚀 Quick Start
 
 ### 1. Clone the Repository
@@ -86,10 +118,12 @@ cd backend/api-gateway && npm install && cd ../..
 ### 3. Start All Services (No Database Required!)
 ```bash
 # Start everything at once
-node start-simple.js
+npm start
+# or
+node start.js
 
 # Or test individual services
-node test-services.js
+node tests/test-services.js
 ```
 
 ### 4. Access the Application
@@ -387,6 +421,70 @@ If you encounter any issues or have questions:
 - ✅ **Backend caching strategies** enhanced for improved response times
 - ✅ **Database query optimization** recommendations provided
 - ✅ **Memory management** improvements identified and documented
+
+## 🔧 Troubleshooting
+
+### API Connection Issues
+
+**Problem**: Frontend shows "API Error: Failed to fetch. Using fallback data" even when backend services are running.
+
+**Root Cause**: Frontend is configured to call services directly instead of through the API Gateway.
+
+**Solution**: 
+- ✅ Frontend should call API Gateway at `http://localhost:4000`
+- ❌ Never configure frontend to call services directly at ports 4001-4004
+- The API Gateway handles routing: `/api/catalog/products` → `http://localhost:4001/api/products`
+
+**Configuration Files to Check**:
+- `frontend/src/lib/api.ts`
+- `frontend/src/utils/constants.ts`
+- `frontend/src/middleware.ts`
+- `frontend/src/lib/apollo-client.ts`
+- `frontend/src/lib/apollo-client-ssr.ts`
+- `frontend/src/services/emailService.ts`
+
+All should have: `API_BASE_URL = 'http://localhost:4000'`
+
+### Theme Toggle Issues
+
+**Problem**: Theme toggle button not working, pages opening in dark theme by default.
+
+**Solution**: Check that `usePageTheme` hook is not being used and theme state is managed globally through Zustand store.
+
+### Correct Service Startup Order
+
+**Problem**: Services not starting in the correct order causing API connection issues.
+
+**Solution**: Start services in this specific order:
+
+1. **API Gateway** (Port 4000) - Central routing hub
+   ```bash
+   cd backend/api-gateway
+   npm run dev
+   ```
+
+2. **Catalog Service** (Port 4001) - Product data service
+   ```bash
+   cd backend/catalog-service
+   npm run dev
+   ```
+
+3. **Frontend** (Port 3000) - React application
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+
+**Why this order matters**:
+- API Gateway must start first to handle routing
+- Catalog Service must be running before frontend tries to fetch products
+- Frontend connects to API Gateway, which proxies to individual services
+
+**Verification**:
+- API Gateway: http://localhost:4000/health
+- Catalog Service: http://localhost:4001/health  
+- Frontend: http://localhost:3000
+- Products API: http://localhost:4000/api/catalog/products
 
 ## 🎯 Roadmap
 

@@ -19,7 +19,7 @@ export function ThemeToggle({
   showLabel = false,
   className = '' 
 }: ThemeToggleProps) {
-  const { theme, actualTheme, setTheme, toggleTheme } = useTheme();
+  const { theme, actualTheme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
 
   const themes = [
@@ -30,6 +30,12 @@ export function ThemeToggle({
 
   const currentTheme = themes.find(t => t.value === theme) || themes[0];
   const CurrentIcon = currentTheme.icon;
+
+  // Simple toggle function
+  const handleToggle = () => {
+    const newTheme = actualTheme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+  };
 
   const iconSizes = {
     sm: 'h-4 w-4',
@@ -60,7 +66,7 @@ export function ThemeToggle({
       <Button
         variant="ghost"
         size={size}
-        onClick={toggleTheme}
+        onClick={handleToggle}
         className={`theme-toggle text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 ${className}`}
         aria-label={`Switch to ${actualTheme === 'light' ? 'dark' : 'light'} theme`}
       >
@@ -153,7 +159,7 @@ export function ThemeToggle({
   // Default icon variant
   return (
     <button
-      onClick={toggleTheme}
+      onClick={handleToggle}
       className={`theme-toggle inline-flex items-center justify-center rounded-md transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 ${buttonSizes[size]} ${className}`}
       aria-label={`Switch to ${actualTheme === 'light' ? 'dark' : 'light'} theme`}
     >
@@ -176,11 +182,16 @@ export function ThemeToggle({
 
 // Compact theme toggle for mobile/small spaces
 export function CompactThemeToggle({ className = '' }: { className?: string }) {
-  const { actualTheme, toggleTheme } = useTheme();
+  const { actualTheme, setTheme } = useTheme();
+
+  const handleToggle = () => {
+    const newTheme = actualTheme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+  };
 
   return (
     <button
-      onClick={toggleTheme}
+      onClick={handleToggle}
       className={`theme-toggle inline-flex items-center justify-center rounded-md transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 h-8 w-8 ${className}`}
       aria-label={`Switch to ${actualTheme === 'light' ? 'dark' : 'light'} theme`}
     >

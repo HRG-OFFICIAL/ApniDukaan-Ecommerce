@@ -79,12 +79,12 @@ export default function SimpleProductCard({ product }: ProductCardProps) {
           
           {/* Rating */}
           <div className="flex items-center mb-3">
-            <div className="flex items-center" role="img" aria-label={`Rating: ${product.rating.average} out of 5 stars`}>
+            <div className="flex items-center" role="img" aria-label={`Rating: ${product.rating} out of 5 stars`}>
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
                   className={`w-3 h-3 ${
-                    i < Math.floor(product.rating.average) 
+                    i < Math.floor(product.rating) 
                       ? "text-yellow-400 fill-current" 
                       : "text-gray-300"
                   }`}
@@ -93,7 +93,7 @@ export default function SimpleProductCard({ product }: ProductCardProps) {
               ))}
             </div>
             <span className="text-xs text-gray-600 ml-2">
-              {product.rating.average} ({product.rating.count})
+              {product.rating} ({product.reviewCount})
             </span>
           </div>
           

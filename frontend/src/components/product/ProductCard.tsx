@@ -87,8 +87,8 @@ export default function ProductCard({
     ? Math.round((((product.originalPrice || product.compareAtPrice || 0) - product.price) / (product.originalPrice || product.compareAtPrice || 1)) * 100)
     : 0
 
-  const categoryName = typeof product.category === 'string' ? product.category : product.category.name
-  const ratingCount = typeof product.rating === 'number' ? product.reviewCount : product.rating.count
+  const categoryName = typeof product.category === 'string' ? product.category : product.category?.name || 'Category'
+  const ratingCount = typeof product.rating === 'number' ? product.reviewCount : product.rating?.count || 0
 
   if (viewMode === 'list') {
     return (

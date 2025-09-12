@@ -58,7 +58,7 @@ const initialNotifications: NotificationSettings = {
 }
 
 const initialState: PreferencesState = {
-  theme: 'system',
+  theme: 'light',
   currency: 'USD',
   language: 'en',
   notifications: initialNotifications,

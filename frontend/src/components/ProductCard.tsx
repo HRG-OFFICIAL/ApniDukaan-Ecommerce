@@ -106,13 +106,13 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
                   <div 
                     className="flex items-center"
                     role="img"
-                    aria-label={`Rating: ${product.rating.average} out of 5 stars`}
+                    aria-label={`Rating: ${product.rating} out of 5 stars`}
                   >
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
                         className={`w-4 h-4 ${
-                          i < Math.floor(product.rating.average) 
+                          i < Math.floor(product.rating) 
                             ? "text-yellow-400 fill-current" 
                             : "text-gray-300"
                         }`}
@@ -121,7 +121,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
                     ))}
                   </div>
                   <span className="text-sm text-gray-600 ml-2">
-                    {product.rating.average} ({product.rating.count} reviews)
+                    {product.rating} ({product.reviewCount} reviews)
                   </span>
                 </div>
 
@@ -252,13 +252,13 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
             <div 
               className="flex items-center"
               role="img"
-              aria-label={`Rating: ${product.rating.average} out of 5 stars`}
+              aria-label={`Rating: ${product.rating} out of 5 stars`}
             >
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
                   className={`w-3 h-3 ${
-                    i < Math.floor(product.rating.average) 
+                    i < Math.floor(product.rating) 
                       ? "text-yellow-400 fill-current" 
                       : "text-gray-300"
                   }`}
@@ -267,7 +267,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
               ))}
             </div>
             <span className="text-xs text-gray-600 ml-2">
-              {product.rating.average} ({product.rating.count})
+              {product.rating} ({product.reviewCount})
             </span>
           </div>
           

@@ -238,7 +238,10 @@ export default function ProductDetailPage() {
 
   const breadcrumbItems = product ? [
     { label: 'Products', href: '/products' },
-    { label: product.category, href: `/products?category=${product.category}` },
+    { 
+      label: product.category || 'Category', 
+      href: `/products?category=${product.category || ''}` 
+    },
     { label: product.name }
   ] : [
     { label: 'Products', href: '/products' },
@@ -357,7 +360,7 @@ export default function ProductDetailPage() {
                           key={i}
                           className={cn(
                             "w-5 h-5",
-                            i < Math.floor(product?.rating?.average || 0)
+                            i < Math.floor(product?.rating || 0)
                               ? "text-yellow-400 fill-current"
                               : "text-gray-300"
                           )}
@@ -365,7 +368,7 @@ export default function ProductDetailPage() {
                       ))}
                     </div>
                     <span className="ml-2 text-sm text-gray-600">
-                      {product?.rating?.average || 0} ({product?.rating?.count || 0} reviews)
+                      {product?.rating || 0} ({product?.reviewCount || 0} reviews)
                     </span>
                   </div>
 

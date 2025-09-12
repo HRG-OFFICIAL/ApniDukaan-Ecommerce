@@ -25,17 +25,15 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  // Force light mode by default - override any system/saved preferences
+                  // Set default theme to light, but let page-specific hooks override
                   document.documentElement.classList.remove('dark');
                   document.documentElement.classList.add('light');
                   document.documentElement.style.colorScheme = 'light';
                   
-                  // Clear any dark theme preferences
-                  localStorage.setItem('theme', 'light');
-                  
-                  // Set body background to light theme
-                  document.body.style.backgroundColor = '#f9fafb'; // gray-50
-                  document.body.style.color = '#111827'; // gray-900
+                  // Set default theme in localStorage
+                  if (!localStorage.getItem('theme')) {
+                    localStorage.setItem('theme', 'light');
+                  }
                 } catch (e) {
                   // Default to light mode if localStorage is not available
                   document.documentElement.classList.remove('dark');
@@ -47,7 +45,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.className} bg-gray-50 text-gray-900 light`}>
+      <body className={`${inter.className} bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-50`}>
         <ThemeProvider>
           <Providers>
             <div id="root">

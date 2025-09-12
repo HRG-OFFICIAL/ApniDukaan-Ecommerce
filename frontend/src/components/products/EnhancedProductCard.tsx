@@ -269,7 +269,9 @@ export function EnhancedProductCard({
         {/* Product Info */}
         <div className="p-4">
           <div className="mb-2">
-            <p className="text-sm text-gray-500 mb-1">{product.category}</p>
+            <p className="text-sm text-gray-500 mb-1">
+              {product.category || 'Category'}
+            </p>
             <h3 className="font-medium text-gray-900 line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors">
               {product.name}
             </h3>
@@ -352,7 +354,9 @@ export function EnhancedProductCard({
         <div className="flex-1 p-6">
           <div className="flex justify-between">
             <div className="flex-1">
-              <p className="text-sm text-gray-500 mb-1">{product.category}</p>
+              <p className="text-sm text-gray-500 mb-1">
+                {product.category || 'Category'}
+              </p>
               <h3 className="text-lg font-medium text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
                 {product.name}
               </h3>
