@@ -1,10 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Star, ShoppingCart, Heart, Eye } from 'lucide-react'
 import { Product } from '../graphql/types'
+import { QuickViewModal } from './QuickViewModal'
+import { useCartStore } from '../store/useCartStore'
+import { usePreferencesStore } from '../store/usePreferencesStore'
+import { useAuthStore } from '../store/useAuthStore'
+import toast from 'react-hot-toast'
 
 interface ProductCardProps {
   product: Product;
@@ -21,6 +26,13 @@ const getBadge = (product: Product) => {
 export default function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
   const [imageLoading, setImageLoading] = useState(true)
   const [imageError, setImageError] = useState(false)
+  const [showQuickView, setShowQuickView] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  const { addItem } = useCartStore()
+  const { wishlist, addToWishlist, removeFromWishlist } = usePreferencesStore()
+  const { isAuthenticated } = useAuthStore()
   
   const discount = product.originalPrice 
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) 
@@ -30,19 +42,78 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
   const imageUrl = typeof productImage === 'string' ? productImage : productImage || '/placeholder.jpg'
   const isOutOfStock = product.stock <= 0
   const isLowStock = product.stock <= 5 && product.stock > 0
+  const isInWishlist = wishlist.includes(product.id)
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
     if (isOutOfStock) {
-      alert('Product is out of stock')
+      toast.error('Product is out of stock')
       return
     }
+
+    addItem({
+      id: product.id,
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.images[0] || '',
+      maxStock: product.stock
+    })
     
-    alert(`Added ${product.name} to cart!`)
+    toast.success('Added to cart!')
   }
 
   const handleWishlistToggle = async (e: React.MouseEvent) => {
     e.preventDefault()
-    alert('Please login to add to wishlist')
+    e.stopPropagation()
+    
+    if (!isAuthenticated) {
+      toast.error('Please login to add to wishlist')
+      return
+    }
+
+    if (isInWishlist) {
+      removeFromWishlist(product.id)
+      toast.success('Removed from wishlist')
+    } else {
+      addToWishlist(product.id)
+      toast.success('Added to wishlist')
+    }
+  }
+
+  const handleAddToCartForModal = async (product: Product, quantity: number) => {
+    if (isOutOfStock) {
+      toast.error('Product is out of stock')
+      return
+    }
+
+    addItem({
+      id: product.id,
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.images[0] || '',
+      maxStock: product.stock
+    }, quantity)
+    
+    toast.success(`Added ${quantity}x ${product.name} to cart!`)
+  }
+
+  const handleWishlistToggleForModal = async (product: Product) => {
+    if (!isAuthenticated) {
+      toast.error('Please login to add to wishlist')
+      return
+    }
+
+    if (isInWishlist) {
+      removeFromWishlist(product.id)
+      toast.success('Removed from wishlist')
+    } else {
+      addToWishlist(product.id)
+      toast.success('Added to wishlist')
+    }
   }
 
   if (viewMode === 'list') {
@@ -80,10 +151,14 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
             </div>
             <button
               onClick={handleWishlistToggle}
-              className="absolute top-2 right-2 z-10 p-2 rounded-full transition-all duration-200 bg-white/80 text-gray-600 hover:bg-white hover:text-red-600"
-              aria-label="Add to wishlist"
+              className={`absolute top-2 right-2 z-10 p-2 rounded-full transition-all duration-200 bg-white/80 hover:bg-white ${
+                isInWishlist 
+                  ? 'text-red-600' 
+                  : 'text-gray-600 hover:text-red-600'
+              }`}
+              aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
             >
-              <Heart className="w-4 h-4" />
+              <Heart className={`w-4 h-4 ${isInWishlist ? 'fill-current' : ''}`} />
             </button>
           </div>
 
@@ -183,14 +258,23 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
 
   // Grid view (default)
   return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 relative">
+    <div 
+      ref={cardRef}
+      className="bg-white border border-gray-200 rounded-lg overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* Wishlist Button */}
       <button
         onClick={handleWishlistToggle}
-        className="absolute top-2 right-2 z-10 p-2 rounded-full transition-all duration-200 bg-white/80 text-gray-600 hover:bg-white hover:text-red-600"
-        aria-label="Add to wishlist"
+        className={`absolute top-2 right-2 z-10 p-2 rounded-full transition-all duration-200 bg-white/80 hover:bg-white ${
+          isInWishlist 
+            ? 'text-red-600' 
+            : 'text-gray-600 hover:text-red-600'
+        }`}
+        aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
       >
-        <Heart className="w-4 h-4" />
+        <Heart className={`w-4 h-4 ${isInWishlist ? 'fill-current' : ''}`} />
       </button>
 
       <Link 
@@ -227,13 +311,23 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
           </div>
 
           {/* Quick View Button */}
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
+          <div className={`absolute inset-0 bg-black transition-all duration-300 flex items-center justify-center ${
+            isHovered ? 'bg-opacity-20' : 'bg-opacity-0'
+          }`}>
             <button
-              className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 bg-white hover:bg-gray-50 px-4 py-2 rounded-md border border-gray-300 text-sm font-medium"
+              className={`transition-all duration-300 transform bg-white hover:bg-gray-50 px-4 py-2 rounded-md border border-gray-300 text-sm font-medium ${
+                isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`}
               aria-label={`Quick view ${product.name}`}
+              onMouseDown={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setShowQuickView(true)
+              }}
               onClick={(e) => {
                 e.preventDefault()
-                alert('Quick view not implemented yet')
+                e.stopPropagation()
+                setShowQuickView(true)
               }}
             >
               <Eye className="w-4 h-4 mr-2 inline" />
@@ -308,6 +402,15 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
           {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
         </button>
       </div>
+
+      {/* Quick View Modal */}
+      <QuickViewModal
+        product={product}
+        isOpen={showQuickView}
+        onClose={() => setShowQuickView(false)}
+        onAddToCart={handleAddToCartForModal}
+        onAddToWishlist={handleWishlistToggleForModal}
+      />
     </div>
   )
 }
