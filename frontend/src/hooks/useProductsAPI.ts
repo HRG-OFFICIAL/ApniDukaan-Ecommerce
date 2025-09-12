@@ -39,51 +39,30 @@ const mockProducts: Product[] = [
   {
     id: '1',
     name: 'Wireless Bluetooth Headphones',
-    slug: 'wireless-bluetooth-headphones',
     description: 'High-quality wireless headphones with noise cancellation',
-    shortDescription: 'Premium wireless headphones',
     sku: 'WBH-001',
     price: 199.99,
     originalPrice: 249.99,
-    currency: 'USD',
     images: ['/images/products/headphones-1.jpg'],
-    thumbnailImage: '/images/products/headphones-1.jpg',
-    category: {
-      id: 'cat-1',
-      name: 'Electronics',
-      slug: 'electronics'
-    },
-    brand: 'TechSound',
+    category: 'Electronics',
+    brand: { name: 'TechSound' },
     tags: ['wireless', 'bluetooth', 'headphones'],
-    attributes: [
-      { name: 'Color', value: 'Black' },
-      { name: 'Battery Life', value: '30 hours' }
-    ],
-    inventory: {
-      quantity: 50,
-      lowStockThreshold: 5,
-      trackQuantity: true,
-      allowBackorder: false
-    },
-    shipping: {
-      weight: 0.5,
-      dimensions: { length: 20, width: 15, height: 8 },
-      freeShipping: true
-    },
-    status: 'published',
-    featured: true,
-    visibility: 'public',
-    rating: { average: 4.5, count: 128 },
-    sales: { totalSold: 45, revenue: 8999.55 },
-    isOnSale: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    // Frontend-specific fields
+    rating: 4.5,
+    reviewCount: 128,
     stock: 50,
     isNew: false,
     isBestseller: true,
-    discount: 20,
-    reviews: []
+    isOnSale: true,
+    isFeatured: true,
+    isActive: true,
+    inStock: true,
+    specifications: {
+      'Color': 'Black',
+      'Battery Life': '30 hours'
+    },
+    reviews: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   }
 ]
 
@@ -102,77 +81,33 @@ export function useProducts(options: UseProductsOptions = {}): UseProductsResult
   // Convert API product to frontend format
   function convertApiProductToFrontend(apiProduct: ApiProduct): Product {
     return {
-      id: apiProduct.id || apiProduct._id,
+      id: apiProduct._id,
       name: apiProduct.name,
-      slug: apiProduct.slug,
       description: apiProduct.description,
-      shortDescription: apiProduct.shortDescription,
       sku: apiProduct.sku,
       price: apiProduct.price,
       originalPrice: apiProduct.originalPrice,
-      currency: apiProduct.currency,
       images: apiProduct.images,
-      thumbnailImage: apiProduct.thumbnailImage,
-      category: {
-        id: apiProduct.category.id || apiProduct.category._id,
-        name: apiProduct.category.name,
-        slug: apiProduct.category.slug
-      },
-      subcategory: apiProduct.subcategory ? {
-        id: apiProduct.subcategory.id || apiProduct.subcategory._id,
-        name: apiProduct.subcategory.name,
-        slug: apiProduct.subcategory.slug
-      } : undefined,
-      brand: apiProduct.brand,
+      category: apiProduct.category.name,
+      subcategory: apiProduct.subcategory?.name,
+      brand: apiProduct.brand ? { name: apiProduct.brand } : undefined,
       tags: apiProduct.tags,
-      attributes: apiProduct.attributes,
-      inventory: {
-        quantity: apiProduct.inventory.quantity,
-        lowStockThreshold: apiProduct.inventory.lowStockThreshold,
-        trackQuantity: apiProduct.inventory.trackQuantity,
-        allowBackorder: apiProduct.inventory.allowBackorder
-      },
-      shipping: apiProduct.shipping ? {
-        weight: apiProduct.shipping.weight || 0,
-        dimensions: apiProduct.shipping.dimensions || { length: 0, width: 0, height: 0 },
-        freeShipping: apiProduct.shipping.freeShipping || false,
-        shippingClass: apiProduct.shipping.shippingClass || 'standard'
-      } : {
-        weight: 0,
-        dimensions: { length: 0, width: 0, height: 0 },
-        freeShipping: false,
-        shippingClass: 'standard'
-      },
-      seo: apiProduct.seo || null,
-      status: apiProduct.status || 'published',
-      featured: apiProduct.featured || false,
-      visibility: apiProduct.visibility || 'public',
-      rating: apiProduct.rating ? {
-        average: apiProduct.rating.average || 0,
-        count: apiProduct.rating.count || 0
-      } : {
-        average: 0,
-        count: 0
-      },
-      sales: apiProduct.sales ? {
-        totalSold: apiProduct.sales.totalSold || 0,
-        revenue: apiProduct.sales.revenue || 0
-      } : {
-        totalSold: 0,
-        revenue: 0
-      },
+      stock: apiProduct.inventory?.quantity || 0,
+      isFeatured: apiProduct.featured || false,
+      isActive: apiProduct.status === 'published',
+      rating: apiProduct.rating?.average || 0,
+      reviewCount: apiProduct.rating?.count || 0,
       isOnSale: apiProduct.isOnSale,
-      saleStartDate: apiProduct.saleStartDate,
-      saleEndDate: apiProduct.saleEndDate,
-      createdAt: apiProduct.createdAt,
-      updatedAt: apiProduct.updatedAt,
-      // Frontend-specific fields
-      stock: apiProduct.inventory.quantity,
       isNew: new Date(apiProduct.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-      isBestseller: apiProduct.sales.totalSold > 100,
-      discount: apiProduct.originalPrice ? 
-        Math.round(((apiProduct.originalPrice - apiProduct.price) / apiProduct.originalPrice) * 100) : 0,
-      reviews: [] // Will be populated separately if needed
+      isBestseller: apiProduct.sales?.totalSold > 100,
+      inStock: (apiProduct.inventory?.quantity || 0) > 0,
+      specifications: apiProduct.attributes?.reduce((acc, attr) => {
+        acc[attr.name] = attr.value;
+        return acc;
+      }, {} as Record<string, string | number | boolean>) || {},
+      reviews: [],
+      createdAt: apiProduct.createdAt,
+      updatedAt: apiProduct.updatedAt
     };
   }
 
@@ -285,71 +220,33 @@ export function useProduct(id: string): UseProductResult {
         if (response.success) {
           // Convert API product to frontend format
           const convertedProduct = {
-            id: response.data.id || response.data._id,
+            id: response.data._id,
             name: response.data.name,
-            slug: response.data.slug,
             description: response.data.description,
-            shortDescription: response.data.shortDescription,
             sku: response.data.sku,
             price: response.data.price,
             originalPrice: response.data.originalPrice,
-            currency: response.data.currency,
             images: response.data.images,
-            thumbnailImage: response.data.thumbnailImage,
-            category: {
-              id: response.data.category.id || response.data.category._id,
-              name: response.data.category.name,
-              slug: response.data.category.slug
-            },
-            subcategory: response.data.subcategory ? {
-              id: response.data.subcategory.id || response.data.subcategory._id,
-              name: response.data.subcategory.name,
-              slug: response.data.subcategory.slug
-            } : undefined,
-            brand: response.data.brand,
+            category: response.data.category.name,
+            subcategory: response.data.subcategory?.name,
+            brand: response.data.brand ? { name: response.data.brand } : undefined,
             tags: response.data.tags,
-            attributes: response.data.attributes,
-            inventory: {
-              quantity: response.data.inventory.quantity,
-              lowStockThreshold: response.data.inventory.lowStockThreshold,
-              trackQuantity: response.data.inventory.trackQuantity,
-              allowBackorder: response.data.inventory.allowBackorder
-            },
-            shipping: response.data.shipping ? {
-              weight: response.data.shipping.weight || 0,
-              dimensions: response.data.shipping.dimensions || { length: 0, width: 0, height: 0 },
-              freeShipping: response.data.shipping.freeShipping || false,
-              shippingClass: response.data.shipping.shippingClass || 'standard'
-            } : {
-              weight: 0,
-              dimensions: { length: 0, width: 0, height: 0 },
-              freeShipping: false,
-              shippingClass: 'standard'
-            },
-            seo: response.data.seo,
-            status: response.data.status,
-            featured: response.data.featured,
-            visibility: response.data.visibility,
-            rating: {
-              average: response.data.rating.average,
-              count: response.data.rating.count
-            },
-            sales: {
-              totalSold: response.data.sales.totalSold,
-              revenue: response.data.sales.revenue
-            },
+            stock: response.data.inventory?.quantity || 0,
+            isFeatured: response.data.featured || false,
+            isActive: response.data.status === 'published',
+            rating: response.data.rating.average,
+            reviewCount: response.data.rating.count,
             isOnSale: response.data.isOnSale,
-            saleStartDate: response.data.saleStartDate,
-            saleEndDate: response.data.saleEndDate,
-            createdAt: response.data.createdAt,
-            updatedAt: response.data.updatedAt,
-            // Frontend-specific fields
-            stock: response.data.inventory.quantity,
             isNew: new Date(response.data.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-            isBestseller: response.data.sales.totalSold > 100,
-            discount: response.data.originalPrice ? 
-              Math.round(((response.data.originalPrice - response.data.price) / response.data.originalPrice) * 100) : 0,
-            reviews: []
+            isBestseller: response.data.sales?.totalSold > 100,
+            inStock: (response.data.inventory?.quantity || 0) > 0,
+            specifications: response.data.attributes?.reduce((acc, attr) => {
+              acc[attr.name] = attr.value;
+              return acc;
+            }, {} as Record<string, string | number | boolean>) || {},
+            reviews: [],
+            createdAt: response.data.createdAt,
+            updatedAt: response.data.updatedAt
           };
           setProduct(convertedProduct);
         } else {
@@ -417,7 +314,7 @@ export function useProductSearch(options: UseProductSearchOptions): UseProductSe
         if (response.success) {
           // Convert API products to frontend format
           const convertedProducts = response.data.map((apiProduct: ApiProduct) => ({
-            id: apiProduct.id || apiProduct._id,
+            id: apiProduct._id,
             name: apiProduct.name,
             slug: apiProduct.slug,
             description: apiProduct.description,
@@ -428,17 +325,9 @@ export function useProductSearch(options: UseProductSearchOptions): UseProductSe
             currency: apiProduct.currency,
             images: apiProduct.images,
             thumbnailImage: apiProduct.thumbnailImage,
-            category: {
-              id: apiProduct.category.id || apiProduct.category._id,
-              name: apiProduct.category.name,
-              slug: apiProduct.category.slug
-            },
-            subcategory: apiProduct.subcategory ? {
-              id: apiProduct.subcategory.id || apiProduct.subcategory._id,
-              name: apiProduct.subcategory.name,
-              slug: apiProduct.subcategory.slug
-            } : undefined,
-            brand: apiProduct.brand,
+            category: apiProduct.category.name,
+            subcategory: apiProduct.subcategory?.name,
+            brand: apiProduct.brand ? { name: apiProduct.brand } : undefined,
             tags: apiProduct.tags,
             attributes: apiProduct.attributes,
             inventory: {
@@ -462,10 +351,8 @@ export function useProductSearch(options: UseProductSearchOptions): UseProductSe
             status: apiProduct.status,
             featured: apiProduct.featured,
             visibility: apiProduct.visibility,
-            rating: {
-              average: apiProduct.rating.average,
-              count: apiProduct.rating.count
-            },
+            rating: apiProduct.rating.average,
+            reviewCount: apiProduct.rating.count,
             sales: {
               totalSold: apiProduct.sales.totalSold,
               revenue: apiProduct.sales.revenue

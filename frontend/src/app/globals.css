@@ -14,11 +14,9 @@ html, html.light {
   color-scheme: light;
 }
 
-/* Ensure no dark theme can override */
+/* Dark theme styles */
 html.dark {
-  background-color: #f9fafb !important; /* gray-50 */
-  color: #111827 !important; /* gray-900 */
-  color-scheme: light !important;
+  color-scheme: dark;
 }
 
 body {
@@ -27,10 +25,10 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Override any dark theme styles */
+/* Dark theme body styles */
 .dark body {
-  background-color: #f9fafb !important; /* gray-50 */
-  color: #111827 !important; /* gray-900 */
+  background-color: #111827; /* gray-900 */
+  color: #f9fafb; /* gray-50 */
 }
 
 /* Ensure all components use light theme colors */
