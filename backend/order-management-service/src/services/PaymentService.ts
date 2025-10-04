@@ -48,9 +48,9 @@ class PaymentService {
         mode: (process.env.PAYPAL_MODE as 'sandbox' | 'live') || 'sandbox'
       },
       razorpay: {
-        enabled: process.env.RAZORPAY_ENABLED === 'true',
-        keyId: process.env.RAZORPAY_KEY_ID || '',
-        keySecret: process.env.RAZORPAY_KEY_SECRET || '',
+        enabled: process.env.RAZORPAY_ENABLED !== 'false',
+        keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_RPTmqUYFOHsjfL',
+        keySecret: process.env.RAZORPAY_KEY_SECRET || '77jo8sW2SfaLZ62g6OBy6dK6',
         webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || ''
       },
       defaultCurrency: 'USD',
