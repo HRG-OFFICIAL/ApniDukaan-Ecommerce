@@ -189,7 +189,16 @@ class ApiClient {
     params.append('sortField', sort.field);
     params.append('sortOrder', sort.order);
 
-    return this.request<Product[]>(`/api/catalog/products?${params.toString()}`);
+    const response = await this.request<{products: Product[], pagination: any}>(`/api/catalog/products?${params.toString()}`);
+    
+    // Transform the response to match expected format
+    return {
+      success: response.success,
+      data: response.data.products || [],
+      pagination: response.data.pagination,
+      message: response.message,
+      error: response.error
+    };
   }
 
   async getProduct(id: string): Promise<ApiResponse<Product>> {
@@ -206,12 +215,13 @@ class ApiClient {
     page: number = 1,
     limit: number = 20
   ): Promise<ApiResponse<Product[]>> {
-    return this.getProducts(
+    const response = await this.getProducts(
       { ...filters, search: query },
       { field: 'createdAt', order: 'desc' },
       page,
       limit
     );
+    return response;
   }
 
   // Categories API

@@ -174,8 +174,8 @@ function addSecurityHeaders(response: NextResponse) {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
     "img-src 'self' data: https: blob:; " +
-    "connect-src 'self' http://localhost:4000 https://apnidukaan-api-gateway.onrender.com https://api.apnidukaan.com https://www.google-analytics.com https://*.onrender.com; " +
-    "frame-src 'self' https://accounts.google.com https://checkout.razorpay.com; " +
+    "connect-src 'self' http://localhost:4000 https://apnidukaan-api-gateway.onrender.com https://api.apnidukaan.com https://api.razorpay.com https://www.google-analytics.com https://*.onrender.com; " +
+    "frame-src 'self' https://accounts.google.com https://checkout.razorpay.com https://api.razorpay.com; " +
     "object-src 'none'; " +
     "base-uri 'self';"
   )
@@ -185,7 +185,7 @@ function addSecurityHeaders(response: NextResponse) {
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('Referrer-Policy', 'origin-when-cross-origin')
   response.headers.set('X-XSS-Protection', '1; mode=block')
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()')
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(self "https://checkout.razorpay.com")')
   
   // HSTS (only in production)
   if (process.env.NODE_ENV === 'production') {
