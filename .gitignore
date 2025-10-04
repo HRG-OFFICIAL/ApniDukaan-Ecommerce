@@ -76,8 +76,10 @@ web_modules/
 .parcel-cache
 
 # Next.js build output
-.next
+.next/
 out/
+# But keep the public directory for static assets
+!public/
 
 # Nuxt.js build / generate output
 .nuxt
@@ -85,7 +87,7 @@ dist
 
 # Gatsby files
 .cache/
-public
+# Note: public/ is needed for Next.js static assets, so we don't ignore it
 
 # Vuepress build output
 .vuepress/dist
@@ -182,4 +184,19 @@ junit.xml
 # Temporary files
 tmp/
 temp/
-.vercel
+
+# Vercel
+# Note: .vercel/ is needed for Vercel deployment configuration
+# But ignore build artifacts
+.vercel/project.json
+
+# Project specific
+# Ignore build artifacts but keep source files
+frontend/.next/
+backend/*/dist/
+backend/*/build/
+
+# Keep essential directories
+!frontend/public/
+!docs/
+!infrastructure/
