@@ -6,7 +6,13 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import { ApolloServer } from 'apollo-server-express';
 import { typeDefs } from './graphql/schema';
 import { resolvers } from './graphql/resolvers';
-import { logger } from '@apnidukaan/shared';
+// Local logger implementation
+const logger = {
+  info: (message: string, ...args: any[]) => console.log(`[INFO] ${message}`, ...args),
+  error: (message: string, ...args: any[]) => console.error(`[ERROR] ${message}`, ...args),
+  warn: (message: string, ...args: any[]) => console.warn(`[WARN] ${message}`, ...args),
+  debug: (message: string, ...args: any[]) => console.debug(`[DEBUG] ${message}`, ...args)
+};
 
 async function startServer() {
   const app = express();

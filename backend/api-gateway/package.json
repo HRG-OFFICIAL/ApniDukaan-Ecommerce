@@ -15,7 +15,6 @@
     "setup": "npm run build"
   },
   "dependencies": {
-    "@apnidukaan/shared": "file:../shared",
     "@apollo/federation": "^0.38.1",
     "@apollo/gateway": "^2.5.7",
     "@graphql-tools/utils": "^10.9.1",
