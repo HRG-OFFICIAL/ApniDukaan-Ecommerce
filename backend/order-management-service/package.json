@@ -53,7 +53,7 @@
     "pdf-lib": "^1.17.1",
     "redis": "^4.6.0",
     "short-unique-id": "^5.0.3",
-    "stripe": "^14.9.0",
+    "razorpay": "^2.9.2",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

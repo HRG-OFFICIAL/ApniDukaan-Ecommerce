@@ -28,7 +28,10 @@ export enum PaymentMethod {
   CREDIT_CARD = 'credit_card',
   DEBIT_CARD = 'debit_card',
   PAYPAL = 'paypal',
-  STRIPE = 'stripe',
+  RAZORPAY = 'razorpay',
+  UPI = 'upi',
+  NET_BANKING = 'net_banking',
+  WALLET = 'wallet',
   BANK_TRANSFER = 'bank_transfer',
   APPLE_PAY = 'apple_pay',
   GOOGLE_PAY = 'google_pay',
@@ -401,6 +404,7 @@ export interface IOrderListResponse {
 
 export interface IPaymentRequest {
   orderId: string;
+  customerId?: string;
   method: PaymentMethod;
   amount: number;
   currency: string;

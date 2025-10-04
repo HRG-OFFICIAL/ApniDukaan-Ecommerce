@@ -96,7 +96,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
       price: product.price,
       image: product.images[0] || '',
       maxStock: product.stock
-    }, quantity)
+    })
     
     toast.success(`Added ${quantity}x ${product.name} to cart!`)
   }
