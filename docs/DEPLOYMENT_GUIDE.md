@@ -1,423 +1,469 @@
 # ApniDukaan Deployment Guide
 
-This guide covers local development setup, Docker deployment, and production deployment on AWS with Kubernetes.
+## Overview
 
-## 📋 Prerequisites
+This guide covers deploying the ApniDukaan e-commerce platform to various environments, from development to production.
 
-### Local Development
-- **Node.js** >= 18.0.0
-- **npm** >= 8.0.0
-- **Git**
+## Prerequisites
 
-### Docker Development
-- **Docker** >= 20.0.0
-- **Docker Compose** >= 2.0.0
+- Docker and Docker Compose
+- Kubernetes cluster (for K8s deployment)
+- Domain name and SSL certificates
+- MongoDB Atlas account (for production)
+- Redis Cloud account (for production)
+- Vercel account (for frontend deployment)
 
-### Production Deployment
-- **AWS CLI** configured
-- **kubectl** for Kubernetes
-- **Helm** (optional, for easier deployments)
+## Environment Setup
 
-## 🚀 Quick Start (Docker)
+### 1. Development Environment
 
-### 1. Clone and Setup Environment
-
+#### Local Development
 ```bash
-git clone https://github.com/your-username/ApniDukaan-ecommerce.git
-cd ApniDukaan-ecommerce
+# Clone repository
+git clone https://github.com/your-username/apnidukaan-ecommerce.git
+cd apnidukaan-ecommerce
 
-# Copy and configure environment variables
-cp .env.example .env
+# Install dependencies
+npm install
+cd frontend && npm install && cd ..
+cd backend/shared && npm install && cd ../..
 
-# Edit .env with your configuration
-# At minimum, set these required variables:
-# - JWT_ACCESS_SECRET=your-secure-access-secret
-# - JWT_REFRESH_SECRET=your-secure-refresh-secret
-# - STRIPE_SECRET_KEY=sk_test_your-stripe-secret-key
-# - STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-publishable-key
-# - GOOGLE_CLIENT_ID=your-google-oauth-client-id
-# - GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
-# - SENDGRID_API_KEY=your-sendgrid-api-key
+# Setup environment
+npm run setup:env
+
+# Start all services
+npm start
 ```
 
-### 2. Start All Services
-
+#### Docker Development
 ```bash
-# Start all services with Docker Compose
-docker-compose up -d
+# Start with Docker Compose
+docker-compose -f infrastructure/docker/docker-compose.yml up -d
 
 # View logs
-docker-compose logs -f
+docker-compose -f infrastructure/docker/docker-compose.yml logs -f
 
-# Check service status
-docker-compose ps
+# Stop services
+docker-compose -f infrastructure/docker/docker-compose.yml down
 ```
 
-### 3. Initialize Data (Optional)
+### 2. Staging Environment
 
-```bash
-# Seed initial data
-npm run seed
-
-# Or manually access services:
-# MongoDB: MongoDB Atlas (Cloud)
-# Redis: redis://localhost:6379
-# MinIO Console: http://localhost:9001 (minioadmin/minioadmin123)
+#### Environment Variables
+Create `.env.staging` file:
+```env
+NODE_ENV=staging
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/apnidukaan-staging
+REDIS_URL=redis://staging-redis:6379
+JWT_SECRET=staging-jwt-secret
+API_GATEWAY_URL=https://api-staging.apnidukaan.com
+FRONTEND_URL=https://staging.apnidukaan.com
 ```
 
-### 4. Access Application
-
-- **Frontend**: http://localhost:3000
-- **GraphQL Playground**: http://localhost:4000/graphql
-- **MinIO Console**: http://localhost:9001
-- **Grafana Monitoring**: http://localhost:3001 (admin/admin)
-- **Prometheus**: http://localhost:9090
-
-## 🏗️ Local Development (Without Docker)
-
-### 1. Install Dependencies
-
+#### Deploy to Staging
 ```bash
-# Install all workspace dependencies
-npm install
+# Build staging images
+docker build -t apnidukaan-frontend:staging ./frontend
+docker build -t apnidukaan-api-gateway:staging ./backend/api-gateway
 
-# Install individual service dependencies
-npm run setup
+# Deploy with Docker Compose
+docker-compose -f docker-compose.staging.yml up -d
 ```
 
-### 2. Setup Infrastructure Services
+### 3. Production Environment
 
-You'll need to run these services locally or in Docker:
-
-```bash
-# MongoDB
-mongod --dbpath /path/to/data
-
-# Redis
-redis-server
-
-# Kafka & Zookeeper (using Docker)
-docker-compose up -d kafka zookeeper mongodb redis minio
+#### Environment Variables
+Create `.env.production` file:
+```env
+NODE_ENV=production
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/apnidukaan-prod
+REDIS_URL=redis://prod-redis:6379
+JWT_SECRET=production-jwt-secret-very-secure
+API_GATEWAY_URL=https://api.apnidukaan.com
+FRONTEND_URL=https://apnidukaan.com
+STRIPE_SECRET_KEY=sk_live_...
+RAZORPAY_KEY_ID=rzp_live_...
+SMTP_HOST=smtp.gmail.com
+SMTP_USER=noreply@apnidukaan.com
+SMTP_PASS=app-password
 ```
 
-### 3. Environment Configuration
+## Deployment Methods
 
-Create `.env` files in each service directory with appropriate configuration.
+### Method 1: Docker Compose Deployment
 
-### 4. Start Services
+#### 1. Prepare Production Configuration
+```yaml
+# docker-compose.prod.yml
+version: '3.8'
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:3000"
+      - "443:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://api.apnidukaan.com
+    depends_on:
+      - api-gateway
 
-```bash
-# Start all services
-npm run dev
+  api-gateway:
+    build: ./backend/api-gateway
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=${MONGODB_URI}
+      - REDIS_URL=${REDIS_URL}
+    depends_on:
+      - mongodb
+      - redis
 
-# Or start individual services
-npm run dev:frontend
-npm run dev:backend
+  mongodb:
+    image: mongo:6.0
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
 
-# Or start specific backend services
-npm run dev --workspace=backend/user-service
-npm run dev --workspace=backend/catalog-service
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/docker/nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - api-gateway
+
+volumes:
+  mongodb_data:
+  redis_data:
 ```
 
-## 🔧 Service Configuration
-
-### Required Environment Variables
-
-#### Global Variables
+#### 2. Deploy
 ```bash
-# JWT Authentication
-JWT_ACCESS_SECRET=your-super-secure-access-secret-min-32-chars
-JWT_REFRESH_SECRET=your-super-secure-refresh-secret-min-32-chars
-
-# Database
-MONGODB_URI=mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0
-REDIS_URL=redis://localhost:6379
-REDIS_PASSWORD=your-redis-password
-
-# Kafka
-KAFKA_BROKERS=localhost:9092
-```
-
-#### Frontend Variables
-```bash
-NEXT_PUBLIC_API_URL=http://localhost:4000/graphql
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-key
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-nextauth-secret
-```
-
-#### Payment Configuration
-```bash
-# Stripe
-STRIPE_SECRET_KEY=sk_test_your-stripe-secret-key
-STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
-
-# PayPal
-PAYPAL_CLIENT_ID=your-paypal-client-id
-PAYPAL_CLIENT_SECRET=your-paypal-client-secret
-PAYPAL_MODE=sandbox
-```
-
-#### OAuth Configuration
-```bash
-GOOGLE_CLIENT_ID=your-google-oauth-client-id
-GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
-GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/callback/google
-```
-
-#### Email Configuration
-```bash
-SENDGRID_API_KEY=SG.your-sendgrid-api-key
-FROM_EMAIL=noreply@ApniDukaan.com
-```
-
-#### AWS Configuration
-```bash
-AWS_ACCESS_KEY_ID=your-aws-access-key
-AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-AWS_REGION=us-east-1
-S3_BUCKET=ApniDukaan-product-images
-CLOUDFRONT_DOMAIN=d1234567890.cloudfront.net
-```
-
-## ☁️ Production Deployment on AWS
-
-### 1. Infrastructure Setup
-
-#### Create EKS Cluster
-```bash
-# Install eksctl if not already installed
-curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-sudo mv /tmp/eksctl /usr/local/bin
-
-# Create EKS cluster
-eksctl create cluster \
-  --name ApniDukaan-cluster \
-  --region us-east-1 \
-  --nodegroup-name ApniDukaan-nodes \
-  --node-type t3.medium \
-  --nodes 3 \
-  --nodes-min 1 \
-  --nodes-max 5 \
-  --managed
-```
-
-#### Setup AWS Resources
-```bash
-# Create S3 bucket for images
-aws s3 mb s3://ApniDukaan-product-images-prod
-
-# Create CloudFront distribution
-aws cloudfront create-distribution \
-  --distribution-config file://infrastructure/aws/cloudfront-config.json
-
-# Create RDS MongoDB Atlas cluster (recommended)
-# Or set up MongoDB on EKS using Helm
-
-# Create ElastiCache Redis cluster
-aws elasticache create-cache-cluster \
-  --cache-cluster-id ApniDukaan-redis \
-  --engine redis \
-  --cache-node-type cache.t3.micro \
-  --num-cache-nodes 1
-```
-
-### 2. Build and Push Docker Images
-
-```bash
-# Build all images
+# Build production images
 docker-compose -f docker-compose.prod.yml build
 
-# Tag and push to ECR
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
+# Deploy
+docker-compose -f docker-compose.prod.yml up -d
 
-# Tag and push each service
-docker tag ApniDukaan-frontend:latest YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/ApniDukaan-frontend:latest
-docker push YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/ApniDukaan-frontend:latest
-
-# Repeat for all services...
+# Check status
+docker-compose -f docker-compose.prod.yml ps
 ```
 
-### 3. Deploy to Kubernetes
+### Method 2: Kubernetes Deployment
 
+#### 1. Create Namespace
 ```bash
-# Create namespace
-kubectl create namespace ApniDukaan
-
-# Create secrets
-kubectl create secret generic app-secrets \
-  --from-literal=jwt-access-secret="your-jwt-access-secret" \
-  --from-literal=jwt-refresh-secret="your-jwt-refresh-secret" \
-  --from-literal=stripe-secret-key="your-stripe-secret" \
-  --from-literal=mongodb-uri="your-mongodb-connection-string" \
-  -n ApniDukaan
-
-# Apply Kubernetes manifests
-kubectl apply -f infrastructure/k8s/ -n ApniDukaan
-
-# Verify deployment
-kubectl get pods -n ApniDukaan
-kubectl get services -n ApniDukaan
+kubectl create namespace apnidukaan
 ```
 
-### 4. Configure Ingress and SSL
-
+#### 2. Apply ConfigMaps
 ```bash
-# Install AWS Load Balancer Controller
-helm repo add eks https://aws.github.io/eks-charts
-helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
-  -n kube-system \
-  --set clusterName=ApniDukaan-cluster
-
-# Apply ingress configuration
-kubectl apply -f infrastructure/k8s/ingress.yaml -n ApniDukaan
-
-# Configure SSL with cert-manager
-kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.13.0/cert-manager.yaml
-kubectl apply -f infrastructure/k8s/cert-manager-issuer.yaml -n ApniDukaan
+kubectl apply -f infrastructure/k8s/configmap.yaml
 ```
 
-## 🔍 Monitoring and Logging
+#### 3. Apply Secrets
+```bash
+kubectl create secret generic apnidukaan-secrets \
+  --from-literal=mongodb-uri="mongodb+srv://..." \
+  --from-literal=jwt-secret="your-jwt-secret" \
+  --from-literal=redis-url="redis://..." \
+  -n apnidukaan
+```
+
+#### 4. Deploy Services
+```bash
+# Deploy all services
+kubectl apply -f infrastructure/k8s/
+
+# Check deployment status
+kubectl get pods -n apnidukaan
+kubectl get services -n apnidukaan
+```
+
+#### 5. Apply Ingress
+```bash
+kubectl apply -f infrastructure/k8s/ingress.yaml
+```
+
+### Method 3: Vercel + Railway Deployment
+
+#### Frontend (Vercel)
+1. Connect GitHub repository to Vercel
+2. Set environment variables in Vercel dashboard
+3. Deploy automatically on push to main branch
+
+#### Backend (Railway)
+1. Connect GitHub repository to Railway
+2. Set environment variables in Railway dashboard
+3. Deploy each service separately
+
+## SSL Certificate Setup
+
+### Using Let's Encrypt
+```bash
+# Install certbot
+sudo apt-get install certbot
+
+# Generate certificates
+sudo certbot certonly --standalone -d apnidukaan.com -d www.apnidukaan.com
+
+# Copy certificates to Docker volume
+sudo cp /etc/letsencrypt/live/apnidukaan.com/fullchain.pem ./ssl/cert.pem
+sudo cp /etc/letsencrypt/live/apnidukaan.com/privkey.pem ./ssl/key.pem
+```
+
+### Using Cloudflare
+1. Add domain to Cloudflare
+2. Enable SSL/TLS encryption
+3. Set SSL mode to "Full (strict)"
+4. Enable "Always Use HTTPS"
+
+## Database Setup
+
+### MongoDB Atlas (Production)
+1. Create MongoDB Atlas cluster
+2. Configure network access (whitelist IPs)
+3. Create database user
+4. Get connection string
+5. Update environment variables
+
+### Local MongoDB (Development)
+```bash
+# Install MongoDB
+brew install mongodb-community
+
+# Start MongoDB
+brew services start mongodb-community
+
+# Create database
+mongo
+> use apnidukaan
+> db.createUser({user: "admin", pwd: "password", roles: ["readWrite"]})
+```
+
+## Redis Setup
+
+### Redis Cloud (Production)
+1. Create Redis Cloud account
+2. Create database
+3. Get connection string
+4. Update environment variables
+
+### Local Redis (Development)
+```bash
+# Install Redis
+brew install redis
+
+# Start Redis
+brew services start redis
+
+# Test connection
+redis-cli ping
+```
+
+## Monitoring Setup
+
+### Prometheus + Grafana
+```bash
+# Start monitoring stack
+docker-compose -f infrastructure/docker/monitoring.yml up -d
+
+# Access Grafana
+open http://localhost:3001
+# Username: admin, Password: admin
+```
 
 ### Application Monitoring
-- **Grafana Dashboard**: http://localhost:3001
-- **Prometheus Metrics**: http://localhost:9090
-- **Application logs**: `docker-compose logs -f [service-name]`
+1. Set up APM (Application Performance Monitoring)
+2. Configure log aggregation
+3. Set up alerting rules
+4. Monitor key metrics
 
-### Key Metrics to Monitor
-- API response times
-- Database query performance
-- Order conversion rates
-- Payment success rates
-- Cache hit ratios
-- Error rates by service
+## Backup Strategy
 
-### Log Analysis
+### Database Backups
 ```bash
-# View specific service logs
-docker-compose logs -f frontend
-docker-compose logs -f api-gateway
-docker-compose logs -f user-service
+# MongoDB backup
+mongodump --uri="mongodb+srv://..." --out=./backups/$(date +%Y%m%d)
 
-# Search logs
-docker-compose logs user-service | grep "ERROR"
-docker-compose logs payment-service | grep "PAYMENT_FAILED"
+# Automated backup script
+#!/bin/bash
+DATE=$(date +%Y%m%d_%H%M%S)
+mongodump --uri="$MONGODB_URI" --out="./backups/$DATE"
+aws s3 cp "./backups/$DATE" "s3://apnidukaan-backups/$DATE" --recursive
 ```
 
-## 🧪 Testing
-
-### Run All Tests
+### File Backups
 ```bash
-# Run all tests
-npm test
-
-# Run tests for specific service
-npm test --workspace=frontend
-npm test --workspace=backend/user-service
+# Backup uploaded files
+tar -czf "uploads_$(date +%Y%m%d).tar.gz" ./uploads/
+aws s3 cp "uploads_$(date +%Y%m%d).tar.gz" "s3://apnidukaan-backups/"
 ```
 
-### Load Testing
+## Security Checklist
+
+### Pre-deployment
+- [ ] Environment variables secured
+- [ ] SSL certificates configured
+- [ ] Database access restricted
+- [ ] API rate limiting enabled
+- [ ] Security headers configured
+- [ ] Dependencies updated
+- [ ] Secrets management implemented
+
+### Post-deployment
+- [ ] Health checks working
+- [ ] Monitoring alerts configured
+- [ ] Backup strategy tested
+- [ ] Security scan completed
+- [ ] Performance testing done
+- [ ] Load testing completed
+
+## Performance Optimization
+
+### Frontend Optimization
 ```bash
-# Install artillery for load testing
-npm install -g artillery
+# Build with optimizations
+npm run build
 
-# Run load tests
-artillery run infrastructure/load-tests/api-load-test.yml
-artillery run infrastructure/load-tests/frontend-load-test.yml
+# Analyze bundle
+npm run analyze
+
+# Enable compression
+# Add to nginx.conf
+gzip on;
+gzip_types text/plain text/css application/json application/javascript;
 ```
 
-## 🔒 Security Checklist
+### Backend Optimization
+```bash
+# Enable clustering
+NODE_ENV=production node -e "require('cluster').isMaster ? require('./cluster') : require('./app')"
 
-### Before Production
-- [ ] Update all default passwords
-- [ ] Configure proper CORS origins
-- [ ] Set up SSL/TLS certificates
-- [ ] Enable rate limiting
-- [ ] Configure proper firewall rules
-- [ ] Set up monitoring and alerting
-- [ ] Implement proper backup strategy
-- [ ] Configure log retention policies
-- [ ] Set up secret management (AWS Secrets Manager)
-- [ ] Enable database encryption at rest
-- [ ] Configure network security groups
+# Enable compression
+app.use(compression());
 
-### Security Headers
-Ensure these headers are configured in Nginx:
-```nginx
-add_header X-Frame-Options DENY;
-add_header X-Content-Type-Options nosniff;
-add_header X-XSS-Protection "1; mode=block";
-add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
+# Enable caching
+app.use(express.static('public', { maxAge: '1d' }));
 ```
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
-#### Service Won't Start
+#### Port Already in Use
 ```bash
-# Check service logs
-docker-compose logs [service-name]
+# Find process using port
+lsof -ti:3000
 
-# Check if ports are available
-netstat -tulpn | grep [port-number]
-
-# Restart specific service
-docker-compose restart [service-name]
+# Kill process
+kill -9 $(lsof -ti:3000)
 ```
 
 #### Database Connection Issues
 ```bash
-# Check MongoDB connection
-docker-compose exec mongodb mongo --eval "db.adminCommand('ismaster')"
+# Check MongoDB status
+brew services list | grep mongodb
 
-# Check Redis connection
-docker-compose exec redis redis-cli ping
+# Check connection
+mongo --host localhost:27017
 ```
 
-#### GraphQL Federation Issues
+#### Docker Issues
 ```bash
-# Check if all services are registered with gateway
-curl http://localhost:4000/graphql \
-  -H "Content-Type: application/json" \
-  -d '{"query": "{ __schema { types { name } } }"}'
+# Clean Docker
+docker system prune -a
+
+# Rebuild images
+docker-compose build --no-cache
 ```
 
-#### Kafka Issues
+#### Kubernetes Issues
 ```bash
-# List Kafka topics
-docker-compose exec kafka kafka-topics --bootstrap-server localhost:9092 --list
+# Check pod logs
+kubectl logs -f deployment/apnidukaan-frontend
 
-# Check consumer groups
-docker-compose exec kafka kafka-consumer-groups --bootstrap-server localhost:9092 --list
+# Check pod status
+kubectl describe pod <pod-name>
+
+# Restart deployment
+kubectl rollout restart deployment/apnidukaan-frontend
 ```
 
-### Getting Help
-- Check service logs first
-- Verify environment variables
-- Ensure all dependencies are running
-- Check network connectivity between services
-- Review the application logs in Grafana
+### Health Checks
 
-## 📚 Additional Resources
+#### API Health Check
+```bash
+curl http://localhost:4000/health
+```
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Apollo GraphQL Documentation](https://www.apollographql.com/docs/)
-- [MongoDB Documentation](https://docs.mongodb.com/)
-- [Kubernetes Documentation](https://kubernetes.io/docs/)
-- [AWS EKS Documentation](https://docs.aws.amazon.com/eks/)
+#### Database Health Check
+```bash
+curl http://localhost:4000/health/db
+```
 
-## 🤝 Contributing
+#### Redis Health Check
+```bash
+curl http://localhost:4000/health/redis
+```
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+## Rollback Procedures
 
-## 📞 Support
+### Docker Compose Rollback
+```bash
+# Stop current deployment
+docker-compose down
 
-For issues and questions:
-- Open an issue on GitHub
-- Check the troubleshooting section above
-- Review service logs for error details
+# Start previous version
+docker-compose -f docker-compose.previous.yml up -d
+```
+
+### Kubernetes Rollback
+```bash
+# Rollback deployment
+kubectl rollout undo deployment/apnidukaan-frontend
+
+# Check rollback status
+kubectl rollout status deployment/apnidukaan-frontend
+```
+
+## Maintenance
+
+### Regular Tasks
+- [ ] Monitor application logs
+- [ ] Check database performance
+- [ ] Update dependencies
+- [ ] Review security alerts
+- [ ] Test backup restoration
+- [ ] Monitor resource usage
+
+### Monthly Tasks
+- [ ] Security audit
+- [ ] Performance review
+- [ ] Dependency updates
+- [ ] Backup testing
+- [ ] Disaster recovery testing
+
+## Support
+
+For deployment support:
+- **Email**: devops@apnidukaan.com
+- **Documentation**: [Deployment Docs](https://docs.apnidukaan.com/deployment)
+- **Issues**: [GitHub Issues](https://github.com/your-username/apnidukaan-ecommerce/issues)
+
+---
+
+*Last updated: January 2024*

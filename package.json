@@ -18,6 +18,7 @@
     "build:frontend": "npm run build --workspace=frontend",
     "build:backend": "npm run build --workspaces --workspace=backend/*",
     "test": "npm run test --workspaces",
+    "test:all": "node scripts/run-all-tests.js",
     "test:frontend": "npm run test --workspace=frontend",
     "test:backend": "npm run test --workspaces --workspace=backend/*",
     "lint": "npm run lint --workspaces",
@@ -32,7 +33,17 @@
     "k8s:deploy": "kubectl apply -f infrastructure/k8s/",
     "k8s:delete": "kubectl delete -f infrastructure/k8s/",
     "setup": "npm install && npm run setup --workspaces",
-    "clean": "npm run clean --workspaces && rm -rf node_modules"
+    "setup:env": "node scripts/setup-environment.js",
+    "clean": "npm run clean --workspaces && rm -rf node_modules",
+    "seed": "node scripts/seed-comprehensive-data.js",
+    "logs": "docker-compose -f infrastructure/docker/docker-compose.yml logs -f",
+    "status": "docker-compose -f infrastructure/docker/docker-compose.yml ps",
+    "restart": "npm run docker:down && npm run docker:up",
+    "analyze": "npm run analyze --workspace=frontend",
+    "test:coverage": "npm run test:coverage --workspaces",
+    "test:watch": "npm run test:watch --workspaces",
+    "db:seed": "node scripts/seed-database.js",
+    "db:reset": "node scripts/init-database.js"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

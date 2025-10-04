@@ -61,6 +61,7 @@ export function ThemeProvider({ children, defaultTheme = 'light' }: ThemeProvide
       const resolvedTheme = theme as 'light' | 'dark'
       setActualTheme(resolvedTheme)
       root.classList.toggle('dark', resolvedTheme === 'dark')
+      return undefined
     }
   }, [isClient, theme])
 

@@ -133,18 +133,21 @@ const apolloClient = new ApolloClient({
   cache,
   defaultOptions: {
     watchQuery: {
-      errorPolicy: 'ignore',
+      errorPolicy: 'all',
       fetchPolicy: 'cache-first',
+      notifyOnNetworkStatusChange: false,
     },
     query: {
-      errorPolicy: 'ignore',
+      errorPolicy: 'all',
       fetchPolicy: 'cache-first',
+      notifyOnNetworkStatusChange: false,
     },
     mutate: {
-      errorPolicy: 'ignore',
+      errorPolicy: 'all',
     },
   },
-  ssrMode: false, // This is for client-side only
+  // Fix for SSR fetch policy issues
+  ssrMode: typeof window === 'undefined',
   assumeImmutableResults: true,
   devtools: {
     enabled: process.env.NODE_ENV === 'development',

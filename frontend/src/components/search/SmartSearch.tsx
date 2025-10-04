@@ -97,6 +97,7 @@ export default function SmartSearch({
     } else {
       setSuggestions([]);
       setIsLoading(false);
+      return undefined;
     }
   }, [query]);
 

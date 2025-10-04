@@ -1,158 +1,270 @@
-# 🚀 Quick Start Checklist - ApniDukaan Development
+# ApniDukaan Quick Start Checklist
 
-## ⚡ **Immediate Actions to Help Your Development Environment**
+## 🚀 Getting Started in 5 Minutes
 
-### **Step 1: Start Docker Desktop (Most Important)**
+Follow this checklist to get ApniDukaan running on your local machine quickly.
+
+## ✅ Prerequisites Check
+
+- [ ] **Node.js 18+** installed (`node --version`)
+- [ ] **npm 9+** installed (`npm --version`)
+- [ ] **Git** installed (`git --version`)
+- [ ] **MongoDB** running locally or Atlas account
+- [ ] **Redis** running locally (optional)
+
+## 🛠️ Setup Steps
+
+### 1. Clone and Install
 ```bash
-# Windows - Choose one method:
+# Clone the repository
+git clone https://github.com/your-username/apnidukaan-ecommerce.git
+cd apnidukaan-ecommerce
 
-# Method 1: GUI (Recommended)
-# Press Windows Key → Type "Docker Desktop" → Click to start
-# Wait until system tray shows "Docker Desktop is running"
-
-# Method 2: Command Line
-net start com.docker.service
-
-# Method 3: Direct executable
-& "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+# Install all dependencies
+npm install
 ```
 
-### **Step 2: Verify Docker is Running**
+### 2. Environment Setup
 ```bash
-# Run these commands - both should show version info (no errors)
-docker version
-docker compose version
+# Automated environment setup
+npm run setup:env
+
+# Or manually copy environment files
+cp env.example .env
+cp frontend/.env.local.example frontend/.env.local
 ```
 
-### **Step 3: Start Development Environment**
+### 3. Start Services
 ```bash
-# Now run the enhanced startup script
-node start-dev.js
+# Start all services (recommended)
+npm start
 
-# OR with database seeding
-node start-dev.js --seed
+# Or start individual services
+npm run dev:frontend    # Frontend only
+npm run dev:backend     # Backend services only
 ```
+
+### 4. Verify Installation
+- [ ] Frontend: http://localhost:3000
+- [ ] API Gateway: http://localhost:4000
+- [ ] Health Check: http://localhost:4000/health
+
+## 🐳 Docker Setup (Alternative)
+
+### 1. Start with Docker
+```bash
+# Start all services with Docker
+docker-compose -f infrastructure/docker/docker-compose.yml up -d
+
+# Check status
+docker-compose -f infrastructure/docker/docker-compose.yml ps
+```
+
+### 2. View Logs
+```bash
+# View all logs
+docker-compose -f infrastructure/docker/docker-compose.yml logs -f
+
+# View specific service logs
+docker-compose -f infrastructure/docker/docker-compose.yml logs -f frontend
+```
+
+## 🧪 Testing Setup
+
+### 1. Run Tests
+```bash
+# Run all tests
+npm run test:all
+
+# Run specific tests
+npm run test:frontend
+npm run test:backend
+```
+
+### 2. Test Coverage
+```bash
+# Run tests with coverage
+npm run test:coverage
+```
+
+## 📊 Database Setup
+
+### 1. MongoDB Setup
+```bash
+# Local MongoDB
+brew install mongodb-community
+brew services start mongodb-community
+
+# Or use MongoDB Atlas
+# Update MONGODB_URI in .env files
+```
+
+### 2. Seed Database
+```bash
+# Seed with sample data
+npm run seed
+
+# Or reset database
+npm run db:reset
+```
+
+## 🔧 Development Workflow
+
+### 1. Make Changes
+- [ ] Edit frontend code in `frontend/src/`
+- [ ] Edit backend code in `backend/[service-name]/src/`
+- [ ] Add tests for new features
+- [ ] Update documentation if needed
+
+### 2. Test Changes
+```bash
+# Run tests
+npm run test:all
+
+# Check types
+npm run type-check
+
+# Lint code
+npm run lint
+```
+
+### 3. Build for Production
+```bash
+# Build all services
+npm run build
+
+# Build specific service
+npm run build:frontend
+npm run build:backend
+```
+
+## 🚀 Deployment
+
+### 1. Docker Deployment
+```bash
+# Build production images
+docker-compose -f docker-compose.prod.yml build
+
+# Deploy
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### 2. Kubernetes Deployment
+```bash
+# Deploy to Kubernetes
+kubectl apply -f infrastructure/k8s/
+
+# Check deployment
+kubectl get pods
+kubectl get services
+```
+
+## 📚 Documentation
+
+### 1. Read Documentation
+- [ ] [README.md](../README.md) - Project overview
+- [ ] [API Documentation](./API_DOCUMENTATION.md) - API reference
+- [ ] [Development Guide](./DEVELOPMENT_GUIDE.md) - Development guidelines
+- [ ] [Deployment Guide](./DEPLOYMENT_GUIDE.md) - Deployment instructions
+- [ ] [Features Overview](./FEATURES_OVERVIEW.md) - Complete feature list
+
+### 2. API Testing
+- [ ] Use Postman collection for API testing
+- [ ] Test GraphQL queries in GraphQL Playground
+- [ ] Verify all endpoints are working
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+#### Port Already in Use
+```bash
+# Find process using port
+lsof -ti:3000
+
+# Kill process
+kill -9 $(lsof -ti:3000)
+```
+
+#### Database Connection Issues
+```bash
+# Check MongoDB status
+brew services list | grep mongodb
+
+# Check connection
+mongo --host localhost:27017
+```
+
+#### Docker Issues
+```bash
+# Clean Docker
+docker system prune -a
+
+# Rebuild images
+docker-compose build --no-cache
+```
+
+#### Permission Issues
+```bash
+# Fix npm permissions
+sudo chown -R $(whoami) ~/.npm
+
+# Fix node_modules permissions
+sudo chown -R $(whoami) node_modules
+```
+
+## 📞 Getting Help
+
+### 1. Check Documentation
+- [ ] Read the relevant documentation
+- [ ] Check the troubleshooting section
+- [ ] Look at existing issues
+
+### 2. Create Issue
+- [ ] Search existing issues first
+- [ ] Create detailed issue description
+- [ ] Include error logs and steps to reproduce
+
+### 3. Contact Support
+- [ ] Email: support@apnidukaan.com
+- [ ] GitHub Issues: [Create an issue](https://github.com/your-username/apnidukaan-ecommerce/issues)
+
+## ✅ Success Checklist
+
+After completing setup, you should have:
+
+- [ ] Frontend running on http://localhost:3000
+- [ ] API Gateway running on http://localhost:4000
+- [ ] All tests passing
+- [ ] Database connected and seeded
+- [ ] All services healthy
+- [ ] Documentation accessible
+- [ ] Development environment ready
+
+## 🎯 Next Steps
+
+### 1. Explore the Platform
+- [ ] Browse the product catalog
+- [ ] Test user registration and login
+- [ ] Add products to cart
+- [ ] Test checkout process
+- [ ] Explore admin panel
+
+### 2. Start Development
+- [ ] Choose a feature to work on
+- [ ] Create a feature branch
+- [ ] Make your changes
+- [ ] Add tests
+- [ ] Submit a pull request
+
+### 3. Learn More
+- [ ] Read the development guide
+- [ ] Explore the codebase
+- [ ] Join the community
+- [ ] Contribute to the project
 
 ---
 
-## 🔧 **If Docker Desktop Won't Start**
+**Welcome to ApniDukaan!** 🎉
 
-### **Common Solutions:**
-```bash
-# Solution 1: Restart Docker Service
-net stop com.docker.service
-net start com.docker.service
-
-# Solution 2: Update WSL 2 (if on Windows)
-wsl --update
-wsl --set-default-version 2
-
-# Solution 3: Restart computer (often fixes WSL/Hyper-V issues)
-```
-
----
-
-## 🗄️ **If Databases Don't Start Automatically**
-
-### **Manual Database Startup:**
-```bash
-# Start just the databases
-docker compose -f docker-compose.dev.yml up -d mongodb redis
-
-# Check if they're running
-docker ps
-
-# You should see containers named something like:
-# - apnidukaan-ecommerce-mongodb-1
-# - apnidukaan-ecommerce-redis-1
-```
-
----
-
-## 🚦 **If Individual Services Fail**
-
-### **Start Services Manually (Open separate terminals):**
-
-**Terminal 1 - Frontend:**
-```bash
-cd frontend
-npm run dev
-# Should start on http://localhost:3000
-```
-
-**Terminal 2 - API Gateway:**
-```bash
-cd backend/api-gateway
-npm run dev
-# Should start on http://localhost:4000
-```
-
-**Terminal 3 - Catalog Service:**
-```bash
-cd backend/catalog-service
-npm run dev
-# Should start on http://localhost:4001
-```
-
-**And so on for other services...**
-
----
-
-## 🔍 **Quick Health Check**
-
-### **Test These URLs (should not give errors):**
-- ✅ Frontend: http://localhost:3000
-- ✅ API Gateway: http://localhost:4000/health
-- ✅ Catalog Service: http://localhost:4001/health
-- ✅ User Service: http://localhost:4002/health
-
----
-
-## 🆘 **Emergency Port Cleanup**
-
-### **If you get "Port already in use" errors:**
-```bash
-# Kill processes on all development ports
-npx kill-port 3000 4000 4001 4002 4003 4004 4005 4006 4007
-
-# Or check what's using a specific port
-netstat -ano | findstr :3000
-# Then kill the PID: taskkill /PID <PID_NUMBER> /F
-```
-
----
-
-## ✅ **Success Indicators**
-
-**You know everything is working when:**
-- ✅ Docker Desktop system tray icon shows "running"
-- ✅ `docker ps` shows MongoDB and Redis containers
-- ✅ No red error messages in terminal logs
-- ✅ http://localhost:3000 shows the frontend
-- ✅ http://localhost:4000/health returns success
-
----
-
-## 📋 **Current Fixed Issues**
-
-✅ **Environment Variables**: All required variables added to `.env`  
-✅ **Service Ports**: No conflicts (3000, 4000-4007)  
-✅ **Database Config**: Dedicated `docker-compose.dev.yml` created  
-✅ **Order Management**: Environment variables copied  
-✅ **Mongoose Warnings**: Duplicate indexes removed  
-✅ **Kafka Warnings**: Suppression flag added  
-
----
-
-## 🚨 **Most Likely Issue: Docker Desktop Not Running**
-
-**90% of startup problems are resolved by ensuring Docker Desktop is running!**
-
-1. Check system tray for Docker Desktop icon
-2. If not running, start it using methods in Step 1 above
-3. Wait for it to fully start (can take 30-60 seconds)
-4. Try `node start-dev.js` again
-
----
-
-*For detailed troubleshooting, see `MANUAL_ASSISTANCE_GUIDE.md`*
+*You're now ready to start building amazing e-commerce experiences.*
