@@ -182,3 +182,4 @@ junit.xml
 # Temporary files
 tmp/
 temp/
+.vercel

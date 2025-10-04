@@ -22,10 +22,10 @@ import {
 import { ErrorBoundary } from '../../components/ui/ErrorBoundary'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
-// Components temporarily disabled for build
-// import { AdvancedFilters } from '../../components/product/AdvancedFilters'
-// import { SortingControls } from '../../components/product/SortingControls'
-// import { EnhancedProductCard } from '../../components/product/EnhancedProductCard'
+// Product components
+import { AdvancedFilters } from '../../components/products/AdvancedFilters'
+import { SortAndViewControls } from '../../components/products/SortAndViewControls'
+import { EnhancedProductCard } from '../../components/products/EnhancedProductCard'
 import MainLayout from '../../components/layout/MainLayout'
 import { 
   Settings, 

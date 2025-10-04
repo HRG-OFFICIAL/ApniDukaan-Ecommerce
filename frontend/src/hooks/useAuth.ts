@@ -56,6 +56,8 @@ export function useAuth() {
         
         return { success: true, user };
       }
+      
+      return { success: false, error: 'Login failed' };
     } catch (error) {
       console.error('Login error:', error);
       return { success: false, error };
@@ -77,6 +79,8 @@ export function useAuth() {
         
         return { success: true, user };
       }
+      
+      return { success: false, error: 'Registration failed' };
     } catch (error) {
       console.error('Register error:', error);
       return { success: false, error };

@@ -26,6 +26,8 @@ const nextConfig = {
     },
     optimizePackageImports: ['lucide-react', '@heroicons/react', 'framer-motion', 'react-hot-toast'],
     scrollRestoration: true,
+    optimizeCss: true,
+    webVitalsAttribution: ['CLS', 'LCP'],
   },
   
   // Performance optimizations

@@ -2,7 +2,9 @@
   import cors from 'cors';
   import helmet from 'helmet';
   import rateLimit from 'express-rate-limit';
+  import { body, validationResult } from 'express-validator';
   import { logger, connectDatabase } from '@apnidukaan/shared';
+  import NotificationService from './services/NotificationService';
 
   async function startServer() {
     const app = express();
@@ -48,23 +50,53 @@ const PORT = process.env.PORT || 4007;
         });
       });
 
-      // Basic notification endpoint
-      app.post('/api/notifications/send', (req, res) => {
+      // Initialize notification service
+      const notificationService = new NotificationService();
+
+      // Validation middleware
+      const handleValidationErrors = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+          return res.status(400).json({
+            success: false,
+            message: 'Validation failed',
+            errors: errors.array()
+          });
+        }
+        next();
+      };
+
+      // Send notification endpoint
+      app.post('/api/notifications/send', [
+        body('type').isIn(['email', 'sms', 'push', 'in_app']).withMessage('Type must be email, sms, push, or in_app'),
+        body('recipient').notEmpty().withMessage('Recipient is required'),
+        body('template').notEmpty().withMessage('Template is required'),
+        body('data').isObject().withMessage('Data must be an object'),
+        handleValidationErrors
+      ], async (req, res) => {
         try {
-          const { type, recipient, _message, _data } = req.body;
+          const { type, recipient, template, data, priority = 'normal' } = req.body;
           
-          logger.info('Notification request received', {
+          const success = await notificationService.sendNotification({
             type,
             recipient,
-            action: 'notification_request'
+            template,
+            data,
+            priority
           });
 
-          // Mock notification sending
-          res.status(200).json({
-            success: true,
-            message: 'Notification sent successfully',
-            notificationId: `notif_${Date.now()}`
-          });
+          if (success) {
+            res.status(200).json({
+              success: true,
+              message: 'Notification queued successfully',
+              notificationId: `notif_${Date.now()}`
+            });
+          } else {
+            res.status(500).json({
+              success: false,
+              message: 'Failed to queue notification'
+            });
+          }
         } catch (error: any) {
           logger.error('Notification sending failed', {
             error: error.message,
@@ -73,6 +105,92 @@ const PORT = process.env.PORT || 4007;
           res.status(500).json({
             success: false,
             message: 'Failed to send notification'
+          });
+        }
+      });
+
+      // Convenience endpoints
+      app.post('/api/notifications/welcome-email', [
+        body('email').isEmail().withMessage('Valid email is required'),
+        body('userName').notEmpty().withMessage('User name is required'),
+        handleValidationErrors
+      ], async (req, res) => {
+        try {
+          const { email, userName } = req.body;
+          const success = await notificationService.sendWelcomeEmail(email, userName);
+          
+          res.status(200).json({
+            success,
+            message: success ? 'Welcome email sent' : 'Failed to send welcome email'
+          });
+        } catch (error: any) {
+          res.status(500).json({
+            success: false,
+            message: 'Failed to send welcome email'
+          });
+        }
+      });
+
+      app.post('/api/notifications/order-confirmation', [
+        body('email').isEmail().withMessage('Valid email is required'),
+        body('orderData').isObject().withMessage('Order data is required'),
+        handleValidationErrors
+      ], async (req, res) => {
+        try {
+          const { email, orderData } = req.body;
+          const success = await notificationService.sendOrderConfirmation(email, orderData);
+          
+          res.status(200).json({
+            success,
+            message: success ? 'Order confirmation sent' : 'Failed to send order confirmation'
+          });
+        } catch (error: any) {
+          res.status(500).json({
+            success: false,
+            message: 'Failed to send order confirmation'
+          });
+        }
+      });
+
+      app.post('/api/notifications/password-reset', [
+        body('email').isEmail().withMessage('Valid email is required'),
+        body('resetToken').notEmpty().withMessage('Reset token is required'),
+        body('userName').notEmpty().withMessage('User name is required'),
+        handleValidationErrors
+      ], async (req, res) => {
+        try {
+          const { email, resetToken, userName } = req.body;
+          const success = await notificationService.sendPasswordResetEmail(email, resetToken, userName);
+          
+          res.status(200).json({
+            success,
+            message: success ? 'Password reset email sent' : 'Failed to send password reset email'
+          });
+        } catch (error: any) {
+          res.status(500).json({
+            success: false,
+            message: 'Failed to send password reset email'
+          });
+        }
+      });
+
+      app.post('/api/notifications/sms/otp', [
+        body('phoneNumber').isMobilePhone().withMessage('Valid phone number is required'),
+        body('otp').isLength({ min: 4, max: 6 }).withMessage('OTP must be 4-6 digits'),
+        handleValidationErrors
+      ], async (req, res) => {
+        try {
+          const { phoneNumber, otp } = req.body;
+          const success = await notificationService.sendOTP(phoneNumber, otp);
+          
+          res.status(200).json({
+            success,
+            message: success ? 'OTP sent' : 'Failed to send OTP'
+          });
+        } catch (error: any) {
+          res.status(500).json({
+            success: false,
+            message: 'Failed to send OTP'
           });
         }
       });
