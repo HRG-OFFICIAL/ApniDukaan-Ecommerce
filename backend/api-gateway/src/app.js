@@ -1,10 +1,32 @@
-// Ultra-simple API Gateway - No TypeScript, No Dependencies, Just Works!
+// MongoDB-integrated API Gateway - Uses your existing database!
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const { MongoClient } = require('mongodb');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+
+// MongoDB connection
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/apnidukaan';
+let db;
+
+// Connect to MongoDB
+async function connectToMongoDB() {
+  try {
+    const client = new MongoClient(MONGODB_URI);
+    await client.connect();
+    db = client.db();
+    console.log('✅ Connected to MongoDB - Using your existing database!');
+    console.log(`📊 Database: ${db.databaseName}`);
+  } catch (error) {
+    console.error('❌ MongoDB connection failed:', error);
+    console.log('🔄 Falling back to mock data');
+  }
+}
+
+// Initialize MongoDB connection
+connectToMongoDB();
 
 // Middleware
 app.use(helmet());
@@ -22,7 +44,9 @@ app.get('/health', (req, res) => {
     status: 'OK', 
     timestamp: new Date().toISOString(),
     service: 'ApniDukaan API Gateway',
-    version: '1.0.0'
+    version: '1.0.0',
+    database: db ? 'connected' : 'disconnected',
+    collections: db ? ['products', 'categories', 'reviews'] : []
   });
 });
 
@@ -89,82 +113,193 @@ const mockProducts = [
   }
 ];
 
-// Products API endpoint
-app.get('/api/catalog/products', (req, res) => {
-  const { page = 1, limit = 12, category, sortField = 'createdAt', sortOrder = 'desc' } = req.query;
-  
-  let filteredProducts = [...mockProducts];
-  
-  // Filter by category if provided
-  if (category) {
-    filteredProducts = filteredProducts.filter(product => 
-      product.category.toLowerCase() === category.toLowerCase()
-    );
-  }
-  
-  // Sort products
-  filteredProducts.sort((a, b) => {
-    if (sortField === 'price') {
-      return sortOrder === 'asc' ? a.price - b.price : b.price - a.price;
-    }
-    if (sortField === 'rating') {
-      return sortOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating;
-    }
-    return 0;
-  });
-  
-  // Pagination
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + parseInt(limit);
-  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
-  
-  res.json({
-    success: true,
-    data: {
-      products: paginatedProducts,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total: filteredProducts.length,
-        totalPages: Math.ceil(filteredProducts.length / limit)
+// Products API endpoint - Uses your real MongoDB data!
+app.get('/api/catalog/products', async (req, res) => {
+  try {
+    const { page = 1, limit = 12, category, sortField = 'createdAt', sortOrder = 'desc' } = req.query;
+    
+    let products = [];
+    let total = 0;
+    
+    if (db) {
+      // Use your real MongoDB data
+      const collection = db.collection('products');
+      
+      // Build query
+      const query = {};
+      if (category) {
+        query.category = category.toLowerCase();
       }
+      
+      // Build sort
+      const sort = {};
+      if (sortField === 'price') {
+        sort.price = sortOrder === 'asc' ? 1 : -1;
+      } else if (sortField === 'rating') {
+        sort.rating = sortOrder === 'asc' ? 1 : -1;
+      } else {
+        sort.createdAt = sortOrder === 'asc' ? 1 : -1;
+      }
+      
+      // Get total count
+      total = await collection.countDocuments(query);
+      
+      // Get products with pagination
+      products = await collection
+        .find(query)
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(parseInt(limit))
+        .toArray();
+      
+      // Convert MongoDB _id to id for frontend compatibility
+      products = products.map(product => ({
+        ...product,
+        id: product._id.toString()
+      }));
+      
+      console.log(`📦 Fetched ${products.length} products from MongoDB`);
+    } else {
+      // Fallback to mock data
+      let filteredProducts = [...mockProducts];
+      
+      if (category) {
+        filteredProducts = filteredProducts.filter(product => 
+          product.category.toLowerCase() === category.toLowerCase()
+        );
+      }
+      
+      // Sort products
+      filteredProducts.sort((a, b) => {
+        if (sortField === 'price') {
+          return sortOrder === 'asc' ? a.price - b.price : b.price - a.price;
+        }
+        if (sortField === 'rating') {
+          return sortOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating;
+        }
+        return 0;
+      });
+      
+      total = filteredProducts.length;
+      
+      // Pagination
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + parseInt(limit);
+      products = filteredProducts.slice(startIndex, endIndex);
+      
+      console.log(`📦 Using mock data - ${products.length} products`);
     }
-  });
-});
-
-// Categories API endpoint
-app.get('/api/catalog/categories', (req, res) => {
-  const categories = [
-    { id: 'electronics', name: 'Electronics', count: 245, image: 'https://via.placeholder.com/200x200?text=Electronics' },
-    { id: 'fashion', name: 'Fashion', count: 189, image: 'https://via.placeholder.com/200x200?text=Fashion' },
-    { id: 'home-garden', name: 'Home & Garden', count: 156, image: 'https://via.placeholder.com/200x200?text=Home' },
-    { id: 'sports', name: 'Sports', count: 134, image: 'https://via.placeholder.com/200x200?text=Sports' },
-    { id: 'books', name: 'Books', count: 98, image: 'https://via.placeholder.com/200x200?text=Books' },
-    { id: 'toys', name: 'Toys', count: 87, image: 'https://via.placeholder.com/200x200?text=Toys' }
-  ];
-  
-  res.json({
-    success: true,
-    data: categories
-  });
-});
-
-// Single product API endpoint
-app.get('/api/catalog/products/:id', (req, res) => {
-  const { id } = req.params;
-  const product = mockProducts.find(p => p.id === id);
-  
-  if (!product) {
-    return res.status(404).json({
+    
+    res.json({
+      success: true,
+      data: {
+        products,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          totalPages: Math.ceil(total / limit)
+        }
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error fetching products:', error);
+    res.status(500).json({
       success: false,
-      error: 'Product not found'
+      error: 'Failed to fetch products'
     });
   }
-  
-  res.json({
-    success: true,
-    data: product
-  });
+});
+
+// Categories API endpoint - Uses your real MongoDB data!
+app.get('/api/catalog/categories', async (req, res) => {
+  try {
+    let categories = [];
+    
+    if (db) {
+      // Use your real MongoDB data
+      const collection = db.collection('categories');
+      categories = await collection.find({}).toArray();
+      
+      // Convert MongoDB _id to id for frontend compatibility
+      categories = categories.map(category => ({
+        ...category,
+        id: category._id.toString()
+      }));
+      
+      console.log(`📂 Fetched ${categories.length} categories from MongoDB`);
+    } else {
+      // Fallback to mock data
+      categories = [
+        { id: 'electronics', name: 'Electronics', count: 245, image: 'https://via.placeholder.com/200x200?text=Electronics' },
+        { id: 'fashion', name: 'Fashion', count: 189, image: 'https://via.placeholder.com/200x200?text=Fashion' },
+        { id: 'home-garden', name: 'Home & Garden', count: 156, image: 'https://via.placeholder.com/200x200?text=Home' },
+        { id: 'sports', name: 'Sports', count: 134, image: 'https://via.placeholder.com/200x200?text=Sports' },
+        { id: 'books', name: 'Books', count: 98, image: 'https://via.placeholder.com/200x200?text=Books' },
+        { id: 'toys', name: 'Toys', count: 87, image: 'https://via.placeholder.com/200x200?text=Toys' }
+      ];
+      
+      console.log(`📂 Using mock data - ${categories.length} categories`);
+    }
+    
+    res.json({
+      success: true,
+      data: categories
+    });
+  } catch (error) {
+    console.error('❌ Error fetching categories:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch categories'
+    });
+  }
+});
+
+// Single product API endpoint - Uses your real MongoDB data!
+app.get('/api/catalog/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    let product = null;
+    
+    if (db) {
+      // Use your real MongoDB data
+      const collection = db.collection('products');
+      const ObjectId = require('mongodb').ObjectId;
+      
+      try {
+        product = await collection.findOne({ _id: new ObjectId(id) });
+        if (product) {
+          product.id = product._id.toString();
+          delete product._id;
+        }
+        console.log(`📦 Fetched product ${id} from MongoDB`);
+      } catch (error) {
+        console.log(`❌ Invalid product ID format: ${id}`);
+      }
+    } else {
+      // Fallback to mock data
+      product = mockProducts.find(p => p.id === id);
+      console.log(`📦 Using mock data for product ${id}`);
+    }
+    
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        error: 'Product not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: product
+    });
+  } catch (error) {
+    console.error('❌ Error fetching product:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch product'
+    });
+  }
 });
 
 // GraphQL placeholder
@@ -200,6 +335,8 @@ app.listen(PORT, () => {
   console.log(`🚀 ApniDukaan API Gateway running on port ${PORT}`);
   console.log(`🏥 Health: http://localhost:${PORT}/health`);
   console.log(`📈 Status: http://localhost:${PORT}/api/status`);
+  console.log(`📊 Database: ${db ? 'MongoDB Connected' : 'Mock Data Mode'}`);
+  console.log(`🗄️ Collections: ${db ? 'products, categories, reviews' : 'mock data'}`);
 });
 
 // Graceful shutdown
