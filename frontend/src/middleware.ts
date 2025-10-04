@@ -170,12 +170,12 @@ function addSecurityHeaders(response: NextResponse) {
   response.headers.set(
     'Content-Security-Policy',
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://www.googletagmanager.com https://www.google-analytics.com; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
     "img-src 'self' data: https: blob:; " +
-    "connect-src 'self' http://localhost:4000 https://api.apnidukaan.com https://www.google-analytics.com; " +
-    "frame-src 'self' https://accounts.google.com; " +
+    "connect-src 'self' http://localhost:4000 https://apnidukaan-api-gateway.onrender.com https://api.apnidukaan.com https://www.google-analytics.com https://*.onrender.com; " +
+    "frame-src 'self' https://accounts.google.com https://checkout.razorpay.com; " +
     "object-src 'none'; " +
     "base-uri 'self';"
   )

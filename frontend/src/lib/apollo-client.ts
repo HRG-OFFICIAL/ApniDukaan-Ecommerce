@@ -7,9 +7,13 @@ import { RetryLink } from '@apollo/client/link/retry';
 // Only load in development to avoid build-time errors
 if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
   try {
-    const { loadErrorMessages, loadDevMessages } = require('@apollo/client/dev');
-    loadDevMessages();
-    loadErrorMessages();
+    // Dynamic import to avoid build-time errors
+    import('@apollo/client/dev').then(({ loadErrorMessages, loadDevMessages }) => {
+      loadDevMessages();
+      loadErrorMessages();
+    }).catch(() => {
+      // Silently ignore errors during build
+    });
   } catch (error) {
     // Silently ignore errors during build
   }
@@ -129,12 +133,15 @@ const apolloClient = new ApolloClient({
   cache,
   defaultOptions: {
     watchQuery: {
-      errorPolicy: 'all',
-      fetchPolicy: 'cache-and-network',
+      errorPolicy: 'ignore',
+      fetchPolicy: 'cache-first',
     },
     query: {
-      errorPolicy: 'all',
+      errorPolicy: 'ignore',
       fetchPolicy: 'cache-first',
+    },
+    mutate: {
+      errorPolicy: 'ignore',
     },
   },
   ssrMode: false, // This is for client-side only
