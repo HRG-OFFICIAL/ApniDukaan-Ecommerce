@@ -1,16 +1,10 @@
 'use client';
 
-import { Metadata } from 'next';
 import ProductGrid from '../../components/ProductGrid';
 import { productService } from '../../services/productService';
 import { Product } from '../../graphql/types';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useEffect, useState } from 'react';
-
-export const metadata: Metadata = {
-  title: 'New Arrivals - ApniDukaan',
-  description: 'Discover the latest products at ApniDukaan',
-};
 
 export default function NewArrivalsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -18,6 +12,9 @@ export default function NewArrivalsPage() {
   const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
+    // Set page title
+    document.title = 'New Arrivals - ApniDukaan';
+    
     const fetchNewArrivals = async () => {
       try {
         const response = await productService.getNewArrivals(20);
