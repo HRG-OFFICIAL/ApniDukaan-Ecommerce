@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
-import ProductGrid from '@/components/ProductGrid';
-import { productService } from '@/services/productService';
-import { Product } from '@/graphql/types';
+import ProductGrid from '../../components/ProductGrid';
+import { productService } from '../../services/productService';
+import { Product } from '../../graphql/types';
 
 export const metadata: Metadata = {
   title: 'Deals & Offers - ApniDukaan',

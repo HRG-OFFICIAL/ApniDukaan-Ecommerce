@@ -49,8 +49,8 @@ class RazorpayService {
   private baseUrl: string;
 
   constructor() {
-    this.keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
-    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    this.keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_RPTmqUYFOHsjfL';
+    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://apnidukaan-api-gateway.onrender.com';
   }
 
   /**

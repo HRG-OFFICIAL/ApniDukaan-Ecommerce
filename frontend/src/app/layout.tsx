@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '../contexts/ThemeContext'
 import { Providers } from '../components/providers/Providers'
+import ErrorBoundary from '../components/ErrorBoundary'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -47,13 +48,15 @@ export default function RootLayout({
         <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
       </head>
       <body className={`${inter.className} bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-50`}>
-        <ThemeProvider>
-          <Providers>
-            <div id="root">
-              {children}
-            </div>
-          </Providers>
-        </ThemeProvider>
+        <ErrorBoundary>
+          <ThemeProvider>
+            <Providers>
+              <div id="root">
+                {children}
+              </div>
+            </Providers>
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )
