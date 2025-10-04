@@ -997,6 +997,146 @@ router.post('/webhooks/paypal',
   }
 );
 
+/**
+ * @route POST /webhooks/razorpay
+ * @desc Handle Razorpay webhooks
+ * @access Public (webhook signature verification)
+ */
+router.post('/webhooks/razorpay',
+  async (req: CustomRequest, res: express.Response) => {
+    try {
+      const signature = req.headers['x-razorpay-signature'] as string;
+      const result = await paymentService.handleRazorpayWebhook(req.body, signature);
+
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      return res.json({ received: true });
+
+    } catch (error) {
+      logger.error('Error handling Razorpay webhook:', error);
+      return res.status(400).json({ error: 'Webhook handling failed' });
+    }
+  }
+);
+
+// ==================== RAZORPAY PAYMENT ROUTES ====================
+
+/**
+ * @route POST /payments/razorpay/create-order
+ * @desc Create Razorpay order
+ * @access Private
+ */
+router.post('/payments/razorpay/create-order',
+  authenticate,
+  [
+    body('amount').isNumeric().withMessage('Valid amount is required'),
+    body('currency').optional().isString().withMessage('Valid currency is required'),
+    body('receipt').isString().withMessage('Receipt is required')
+  ],
+  async (req: CustomRequest, res: express.Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          error: 'Validation failed',
+          details: errors.array()
+        });
+      }
+
+      const { amount, currency = 'INR', receipt, notes } = req.body;
+
+      // Create Razorpay order directly
+      const razorpayOrder = await paymentService.createRazorpayOrder({
+        amount: parseFloat(amount),
+        currency,
+        receipt,
+        notes: notes || {}
+      });
+
+      if (!razorpayOrder.success) {
+        return res.status(400).json({
+          success: false,
+          error: razorpayOrder.error,
+          code: razorpayOrder.code
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: razorpayOrder.data,
+        message: 'Razorpay order created successfully'
+      });
+
+    } catch (error) {
+      logger.error('Error creating Razorpay order:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR'
+      });
+    }
+  }
+);
+
+/**
+ * @route POST /payments/razorpay/verify
+ * @desc Verify Razorpay payment signature
+ * @access Private
+ */
+router.post('/payments/razorpay/verify',
+  authenticate,
+  [
+    body('razorpay_order_id').isString().withMessage('Order ID is required'),
+    body('razorpay_payment_id').isString().withMessage('Payment ID is required'),
+    body('razorpay_signature').isString().withMessage('Signature is required')
+  ],
+  async (req: CustomRequest, res: express.Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          error: 'Validation failed',
+          details: errors.array()
+        });
+      }
+
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+      const result = await paymentService.verifyRazorpayPayment(
+        razorpay_payment_id, 
+        razorpay_order_id, 
+        razorpay_signature
+      );
+
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          error: result.error,
+          code: result.code
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: result.data,
+        message: result.message
+      });
+
+    } catch (error) {
+      logger.error('Error verifying Razorpay payment:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR'
+      });
+    }
+  }
+);
+
 // ==================== ADMIN ROUTES ====================
 
 /**
