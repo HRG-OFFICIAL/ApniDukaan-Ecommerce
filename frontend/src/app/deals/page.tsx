@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import ProductGrid from '@/components/ProductGrid';
-import { getProducts } from '@/services/productService';
+import { productService } from '@/services/productService';
+import { Product } from '@/graphql/types';
 
 export const metadata: Metadata = {
   title: 'Deals & Offers - ApniDukaan',
@@ -8,12 +9,14 @@ export const metadata: Metadata = {
 };
 
 export default async function DealsPage() {
-  const products = await getProducts({ 
-    page: 1, 
-    limit: 20, 
-    sortField: 'discount', 
-    sortOrder: 'desc' 
-  });
+  let products: Product[] = [];
+  
+  try {
+    const response = await productService.getDeals(20);
+    products = response.data?.products || [];
+  } catch (error) {
+    console.error('Error fetching deals:', error);
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -22,7 +25,13 @@ export default async function DealsPage() {
         <p className="text-gray-600">Find amazing deals and discounts</p>
       </div>
       
-      <ProductGrid products={products.data?.products || []} />
+      {products.length > 0 ? (
+        <ProductGrid products={products} />
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No deals found. Please try again later.</p>
+        </div>
+      )}
     </div>
   );
 }
