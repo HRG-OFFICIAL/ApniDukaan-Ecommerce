@@ -1,19 +1,7 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://apnidukaan-api-gateway.onrender.com';
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice?: number;
-  discount?: number;
-  rating?: number;
-  reviews?: number;
-  image: string;
-  category: string;
-  inStock: boolean;
-  description?: string;
-  specifications?: any;
-}
+// Import Product type from graphql/types
+import { Product } from '../graphql/types';
 
 interface ProductResponse {
   success: boolean;
