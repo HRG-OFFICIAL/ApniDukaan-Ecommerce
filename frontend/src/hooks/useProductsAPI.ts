@@ -121,7 +121,7 @@ export function useProducts(options: UseProductsOptions = {}): UseProductsResult
                  sort === 'name' ? 'name' : 
                  sort === 'rating' ? 'rating' : 
                  sort === 'popular' ? 'sales' : 'createdAt',
-          order: sort === 'price-low' || sort === 'name' ? 'asc' : 'desc'
+          order: sort?.includes('asc') ? 'asc' : 'desc'
         };
 
         const page = Math.floor(offset / limit) + 1;

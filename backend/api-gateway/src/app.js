@@ -151,11 +151,23 @@ app.get('/api/catalog/products', async (req, res) => {
       const query = {};
       if (category) {
         if (/^[a-f0-9]{24}$/i.test(category)) {
-          // Match either ObjectId or raw string value equal to provided id string
+          // Provided an ObjectId string
           query.category = { $in: [new ObjectId(category), category] };
         } else {
-          // Treat as human-readable name/slug stored as string
-          query.category = category;
+          // Try resolving category by name/slug in categories collection
+          const categoriesCol = db.collection('categories');
+          const catDoc = await categoriesCol.findOne({
+            $or: [
+              { name: { $regex: new RegExp(`^${category}$`, 'i') } },
+              { slug: { $regex: new RegExp(`^${category}$`, 'i') } }
+            ]
+          });
+          if (catDoc && catDoc._id) {
+            query.category = catDoc._id;
+          } else {
+            // Fallback to raw string match (for legacy datasets)
+            query.category = category;
+          }
         }
       }
       
