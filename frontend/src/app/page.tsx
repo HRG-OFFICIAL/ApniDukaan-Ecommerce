@@ -15,18 +15,18 @@ export default function Home() {
         <section className="relative bg-blue-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
             <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 tracking-tight">
-              <span className="block">Unbeatable Deals,</span>
-              <span className="block text-blue-600">Unmatched Prices.</span>
+              <span className="block">भारत का सबसे बड़ा</span>
+              <span className="block text-blue-600">ऑनलाइन मार्केटप्लेस</span>
             </h1>
             <p className="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
-              Explore thousands of products from top brands. Your next great find is just a click away.
+              लाखों उत्पादों का विशाल संग्रह। सर्वोत्तम ब्रांड्स से सर्वोत्तम कीमतें। आपकी अगली खरीदारी यहीं है।
             </p>
             <div className="mt-8">
               <Link
                 href="/products"
                 className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
               >
-                Shop Now <ArrowRight className="ml-2 -mr-1 h-5 w-5" />
+                अभी खरीदें <ArrowRight className="ml-2 -mr-1 h-5 w-5" />
               </Link>
             </div>
           </div>
@@ -53,8 +53,8 @@ export default function Home() {
         <section className="bg-white py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 flex items-center"><Gift className="mr-3 h-8 w-8 text-blue-600" /> Deals of the Day</h2>
-              <span className="text-sm font-mono bg-gray-900 text-white px-3 py-1.5 rounded">⏰ 22:56:00 Left</span>
+              <h2 className="text-3xl font-bold text-gray-900 flex items-center"><Gift className="mr-3 h-8 w-8 text-blue-600" /> आज के ऑफर</h2>
+              <span className="text-sm font-mono bg-gray-900 text-white px-3 py-1.5 rounded">⏰ 22:56:00 बचा</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
               {sampleProducts.map((p) => (
@@ -67,14 +67,14 @@ export default function Home() {
         <section className="bg-gray-900 text-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
             <Zap className="mx-auto h-12 w-12 text-yellow-400" />
-            <h2 className="mt-4 text-3xl font-extrabold">Flash Sale Frenzy</h2>
-            <p className="mt-2 text-lg text-gray-300">Limited time offer - Extra 20% Off on Electronics!</p>
+            <h2 className="mt-4 text-3xl font-extrabold">फ्लैश सेल मैडनेस</h2>
+            <p className="mt-2 text-lg text-gray-300">सीमित समय का ऑफर - इलेक्ट्रॉनिक्स पर अतिरिक्त 20% छूट!</p>
             <div className="mt-8">
               <Link
                 href="/products?category=electronics"
                 className="inline-block bg-yellow-400 text-gray-900 font-bold px-8 py-3 rounded-md hover:bg-yellow-300 transition-colors"
               >
-                Grab the Deal
+                ऑफर पकड़ें
               </Link>
             </div>
           </div>
