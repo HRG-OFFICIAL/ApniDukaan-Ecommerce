@@ -63,6 +63,32 @@ export default function RootLayout({
             `,
           }}
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+                  if ('serviceWorker' in navigator) {
+                    // Unregister any existing SWs in dev to avoid stale caches/interception
+                    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                      for (var i = 0; i < registrations.length; i++) {
+                        registrations[i].unregister();
+                      }
+                    });
+                    // Clear caches created by SW
+                    if (window.caches && caches.keys) {
+                      caches.keys().then(function(names) {
+                        for (var i = 0; i < names.length; i++) {
+                          caches.delete(names[i]);
+                        }
+                      });
+                    }
+                  }
+                }
+              })();
+            `,
+          }}
+        />
         <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#3b82f6" />

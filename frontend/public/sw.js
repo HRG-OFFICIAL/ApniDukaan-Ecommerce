@@ -1,3 +1,6 @@
+// In dev, do not activate any SW logic to avoid interfering with HMR/chunk loads
+const isDev = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1'
+
 const CACHE_NAME = 'apnidukaan-v1.0.0'
 const STATIC_CACHE = 'apnidukaan-static-v1.0.0'
 const DYNAMIC_CACHE = 'apnidukaan-dynamic-v1.0.0'
@@ -20,6 +23,11 @@ const API_CACHE_PATTERNS = [
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
+  if (isDev) {
+    // Immediately become a no-op in dev
+    self.skipWaiting()
+    return
+  }
   console.log('Service Worker: Installing...')
   
   event.waitUntil(
@@ -40,6 +48,17 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
+  if (isDev) {
+    // In dev, clear any caches created previously and claim clients without controlling them
+    event.waitUntil(
+      (async () => {
+        const names = await caches.keys()
+        await Promise.all(names.map((n) => caches.delete(n)))
+        await self.clients.claim()
+      })()
+    )
+    return
+  }
   console.log('Service Worker: Activating...')
   
   event.waitUntil(
@@ -63,6 +82,10 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - serve from cache or network
 self.addEventListener('fetch', (event) => {
+  if (isDev) {
+    // Don't intercept any requests in dev
+    return
+  }
   const { request } = event
   const url = new URL(request.url)
 
@@ -73,6 +96,16 @@ self.addEventListener('fetch', (event) => {
 
   // Skip chrome-extension and other non-http requests
   if (!url.protocol.startsWith('http')) {
+    return
+  }
+
+  // Bypass Next.js build assets and HMR endpoints entirely
+  // These include _next/static, _next/webpack-hmr, and Next server runtime chunks
+  if (
+    url.pathname.startsWith('/_next/') ||
+    url.pathname.includes('__webpack_hmr') ||
+    url.hostname !== self.location.hostname
+  ) {
     return
   }
 
@@ -199,6 +232,8 @@ async function handlePageRequest(request) {
 }
 
 function isStaticAsset(pathname) {
+  // Do not treat Next.js assets as cacheable static assets
+  if (pathname.startsWith('/_next/')) return false
   return pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/)
 }
 
