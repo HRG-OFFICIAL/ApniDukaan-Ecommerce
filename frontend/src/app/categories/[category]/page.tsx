@@ -102,7 +102,8 @@ export default function CategoryPage() {
     refetch
   } = useProducts({
     filter: {
-      category: categoryInfo.name
+      // Use the URL slug; backend resolves slug/name/ObjectId
+      category: category
     },
     search: searchQuery || undefined,
     sort: sortBy === 'featured' ? undefined : 
