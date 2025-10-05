@@ -11,7 +11,7 @@ interface CustomRequest extends express.Request {
   sessionId?: string;
 }
 
-const router = express.Router();
+const router: express.Router = express.Router();
 const cartService = new CartService();
 
 // Middleware to get user ID from headers or session
