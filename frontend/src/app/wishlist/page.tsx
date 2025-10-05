@@ -342,7 +342,7 @@ export default function WishlistPage() {
                   
                   {item.stock === 0 && (
                     <div className="mt-2 text-xs text-red-600">
-                      Out of Stock
+                      Add to Cart
                     </div>
                   )}
                 </div>

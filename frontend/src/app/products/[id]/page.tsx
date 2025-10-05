@@ -208,7 +208,7 @@ export default function ProductDetailPage() {
     }
     
     if (isOutOfStock) {
-      toast.error('Product is out of stock')
+      // Allow adding to cart regardless of stock status
       return
     }
     
@@ -467,7 +467,7 @@ export default function ProductDetailPage() {
                     size="lg"
                   >
                     <ShoppingCart className="w-5 h-5 mr-2" />
-                    {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                    Add to Cart
                   </Button>
                 </div>
               </div>

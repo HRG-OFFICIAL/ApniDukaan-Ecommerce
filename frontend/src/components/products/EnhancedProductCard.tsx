@@ -59,7 +59,7 @@ export function EnhancedProductCard({
     e.stopPropagation()
     
     if (isOutOfStock) {
-      toast.error('Product is out of stock')
+      // Allow adding to cart regardless of stock status
       return
     }
 
@@ -188,7 +188,7 @@ export function EnhancedProductCard({
           {/* Stock Status */}
           {isOutOfStock && (
             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-              <span className="text-white font-semibold">Out of Stock</span>
+              <span className="text-white font-semibold">Add to Cart</span>
             </div>
           )}
 
@@ -379,7 +379,7 @@ export function EnhancedProductCard({
               <div className="text-sm text-gray-600 space-y-1">
                 <div className="flex items-center">
                   <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  <span>{isOutOfStock ? 'Out of stock' : `${product.inventory.quantity} in stock`}</span>
+                  <span>{`${product.inventory.quantity} in stock`}</span>
                 </div>
                 <div className="flex items-center">
                   <Truck className="h-4 w-4 text-blue-500 mr-2" />

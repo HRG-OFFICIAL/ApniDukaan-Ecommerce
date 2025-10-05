@@ -15,13 +15,6 @@ import Image from 'next/image'
 
 export default function Home() {
   const { products, loading } = useProducts(undefined, undefined, undefined, 20)
-  const [featured, setFeatured] = useState<any[]>([])
-
-  useEffect(() => {
-    if (products && products.length > 0) {
-      setFeatured(products.slice(0, 8))
-    }
-  }, [products])
 
   const categories = useMemo(() => {
     return (sampleCategories || []).map((c: any) => ({
@@ -65,17 +58,17 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="py-16 bg-white">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
-            >
-              <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Featured Products</h2>
-              <FeaturedProducts products={featured} />
-            </motion.div>
-          </section>
+                 <section className="py-16 bg-white">
+                   <motion.div
+                     initial={{ opacity: 0, y: 20 }}
+                     whileInView={{ opacity: 1, y: 0 }}
+                     viewport={{ once: true }}
+                     className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+                   >
+                     <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Featured Products</h2>
+                     <FeaturedProducts />
+                   </motion.div>
+                 </section>
 
           <section className="py-16 bg-gray-50">
             <motion.div
@@ -89,16 +82,16 @@ export default function Home() {
             </motion.div>
           </section>
 
-          <section className="py-16 bg-gradient-to-r from-primary-500 to-emerald-500 text-white">
+          <section className="py-16 bg-gray-50">
             <motion.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
             >
-              <h2 className="text-3xl font-bold mb-4">Deals of the Day</h2>
-              <p className="text-xl mb-8">Save up to 50% on top picks!</p>
-              <DealsOfTheDay products={products.slice(0, 8)} />
+              <h2 className="text-3xl font-bold mb-4 text-gray-900">Deals of the Day</h2>
+              <p className="text-xl mb-8 text-gray-600">Save up to 50% on top picks!</p>
+              <DealsOfTheDay />
             </motion.div>
           </section>
 

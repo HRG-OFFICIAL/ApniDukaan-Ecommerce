@@ -48,10 +48,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
     e.preventDefault()
     e.stopPropagation()
     
-    if (isOutOfStock) {
-      toast.error('Product is out of stock')
-      return
-    }
+    // Allow adding to cart regardless of stock status
 
     addItem({
       id: product._id,
@@ -84,10 +81,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
   }
 
   const handleAddToCartForModal = async (product: Product, quantity: number) => {
-    if (isOutOfStock) {
-      toast.error('Product is out of stock')
-      return
-    }
+    // Allow adding to cart regardless of stock status
 
     addItem({
       id: product._id,
@@ -140,7 +134,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
               )}
               {isOutOfStock && (
                 <span className="bg-gray-800 text-white text-xs font-semibold px-2 py-1 rounded">
-                  Out of Stock
+                  Add to Cart
                 </span>
               )}
               {isLowStock && !isOutOfStock && (
@@ -229,21 +223,17 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
               <div className="flex flex-col space-y-3 ml-6">
                 <button
                   onClick={handleAddToCart}
-                  disabled={isOutOfStock}
-                  className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isOutOfStock 
-                      ? "bg-gray-300 cursor-not-allowed text-gray-500" 
-                      : "bg-blue-600 hover:bg-blue-700 text-white"
-                  }`}
+                  disabled={false}
+                  className="px-4 py-1 h-7 rounded-md text-xs font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white"
                   aria-label={isOutOfStock ? 'Product out of stock' : `Add ${product.name} to cart`}
                 >
                   <ShoppingCart className="w-4 h-4 mr-2 inline" />
-                  {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                  Add to Cart
                 </button>
                 
                 <Link 
                   href={`/products/${product._id}`}
-                  className="px-6 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-center"
+                  className="px-4 py-1 h-7 border border-gray-300 rounded-md text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors text-center"
                 >
                   <Eye className="w-4 h-4 mr-2 inline" />
                   View Details
@@ -296,11 +286,6 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
             {badge && (
               <span className={`text-xs font-semibold px-2 py-1 rounded ${badge.classes}`}>
                 {badge.text}
-              </span>
-            )}
-            {isOutOfStock && (
-              <span className="bg-gray-800 text-white text-xs font-semibold px-2 py-1 rounded">
-                Out of Stock
               </span>
             )}
             {isLowStock && !isOutOfStock && (
@@ -390,16 +375,12 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
       <div className="px-4 pb-4">
         <button
           onClick={handleAddToCart}
-          disabled={isOutOfStock}
-          className={`w-full px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            isOutOfStock 
-              ? "bg-gray-300 cursor-not-allowed text-gray-500" 
-              : "bg-blue-600 hover:bg-blue-700 text-white"
-          }`}
+          disabled={false}
+          className="w-full px-4 py-2 rounded-md text-sm font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white"
           aria-label={isOutOfStock ? 'Product out of stock' : `Add ${product.name} to cart`}
         >
           <ShoppingCart className="w-4 h-4 mr-2 inline" />
-          {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+          Add to Cart
         </button>
       </div>
 
