@@ -25,7 +25,8 @@ export default function SimpleProductCard({ product }: ProductCardProps) {
     : 0
   const badge = getBadge(product)
   const productImage = Array.isArray(product.images) ? product.images[0] : product.images
-  const imageUrl = typeof productImage === 'string' ? productImage : productImage || '/placeholder.jpg'
+  const fallbackPlaceholder = 'https://placehold.co/400x300/png'
+  const imageUrl = typeof productImage === 'string' ? (productImage || fallbackPlaceholder) : fallbackPlaceholder
   const isOutOfStock = product.inventory.quantity <= 0
   const isLowStock = product.inventory.quantity <= 5 && product.inventory.quantity > 0
 
