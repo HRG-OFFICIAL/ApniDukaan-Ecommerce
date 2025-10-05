@@ -1,10 +1,24 @@
 {
   "version": 2,
-  "buildCommand": "npm run build:frontend",
+  "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/.next",
   "installCommand": "npm install",
-  "devCommand": "npm run dev:frontend",
+  "devCommand": "cd frontend && npm run dev",
   "framework": "nextjs",
+  "functions": {
+    "frontend/src/app/api/**/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_API_URL": "@next_public_api_url",
+      "NEXT_PUBLIC_APP_NAME": "@next_public_app_name"
+    }
+  },
   "rewrites": [
     {
       "source": "/(.*)",
