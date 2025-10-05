@@ -7,7 +7,7 @@ export const LazyEnhancedProductCard = lazy(() => import('../components/products
 export const LazyCartSidebar = lazy(() => import('../components/cart/CartSidebar'))
 
 // Dynamic imports with Next.js dynamic for better optimization
-export const DynamicEnhancedNavbar = dynamic(() => import('../components/layout/EnhancedNavbar').then(module => ({ default: module.EnhancedNavbar })), {
+export const DynamicEnhancedNavbar = dynamic(() => import('../components/layout/EnhancedNavbar').then(module => ({ default: module.Navbar })), {
   ssr: false,
   loading: () => <div className="h-16 bg-gray-100 animate-pulse" />
 })

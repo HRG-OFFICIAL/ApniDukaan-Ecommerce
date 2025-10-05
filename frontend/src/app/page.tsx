@@ -72,21 +72,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="bg-gray-900 text-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-            <Zap className="mx-auto h-12 w-12 text-yellow-400" />
-            <h2 className="mt-4 text-3xl font-extrabold">Flash Sale Madness</h2>
-            <p className="mt-2 text-lg text-gray-300">Limited time offer - Extra 20% off on Electronics!</p>
-            <div className="mt-8">
-              <Link
-                href="/products?category=electronics"
-                className="inline-block bg-yellow-400 text-gray-900 font-bold px-8 py-3 rounded-md hover:bg-yellow-300 transition-colors"
-              >
-                Grab the Deal
-              </Link>
-            </div>
-          </div>
-        </section>
+        {/* Promotional section removed per request */}
       </main>
       </div>
     </MainLayout>

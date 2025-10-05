@@ -109,6 +109,11 @@ html.dark {
   select {
     @apply text-gray-900 bg-white;
   }
+
+  /* Preserve gray background for navbar search input specifically */
+  .navbar-search input[type="text"] {
+    @apply bg-gray-100 !important;
+  }
   
   /* Dark mode input styles */
   .dark input[type="text"],
