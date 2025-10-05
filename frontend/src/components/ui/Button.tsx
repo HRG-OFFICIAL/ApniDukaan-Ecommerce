@@ -40,9 +40,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
     
     const sizes = {
-      sm: 'h-8 px-3 text-sm',
-      md: 'h-10 px-4 py-2',
-      lg: 'h-12 px-8 text-lg'
+      sm: 'h-7 px-2 text-xs',
+      md: 'h-8 px-3 py-1 text-sm',
+      lg: 'h-9 px-4 py-1 text-base'
     };
 
     const classes = cn(

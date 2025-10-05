@@ -51,6 +51,12 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'm.media-amazon.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'images.unsplash.com',
         port: '',
         pathname: '/**',
@@ -78,6 +84,24 @@ const nextConfig = {
         hostname: 'placehold.co',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.amazon.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.flipkart.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.myntra.com',
+        port: '',
+        pathname: '/**',
       }
     ],
     formats: ['image/webp', 'image/avif'],
@@ -101,11 +125,11 @@ const nextConfig = {
     return [
       {
         source: '/api/catalog/:path*',
-        destination: 'http://localhost:4001/api/:path*',
+        destination: 'http://localhost:4000/api/catalog/:path*',
       },
       {
         source: '/catalog/:path*',
-        destination: 'http://localhost:4001/api/:path*',
+        destination: 'http://localhost:4000/api/catalog/:path*',
       },
     ]
   },

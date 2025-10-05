@@ -170,7 +170,7 @@ export function QuickViewModal({
                     )}
                     {isOutOfStock && (
                       <span className="bg-gray-800 text-white text-xs font-semibold px-2 py-1 rounded">
-                        Out of Stock
+                        Add to Cart
                       </span>
                     )}
                     {isLowStock && !isOutOfStock && (
@@ -273,7 +273,7 @@ export function QuickViewModal({
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Quantity</h3>
                 {isOutOfStock ? (
                   <div className="text-red-600 font-medium">
-                    Out of Stock
+                    Add to Cart
                   </div>
                 ) : (
                   <div className="flex items-center space-x-3">
@@ -305,7 +305,7 @@ export function QuickViewModal({
                     className="flex-1"
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                    Add to Cart
                   </Button>
                   
                   <Button

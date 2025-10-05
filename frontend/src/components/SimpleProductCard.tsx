@@ -59,11 +59,6 @@ export default function SimpleProductCard({ product }: ProductCardProps) {
                 {badge.text}
               </span>
             )}
-            {isOutOfStock && (
-              <span className="bg-gray-800 text-white text-xs font-semibold px-2 py-1 rounded">
-                Out of Stock
-              </span>
-            )}
             {isLowStock && !isOutOfStock && (
               <span className="bg-orange-500 text-white text-xs font-semibold px-2 py-1 rounded">
                 Only {product.inventory.quantity} left
@@ -121,15 +116,11 @@ export default function SimpleProductCard({ product }: ProductCardProps) {
       {/* Add to Cart Button */}
       <div className="p-4 pt-0">
         <button
-          disabled={isOutOfStock}
-          className={`w-full py-2 px-4 rounded-md font-medium transition-all duration-200 flex items-center justify-center ${
-            isOutOfStock
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
+          disabled={false}
+          className="w-full py-1 px-3 h-7 rounded-md font-medium transition-all duration-200 flex items-center justify-center bg-blue-600 text-white hover:bg-blue-700 text-sm"
         >
           <ShoppingCart className="w-4 h-4 mr-2" />
-          {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+          Add to Cart
         </button>
       </div>
     </div>
