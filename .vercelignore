@@ -1,0 +1,27 @@
+# Ignore backend services (not needed for frontend deployment)
+backend/
+infrastructure/
+scripts/
+docs/
+
+# Ignore development files
+*.log
+*.tmp
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Ignore test files
+**/__tests__/
+**/*.test.*
+**/*.spec.*
+
+# Ignore build artifacts from other services
+**/node_modules/
+**/dist/
+**/build/
+
+# Keep only frontend directory for deployment
+!frontend/
