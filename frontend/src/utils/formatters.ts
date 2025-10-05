@@ -2,22 +2,22 @@
  * Utility functions for formatting data
  */
 
-// Currency formatting
+// Currency formatting - Default to INR for Indian market
 export const formatCurrency = (
   amount: number, 
-  currency: string = 'USD', 
-  locale: string = 'en-US'
+  currency: string = 'INR', 
+  locale: string = 'en-IN'
 ): string => {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
-    minimumFractionDigits: 2,
+    minimumFractionDigits: 0,
     maximumFractionDigits: 2
   }).format(amount)
 }
 
-// Number formatting with commas
-export const formatNumber = (num: number, locale: string = 'en-US'): string => {
+// Number formatting with commas - Default to Indian locale
+export const formatNumber = (num: number, locale: string = 'en-IN'): string => {
   return new Intl.NumberFormat(locale).format(num)
 }
 
@@ -85,16 +85,18 @@ export const formatFileSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
-// Phone number formatting
+// Phone number formatting - Indian format
 export const formatPhoneNumber = (phone: string): string => {
   // Remove all non-digit characters
   const cleaned = phone.replace(/\D/g, '')
   
-  // Format US phone numbers
+  // Format Indian phone numbers
   if (cleaned.length === 10) {
-    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`
-  } else if (cleaned.length === 11 && cleaned.startsWith('1')) {
-    return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`
+    return `+91 ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`
+  } else if (cleaned.length === 12 && cleaned.startsWith('91')) {
+    return `+91 ${cleaned.slice(2, 7)} ${cleaned.slice(7)}`
+  } else if (cleaned.length === 13 && cleaned.startsWith('+91')) {
+    return `+91 ${cleaned.slice(3, 8)} ${cleaned.slice(8)}`
   }
   
   return phone // Return original if not a recognized format

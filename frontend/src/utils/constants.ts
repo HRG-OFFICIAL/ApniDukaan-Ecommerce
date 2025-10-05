@@ -64,14 +64,14 @@ export const PRODUCT_CONFIG = {
   outOfStockThreshold: 0
 } as const
 
-// Order Configuration
+// Order Configuration - Indian market
 export const ORDER_CONFIG = {
   maxItemsPerOrder: 100,
   minOrderAmount: 1.00,
-  maxOrderAmount: 50000.00,
-  defaultCurrency: 'USD',
-  shippingThresholdForFree: 50.00,
-  taxRate: 0.08 // 8%
+  maxOrderAmount: 500000.00, // ₹5 lakh max
+  defaultCurrency: 'INR',
+  shippingThresholdForFree: 500.00, // ₹500 for free shipping
+  taxRate: 0.18 // 18% GST
 } as const
 
 // Cart Configuration
@@ -166,19 +166,20 @@ export const PRODUCT_CATEGORIES = [
   'Office Supplies'
 ] as const
 
-// Currencies
+// Currencies - Indian market focused
 export const CURRENCIES = [
+  { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
   { code: 'USD', symbol: '$', name: 'US Dollar' },
   { code: 'EUR', symbol: '€', name: 'Euro' },
   { code: 'GBP', symbol: '£', name: 'British Pound' },
   { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
   { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
-  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
-  { code: 'INR', symbol: '₹', name: 'Indian Rupee' }
+  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' }
 ] as const
 
-// Countries
+// Countries - India first
 export const COUNTRIES = [
+  { code: 'IN', name: 'India' },
   { code: 'US', name: 'United States' },
   { code: 'CA', name: 'Canada' },
   { code: 'GB', name: 'United Kingdom' },
@@ -188,13 +189,13 @@ export const COUNTRIES = [
   { code: 'ES', name: 'Spain' },
   { code: 'AU', name: 'Australia' },
   { code: 'JP', name: 'Japan' },
-  { code: 'IN', name: 'India' },
   { code: 'BR', name: 'Brazil' },
   { code: 'MX', name: 'Mexico' }
 ] as const
 
-// Languages
+// Languages - Hindi first for Indian market
 export const LANGUAGES = [
+  { code: 'hi', name: 'हिन्दी' },
   { code: 'en', name: 'English' },
   { code: 'es', name: 'Español' },
   { code: 'fr', name: 'Français' },
@@ -206,12 +207,13 @@ export const LANGUAGES = [
   { code: 'zh', name: '中文' }
 ] as const
 
-// Shipping Methods
+// Shipping Methods - Indian market
 export const SHIPPING_METHODS = [
-  { id: 'standard', name: 'Standard Shipping', price: 5.99, estimatedDays: '5-7 business days' },
-  { id: 'expedited', name: 'Expedited Shipping', price: 12.99, estimatedDays: '2-3 business days' },
-  { id: 'overnight', name: 'Overnight Shipping', price: 24.99, estimatedDays: '1 business day' },
-  { id: 'free', name: 'Free Shipping', price: 0, estimatedDays: '7-10 business days', minOrderAmount: 50 }
+  { id: 'standard', name: 'Standard Delivery', price: 49, estimatedDays: '3-5 business days' },
+  { id: 'express', name: 'Express Delivery', price: 99, estimatedDays: '1-2 business days' },
+  { id: 'same_day', name: 'Same Day Delivery', price: 199, estimatedDays: 'Same day (select cities)' },
+  { id: 'free', name: 'Free Delivery', price: 0, estimatedDays: '5-7 business days', minOrderAmount: 500 },
+  { id: 'cod', name: 'Cash on Delivery', price: 29, estimatedDays: '3-5 business days' }
 ] as const
 
 // Sort Options
@@ -226,15 +228,15 @@ export const SORT_OPTIONS = [
   { value: 'name-desc', label: 'Name: Z to A' }
 ] as const
 
-// Filter Options
+// Filter Options - Indian pricing
 export const FILTER_OPTIONS = {
   priceRanges: [
-    { min: 0, max: 25, label: 'Under $25' },
-    { min: 25, max: 50, label: '$25 - $50' },
-    { min: 50, max: 100, label: '$50 - $100' },
-    { min: 100, max: 250, label: '$100 - $250' },
-    { min: 250, max: 500, label: '$250 - $500' },
-    { min: 500, max: Infinity, label: 'Over $500' }
+    { min: 0, max: 500, label: 'Under ₹500' },
+    { min: 500, max: 1000, label: '₹500 - ₹1,000' },
+    { min: 1000, max: 2500, label: '₹1,000 - ₹2,500' },
+    { min: 2500, max: 5000, label: '₹2,500 - ₹5,000' },
+    { min: 5000, max: 10000, label: '₹5,000 - ₹10,000' },
+    { min: 10000, max: Infinity, label: 'Over ₹10,000' }
   ],
   ratings: [
     { value: 4, label: '4 stars & up' },
