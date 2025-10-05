@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm install && npm run build",
+  "buildCommand": "cd frontend && rm -rf .next && npm install && npm run build",
   "outputDirectory": "frontend/.next",
   "installCommand": "npm install",
   "devCommand": "cd frontend && npm run dev",
@@ -21,14 +21,10 @@
       "NEXT_PUBLIC_APP_NAME": "ApniDukaan"
     }
   },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "https://apnidukaan-api-gateway.onrender.com/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "source": "/api/(.*)",
+      "destination": "https://apnidukaan-api-gateway.onrender.com/api/$1"
     }
   ]
 }

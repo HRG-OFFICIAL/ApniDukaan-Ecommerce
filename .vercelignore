@@ -31,3 +31,6 @@ package-lock.json
 
 # Allow frontend node_modules for build
 !frontend/node_modules/
+
+# Ignore Vercel build cache
+.vercel/output
