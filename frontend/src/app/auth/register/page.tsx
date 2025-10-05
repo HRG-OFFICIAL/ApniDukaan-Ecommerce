@@ -118,7 +118,7 @@ export default function RegisterPage() {
   const handleGoogleLogin = async () => {
     setOauthLoading(true);
     try {
-      const result = await loginWithGoogle(true); // Use popup
+      const result = await loginWithGoogle();
       
       if (result.success) {
         // Success handling is done in the OAuth service
@@ -376,7 +376,7 @@ export default function RegisterPage() {
                       Registration failed
                     </h3>
                     <div className="mt-2 text-sm text-red-700">
-                      {errors.register.message || 'An error occurred during registration'}
+                      {errors.register || 'An error occurred during registration'}
                     </div>
                   </div>
                 </div>

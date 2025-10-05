@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import ProductCard from '../ProductCard'
-import { Product } from '../../graphql/types'
+import { Product } from '../../lib/api'
 
 const mockProduct: Product = {
   id: '1',

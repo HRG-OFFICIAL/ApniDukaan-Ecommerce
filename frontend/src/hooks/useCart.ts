@@ -1,76 +1,110 @@
-import { useQuery, useMutation, useSubscription } from '@apollo/client';
-import { GET_CART } from '../graphql/queries';
-import { 
-  ADD_TO_CART, 
-  UPDATE_CART_ITEM, 
-  REMOVE_FROM_CART, 
-  CLEAR_CART 
-} from '../graphql/mutations';
-import { CART_UPDATED } from '../graphql/subscriptions';
-import { CartResponse } from '../graphql/types';
+'use client'
+
+import { useState, useEffect } from 'react';
+import { cartService, Cart, CartItem } from '../services/cartService';
 
 // Hook for fetching cart
 export function useCart() {
-  const { data, loading, error, refetch } = useQuery(GET_CART);
+  const [cart, setCart] = useState<Cart | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchCart = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const cart = await cartService.getCart();
+      setCart(cart);
+    } catch (err) {
+      setError('Failed to fetch cart');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCart();
+  }, []);
 
   return {
-    cart: data?.cart as CartResponse,
+    cart,
     loading,
     error,
-    refetch
+    refetch: fetchCart
   };
 }
 
-// Hook for cart operations
-export function useCartOperations() {
-  const [addToCart, { loading: addingToCart }] = useMutation(ADD_TO_CART, {
-    refetchQueries: ['GetCart'],
-  });
+// Hook for cart mutations
+export function useCartMutations() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [updateCartItem, { loading: updatingCart }] = useMutation(UPDATE_CART_ITEM, {
-    refetchQueries: ['GetCart'],
-  });
-
-  const [removeFromCart, { loading: removingFromCart }] = useMutation(REMOVE_FROM_CART, {
-    refetchQueries: ['GetCart'],
-  });
-
-  const [clearCart, { loading: clearingCart }] = useMutation(CLEAR_CART, {
-    refetchQueries: ['GetCart'],
-  });
-
-  return {
-    addToCart: (productId: string, quantity: number = 1) => 
-      addToCart({ variables: { productId, quantity } }),
-    updateCartItem: (itemId: string, quantity: number) => 
-      updateCartItem({ variables: { itemId, quantity } }),
-    removeFromCart: (itemId: string) => 
-      removeFromCart({ variables: { itemId } }),
-    clearCart: () => clearCart(),
-    loading: addingToCart || updatingCart || removingFromCart || clearingCart
+  const addToCart = async (productId: string, quantity: number = 1) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const cart = await cartService.addToCart(productId, quantity);
+      return { success: true, data: cart };
+    } catch (err) {
+      const errorMsg = 'Failed to add to cart';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      setLoading(false);
+    }
   };
-}
 
-// Hook for real-time cart updates
-export function useCartSubscription() {
-  const { data, loading, error } = useSubscription(CART_UPDATED);
+  const updateCartItem = async (itemId: string, quantity: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const cart = await cartService.updateCartItem(itemId, quantity);
+      return { success: true, data: cart };
+    } catch (err) {
+      const errorMsg = 'Failed to update cart item';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeFromCart = async (itemId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const cart = await cartService.removeFromCart(itemId);
+      return { success: true, data: cart };
+    } catch (err) {
+      const errorMsg = 'Failed to remove from cart';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearCart = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const cart = await cartService.clearCart();
+      return { success: true, data: cart };
+    } catch (err) {
+      const errorMsg = 'Failed to clear cart';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
-    cartUpdate: data?.cartUpdated as CartResponse,
+    addToCart,
+    updateCartItem,
+    removeFromCart,
+    clearCart,
     loading,
     error
-  };
-}
-
-// Combined hook for cart with operations
-export function useCartWithOperations() {
-  const cartQuery = useCart();
-  const cartOperations = useCartOperations();
-  const cartSubscription = useCartSubscription();
-
-  return {
-    ...cartQuery,
-    ...cartOperations,
-    subscription: cartSubscription
   };
 }

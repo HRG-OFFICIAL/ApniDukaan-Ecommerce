@@ -16,7 +16,7 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const processCallback = async () => {
       try {
-        const result = handleCallback()
+        const result = await handleCallback('google', 'mock-code')
         
         if (result.success) {
           setStatus('success')

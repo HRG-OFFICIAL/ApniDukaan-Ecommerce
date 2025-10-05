@@ -14,38 +14,107 @@ import {
   CreditCard,
   Truck
 } from 'lucide-react';
-import { useQuery } from '@apollo/client';
-import { GET_USER_ORDERS } from '../../graphql/queries';
 import { Button } from '../../components/ui/Button';
 import MainLayout from '../../components/layout/MainLayout';
-import { OrderResponse, OrderStatus, OrderFilter, OrderSort } from '../../graphql/types';
+
+// Order types and API calls
+export interface OrderResponse {
+  orders: Order[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface Order {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  total: number;
+  items: OrderItem[];
+  shippingAddress: Address;
+  billingAddress: Address;
+  paymentMethod: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrderItem {
+  id: string;
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+}
+
+export interface Address {
+  id: string;
+  type: 'home' | 'work' | 'other';
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  isDefault: boolean;
+}
+
+export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned' | 'refunded';
+
+export interface OrderFilter {
+  status?: OrderStatus[];
+  dateRange?: {
+    start: string;
+    end: string;
+  };
+}
+
+export interface OrderSort {
+  field: 'createdAt' | 'total' | 'status' | 'updatedAt';
+  order?: 'asc' | 'desc';
+  direction?: 'asc' | 'desc';
+}
 
 export default function OrdersPage() {
   const [filter, setFilter] = useState<OrderFilter>({});
-  const [sort, setSort] = useState<OrderSort>({ field: 'createdAt', direction: 'DESC' });
+  const [sort, setSort] = useState<OrderSort>({ field: 'createdAt', direction: 'desc' });
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data, loading, error, refetch } = useQuery(GET_USER_ORDERS, {
-    variables: { filter, sort, limit: 20, offset: 0 }
-  });
+  // Using REST API instead of GraphQL
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refetch = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/orders');
+      const result = await response.json();
+      setData(result);
+    } catch (err) {
+      setError('Failed to fetch orders');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const orders = data?.myOrders || [];
 
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
-      case OrderStatus.PENDING:
+      case 'pending':
         return 'bg-yellow-100 text-yellow-800';
-      case OrderStatus.CONFIRMED:
+      case 'confirmed':
         return 'bg-blue-100 text-blue-800';
-      case OrderStatus.PROCESSING:
+      case 'processing':
         return 'bg-purple-100 text-purple-800';
-      case OrderStatus.SHIPPED:
+      case 'shipped':
         return 'bg-indigo-100 text-indigo-800';
-      case OrderStatus.DELIVERED:
+      case 'delivered':
         return 'bg-green-100 text-green-800';
-      case OrderStatus.CANCELLED:
+      case 'cancelled':
         return 'bg-red-100 text-red-800';
-      case OrderStatus.REFUNDED:
+      case 'refunded':
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -54,15 +123,15 @@ export default function OrdersPage() {
 
   const getStatusIcon = (status: OrderStatus) => {
     switch (status) {
-      case OrderStatus.PENDING:
+      case 'pending':
         return <Package className="h-4 w-4" />;
-      case OrderStatus.CONFIRMED:
+      case 'confirmed':
         return <CreditCard className="h-4 w-4" />;
-      case OrderStatus.PROCESSING:
+      case 'processing':
         return <Package className="h-4 w-4" />;
-      case OrderStatus.SHIPPED:
+      case 'shipped':
         return <Truck className="h-4 w-4" />;
-      case OrderStatus.DELIVERED:
+      case 'delivered':
         return <Package className="h-4 w-4" />;
       default:
         return <Package className="h-4 w-4" />;
@@ -139,11 +208,11 @@ export default function OrdersPage() {
             <div className="flex gap-2">
               <select
                 value={filter.status || ''}
-                onChange={(e) => setFilter(prev => ({ ...prev, status: e.target.value as OrderStatus || undefined }))}
+                onChange={(e) => setFilter(prev => ({ ...prev, status: e.target.value ? [e.target.value as OrderStatus] : undefined }))}
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Status</option>
-                {Object.values(OrderStatus).map((status) => (
+                {(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'refunded'] as OrderStatus[]).map((status) => (
                   <option key={status} value={status}>
                     {status.replace('_', ' ')}
                   </option>
@@ -154,7 +223,7 @@ export default function OrdersPage() {
                 value={`${sort.field}-${sort.direction}`}
                 onChange={(e) => {
                   const [field, direction] = e.target.value.split('-');
-                  setSort({ field: field as 'createdAt' | 'updatedAt' | 'total' | 'status', direction: direction as 'ASC' | 'DESC' });
+                  setSort({ field: field as 'createdAt' | 'updatedAt' | 'total' | 'status', direction: direction.toLowerCase() as 'asc' | 'desc' });
                 }}
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
@@ -189,7 +258,7 @@ export default function OrdersPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {orders.map((order: OrderResponse) => (
+            {orders.map((order: Order) => (
               <div key={order.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex-1">
@@ -214,7 +283,7 @@ export default function OrdersPage() {
                       </div>
                       <div className="flex items-center">
                         <CreditCard className="h-4 w-4 mr-2" />
-                        <span>{order.payment?.method?.replace('_', ' ') || 'N/A'}</span>
+                        <span>{order.paymentMethod || 'N/A'}</span>
                       </div>
                     </div>
 
@@ -226,7 +295,7 @@ export default function OrdersPage() {
                             <div className="flex-shrink-0 w-8 h-8 bg-gray-200 rounded"></div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-900 truncate">
-                                {item.product.name}
+                                {item.name}
                               </p>
                               <p className="text-sm text-gray-500">
                                 Qty: {item.quantity} × ${item.price.toFixed(2)}

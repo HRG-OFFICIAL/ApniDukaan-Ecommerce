@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 require('dotenv').config();
 
 const app = express();
@@ -146,7 +146,11 @@ app.get('/api/catalog/products', async (req, res) => {
       // Build query
       const query = {};
       if (category) {
-        query.category = category.toLowerCase();
+        if (/^[a-f0-9]{24}$/i.test(category)) {
+          query.category = { $in: [new ObjectId(category), category] };
+        } else {
+          query.category = category;
+        }
       }
       
       // Build sort
@@ -154,7 +158,7 @@ app.get('/api/catalog/products', async (req, res) => {
       if (sortField === 'price') {
         sort.price = sortOrder === 'asc' ? 1 : -1;
       } else if (sortField === 'rating') {
-        sort.rating = sortOrder === 'asc' ? 1 : -1;
+        sort['rating.average'] = sortOrder === 'asc' ? 1 : -1;
       } else {
         sort.createdAt = sortOrder === 'asc' ? 1 : -1;
       }
@@ -162,12 +166,17 @@ app.get('/api/catalog/products', async (req, res) => {
       // Get total count
       total = await collection.countDocuments(query);
       
-      // Get products with pagination
+      // Get products with pagination and join category name when category is ObjectId
       products = await collection
-        .find(query)
-        .sort(sort)
-        .skip((page - 1) * limit)
-        .limit(parseInt(limit))
+        .aggregate([
+          { $match: query },
+          { $sort: sort },
+          { $skip: (parseInt(page) - 1) * parseInt(limit) },
+          { $limit: parseInt(limit) },
+          { $lookup: { from: 'categories', localField: 'category', foreignField: '_id', as: 'cat' } },
+          { $addFields: { categoryName: { $ifNull: [ { $arrayElemAt: [ '$cat.name', 0 ] }, '$category' ] } } },
+          { $project: { cat: 0 } }
+        ])
         .toArray();
       
       // Convert MongoDB _id to id for frontend compatibility

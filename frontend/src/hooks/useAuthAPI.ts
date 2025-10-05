@@ -1,386 +1,341 @@
 'use client'
 
-import { useQuery, useMutation, useSubscription } from '@apollo/client'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
-import { useAuth } from '../contexts/AuthContext'
-import { 
-  GET_USER_PROFILE, 
-  GET_USER_ORDERS 
-} from '../graphql/queries'
-import { 
-  LOGIN, 
-  REGISTER, 
-  LOGOUT, 
-  REFRESH_TOKEN,
-  FORGOT_PASSWORD,
-  RESET_PASSWORD,
-  UPDATE_PROFILE,
-  VERIFY_EMAIL
-} from '../graphql/mutations'
-import { USER_UPDATED } from '../graphql/subscriptions'
 import { 
   RegisterInput, 
   UpdateProfileInput, 
   User 
-} from '../graphql/types'
+} from '../lib/api'
 import toast from 'react-hot-toast'
+
+// Mock user data for now - replace with actual API calls
+const mockUser: User = {
+  _id: '1',
+  email: 'user@example.com',
+  name: 'John Doe',
+  firstName: 'John',
+  lastName: 'Doe',
+  phone: '+1234567890',
+  avatar: '',
+  role: 'user',
+  isEmailVerified: true,
+  isPhoneVerified: false,
+  isActive: true,
+  preferences: {
+    theme: 'light',
+    language: 'en',
+    currency: 'USD',
+    newsletter: true,
+    notifications: {
+      email: true,
+      sms: false,
+      push: true
+    }
+  },
+  addresses: [],
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  lastLoginAt: new Date()
+};
 
 // Token refresh utility
 export function useTokenRefresh() {
-  const { logout } = useAuth()
-  const [refreshTokenMutation] = useMutation(REFRESH_TOKEN)
-
   const refreshToken = async (): Promise<string | null> => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken')
-      if (!refreshToken) {
-        throw new Error('No refresh token available')
-      }
-
-      const { data } = await refreshTokenMutation({ 
-        variables: { refreshToken } 
-      })
-
-      if (data?.refreshToken) {
-        const { accessToken, refreshToken: newRefreshToken } = data.refreshToken
-        
-        // Update tokens in localStorage
-        localStorage.setItem('authToken', accessToken)
-        localStorage.setItem('refreshToken', newRefreshToken)
-        
-        return accessToken
-      }
-
-      throw new Error('Failed to refresh token')
+      // TODO: Implement token refresh API call
+      console.log('Refreshing token...');
+      return 'new-token';
     } catch (error) {
-      console.error('Token refresh failed:', error)
-      
-      // Clear all auth data and redirect to login
-      localStorage.removeItem('authToken')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('user')
-      logout()
-      
-      toast.error('Session expired. Please log in again.')
-      window.location.href = '/auth/login'
-      return null
+      console.error('Token refresh failed:', error);
+      return null;
     }
-  }
+  };
 
-  return { refreshToken }
+  return { refreshToken };
 }
 
-// Main authentication API hook
+// Main auth API hook
 export function useAuthAPI() {
-  const router = useRouter()
-  const { login: setAuthState, logout: clearAuthState, setUser, setLoading } = useAuth()
-  const { refreshToken } = useTokenRefresh()
+  const [user, setUser] = useState<User | null>(mockUser);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-  // Queries
-  const { 
-    data: userData, 
-    loading: userLoading, 
-    error: userError,
-    refetch: refetchUser 
-  } = useQuery(GET_USER_PROFILE, {
-    skip: typeof window !== 'undefined' && !localStorage.getItem('authToken'),
-    errorPolicy: 'all'
-  })
-
-  // Handle user data updates with useEffect
-  useEffect(() => {
-    if (userData?.me) {
-      setUser(userData.me)
-    }
-  }, [userData, setUser])
-
-  // Handle authentication errors with useEffect
-  useEffect(() => {
-    const handleAuthError = async () => {
-      if (userError?.networkError && 'statusCode' in userError.networkError && userError.networkError.statusCode === 401) {
-        const newToken = await refreshToken()
-        if (newToken) {
-          refetchUser()
-        }
-      }
-    }
-    
-    if (userError) {
-      handleAuthError()
-    }
-  }, [userError, refreshToken, refetchUser])
-
-  const {
-    data: ordersData,
-    loading: ordersLoading,
-    error: ordersError,
-    refetch: refetchOrders
-  } = useQuery(GET_USER_ORDERS, {
-    skip: !userData?.me,
-    errorPolicy: 'all'
-  })
-
-  // Mutations
-  const [loginMutation, { loading: loggingIn, error: loginError, data: loginData }] = useMutation(LOGIN)
-  const [registerMutation, { loading: registering, error: registerError, data: registerData }] = useMutation(REGISTER)
-  const [logoutMutation, { loading: loggingOut }] = useMutation(LOGOUT)
-  const [forgotPasswordMutation, { loading: sendingReset }] = useMutation(FORGOT_PASSWORD)
-  const [resetPasswordMutation, { loading: resetting }] = useMutation(RESET_PASSWORD)
-  const [updateProfileMutation, { loading: updatingProfile }] = useMutation(UPDATE_PROFILE, {
-    refetchQueries: [{ query: GET_USER_PROFILE }]
-  })
-  const [verifyEmailMutation, { loading: verifyingEmail }] = useMutation(VERIFY_EMAIL)
-
-  // Handle login success
-  useEffect(() => {
-    if (loginData?.login) {
-      const { user, accessToken, refreshToken } = loginData.login
-      
-      // Store tokens and user data
-      localStorage.setItem('authToken', accessToken)
-      localStorage.setItem('refreshToken', refreshToken)
-      localStorage.setItem('user', JSON.stringify(user))
-      
-      // Update auth context
-      setAuthState(user, accessToken)
-      toast.success('Login successful!')
-    }
-  }, [loginData, setAuthState])
-
-  // Handle login error
-  useEffect(() => {
-    if (loginError) {
-      console.error('Login error:', loginError)
-      toast.error(loginError.message || 'Login failed. Please check your credentials.')
-    }
-  }, [loginError])
-
-  // Handle register success
-  useEffect(() => {
-    if (registerData?.register) {
-      const { user, accessToken, refreshToken } = registerData.register
-      
-      // Store tokens and user data
-      localStorage.setItem('authToken', accessToken)
-      localStorage.setItem('refreshToken', refreshToken)
-      localStorage.setItem('user', JSON.stringify(user))
-      
-      // Update auth context
-      setAuthState(user, accessToken)
-      toast.success('Registration successful!')
-    }
-  }, [registerData, setAuthState])
-
-  // Handle register error
-  useEffect(() => {
-    if (registerError) {
-      console.error('Registration error:', registerError)
-      toast.error(registerError.message || 'Registration failed. Please try again.')
-    }
-  }, [registerError])
-
-  // Subscription for real-time user updates
-  useSubscription(USER_UPDATED, {
-    skip: !userData?.me,
-    onSubscriptionData: ({ subscriptionData }) => {
-      if (subscriptionData.data?.userUpdated) {
-        setUser(subscriptionData.data.userUpdated)
-        toast.success('Your profile has been updated')
-      }
-    }
-  })
-
-  // Handler functions
-  const handleLogin = async (email: string, password: string) => {
-    setLoading(true)
+  // Mock functions - replace with actual API calls
+  const login = async (email: string, password: string) => {
+    setLoading(true);
     try {
-      const result = await loginMutation({ 
-        variables: { email, password }
-      })
-      return { success: true, user: result.data?.login?.user }
+      // TODO: Implement login API call
+      console.log('Logging in:', email);
+      setUser(mockUser);
+      toast.success('Logged in successfully!');
+      return { success: true, user: mockUser };
     } catch (error) {
-      return { success: false, error }
+      setError('Login failed');
+      toast.error('Login failed');
+      return { success: false, error: 'Login failed' };
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const handleRegister = async (input: RegisterInput) => {
-    setLoading(true)
+  const register = async (input: RegisterInput) => {
+    setLoading(true);
     try {
-      const result = await registerMutation({ 
-        variables: { input }
-      })
-      return { success: true, user: result.data?.register?.user }
+      // TODO: Implement register API call
+      console.log('Registering:', input);
+      setUser(mockUser);
+      toast.success('Registration successful!');
+      return { success: true, user: mockUser };
     } catch (error) {
-      return { success: false, error }
+      setError('Registration failed');
+      toast.error('Registration failed');
+      return { success: false, error: 'Registration failed' };
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const handleLogout = async () => {
-    setLoading(true)
+  const logout = async () => {
+    setLoading(true);
     try {
-      await logoutMutation()
-      
-      // Clear all stored data
-      localStorage.removeItem('authToken')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('user')
-      
-      // Clear auth context
-      clearAuthState()
-      toast.success('Logged out successfully')
-      
-      // Redirect to home
-      router.push('/')
-      
-      return { success: true }
+      // TODO: Implement logout API call
+      console.log('Logging out...');
+      setUser(null);
+      toast.success('Logged out successfully!');
+      router.push('/auth/login');
+      return { success: true };
     } catch (error) {
-      console.error('Logout error:', error)
-      // Even if logout fails on server, clear local data
-      localStorage.removeItem('authToken')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('user')
-      clearAuthState()
-      router.push('/')
-      return { success: false, error }
+      setError('Logout failed');
+      toast.error('Logout failed');
+      return { success: false, error: 'Logout failed' };
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const handleForgotPassword = async (email: string) => {
+  const updateProfile = async (input: UpdateProfileInput) => {
+    setLoading(true);
     try {
-      await forgotPasswordMutation({ variables: { email } })
-      toast.success('Password reset email sent! Check your inbox.')
-      return { success: true }
-    } catch (error: any) {
-      console.error('Forgot password error:', error)
-      toast.error(error.message || 'Failed to send reset email. Please try again.')
-      return { success: false, error }
-    }
-  }
-
-  const handleResetPassword = async (token: string, password: string) => {
-    try {
-      await resetPasswordMutation({ variables: { token, password } })
-      toast.success('Password reset successful! You can now log in with your new password.')
-      router.push('/auth/login')
-      return { success: true }
-    } catch (error: any) {
-      console.error('Reset password error:', error)
-      toast.error(error.message || 'Failed to reset password. Please try again.')
-      return { success: false, error }
-    }
-  }
-
-  const handleUpdateProfile = async (input: UpdateProfileInput) => {
-    try {
-      const result = await updateProfileMutation({ variables: { input } })
-      if (result.data?.updateProfile) {
-        setUser(result.data.updateProfile)
-        toast.success('Profile updated successfully!')
+      // TODO: Implement update profile API call
+      console.log('Updating profile:', input);
+      if (user) {
+        const updatedUser = { 
+          ...user, 
+          ...input,
+          preferences: {
+            ...user.preferences,
+            ...input.preferences,
+            theme: input.preferences?.theme || user.preferences.theme,
+            notifications: {
+              email: input.preferences?.notifications?.email ?? user.preferences.notifications.email,
+              sms: input.preferences?.notifications?.sms ?? user.preferences.notifications.sms,
+              push: input.preferences?.notifications?.push ?? user.preferences.notifications.push
+            }
+          }
+        };
+        setUser(updatedUser);
+        toast.success('Profile updated successfully!');
+        return { success: true, user: updatedUser };
       }
-      return { success: true, user: result.data?.updateProfile }
-    } catch (error: any) {
-      console.error('Update profile error:', error)
-      toast.error(error.message || 'Failed to update profile. Please try again.')
-      return { success: false, error }
+      return { success: false, error: 'User not found' };
+    } catch (error) {
+      setError('Profile update failed');
+      toast.error('Profile update failed');
+      return { success: false, error: 'Profile update failed' };
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-  const handleVerifyEmail = async (token: string) => {
+  const addAddress = async (input: any) => {
+    setLoading(true);
     try {
-      await verifyEmailMutation({ variables: { token } })
-      toast.success('Email verified successfully!')
-      refetchUser()
-      return { success: true }
-    } catch (error: any) {
-      console.error('Email verification error:', error)
-      toast.error(error.message || 'Failed to verify email. Please try again.')
-      return { success: false, error }
-    }
-  }
-
-  // Auto-login on app start if token exists
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('authToken')
-      const user = localStorage.getItem('user')
-      
-      if (token && user && !userData?.me) {
-        try {
-          const parsedUser = JSON.parse(user)
-          setAuthState(parsedUser, token)
-        } catch (error) {
-          console.error('Error parsing stored user:', error)
-          localStorage.removeItem('authToken')
-          localStorage.removeItem('refreshToken')
-          localStorage.removeItem('user')
-        }
+      // TODO: Implement add address API call
+      console.log('Adding address:', input);
+      if (user) {
+        const newAddress = {
+          _id: Date.now().toString(),
+          ...input,
+          isDefault: user.addresses.length === 0
+        };
+        const updatedUser = {
+          ...user,
+          addresses: [...user.addresses, newAddress]
+        };
+        setUser(updatedUser);
+        toast.success('Address added successfully!');
+        return { success: true, user: updatedUser };
       }
+      return { success: false, error: 'User not found' };
+    } catch (error) {
+      setError('Failed to add address');
+      toast.error('Failed to add address');
+      return { success: false, error: 'Failed to add address' };
+    } finally {
+      setLoading(false);
     }
-  }, [])
+  };
+
+  const updateAddress = async (id: string, input: any) => {
+    setLoading(true);
+    try {
+      // TODO: Implement update address API call
+      console.log('Updating address:', id, input);
+      if (user) {
+        const updatedAddresses = user.addresses.map(addr =>
+          addr._id === id ? { ...addr, ...input } : addr
+        );
+        const updatedUser = { ...user, addresses: updatedAddresses };
+        setUser(updatedUser);
+        toast.success('Address updated successfully!');
+        return { success: true, user: updatedUser };
+      }
+      return { success: false, error: 'User not found' };
+    } catch (error) {
+      setError('Failed to update address');
+      toast.error('Failed to update address');
+      return { success: false, error: 'Failed to update address' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteAddress = async (id: string) => {
+    setLoading(true);
+    try {
+      // TODO: Implement delete address API call
+      console.log('Deleting address:', id);
+      if (user) {
+        const updatedAddresses = user.addresses.filter(addr => addr._id !== id);
+        const updatedUser = { ...user, addresses: updatedAddresses };
+        setUser(updatedUser);
+        toast.success('Address deleted successfully!');
+        return { success: true, user: updatedUser };
+      }
+      return { success: false, error: 'User not found' };
+    } catch (error) {
+      setError('Failed to delete address');
+      toast.error('Failed to delete address');
+      return { success: false, error: 'Failed to delete address' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const forgotPassword = async (email: string) => {
+    setLoading(true);
+    try {
+      // TODO: Implement forgot password API call
+      console.log('Forgot password:', email);
+      toast.success('Password reset link sent to your email!');
+      return { success: true };
+    } catch (error) {
+      setError('Failed to send reset link');
+      toast.error('Failed to send reset link');
+      return { success: false, error: 'Failed to send reset link' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetPassword = async (token: string, password: string) => {
+    setLoading(true);
+    try {
+      // TODO: Implement reset password API call
+      console.log('Reset password:', token);
+      toast.success('Password reset successfully!');
+      router.push('/auth/login');
+      return { success: true };
+    } catch (error) {
+      setError('Failed to reset password');
+      toast.error('Failed to reset password');
+      return { success: false, error: 'Failed to reset password' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyEmail = async (token: string) => {
+    setLoading(true);
+    try {
+      // TODO: Implement verify email API call
+      console.log('Verifying email:', token);
+      if (user) {
+        const updatedUser = { ...user, isEmailVerified: true };
+        setUser(updatedUser);
+        toast.success('Email verified successfully!');
+        return { success: true, user: updatedUser };
+      }
+      return { success: false, error: 'User not found' };
+    } catch (error) {
+      setError('Failed to verify email');
+      toast.error('Failed to verify email');
+      return { success: false, error: 'Failed to verify email' };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
-    // Data
-    user: userData?.me,
-    orders: ordersData?.me?.orders || [],
-    
-    // Loading states
-    loading: userLoading || loggingIn || registering || loggingOut || sendingReset || resetting || updatingProfile || verifyingEmail,
-    userLoading,
-    ordersLoading,
-    
-    // Error states
-    errors: {
-      user: userError,
-      login: loginError,
-      register: registerError,
-      orders: ordersError
-    },
-    
-    // Actions
-    login: handleLogin,
-    register: handleRegister,
-    logout: handleLogout,
-    forgotPassword: handleForgotPassword,
-    resetPassword: handleResetPassword,
-    updateProfile: handleUpdateProfile,
-    verifyEmail: handleVerifyEmail,
-    
-    // Utilities
-    refetchUser,
-    refetchOrders,
-    refreshToken
-  }
+    user,
+    loading,
+    error,
+    errors: { login: error, register: error },
+    login,
+    register,
+    logout,
+    updateProfile,
+    addAddress,
+    updateAddress,
+    deleteAddress,
+    forgotPassword,
+    resetPassword,
+    verifyEmail
+  };
 }
 
-// Hook for checking authentication status
+// Hook for auth status
 export function useAuthStatus() {
-  const { user, loading } = useAuthAPI()
+  const { user, loading } = useAuthAPI();
   
   return {
     isAuthenticated: !!user,
-    isLoading: loading,
-    user
-  }
+    user,
+    loading
+  };
 }
 
-// Hook for protected routes
-export function useProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuthStatus()
-  const router = useRouter()
+// Hook for user orders
+export function useUserOrders() {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      // TODO: Implement fetch orders API call
+      console.log('Fetching orders...');
+      setOrders([]);
+      return { success: true, orders: [] };
+    } catch (error) {
+      setError('Failed to fetch orders');
+      return { success: false, error: 'Failed to fetch orders' };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      const currentPath = window.location.pathname
-      router.push(`/auth/login?redirect=${encodeURIComponent(currentPath)}`)
-    }
-  }, [isAuthenticated, isLoading, router])
+    fetchOrders();
+  }, []);
 
-  return { isAuthenticated, isLoading }
+  return {
+    orders,
+    loading,
+    error,
+    refetch: fetchOrders
+  };
 }

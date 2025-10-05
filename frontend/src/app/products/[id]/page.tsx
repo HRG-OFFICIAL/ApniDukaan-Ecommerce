@@ -26,7 +26,7 @@ import { useProductsStore } from '../../../store/useProductsStore'
 import { useProduct } from '../../../hooks/useProductsAPI'
 import { useProducts } from '../../../hooks/useProductsAPI'
 import { useWishlist } from '../../../hooks/useWishlist'
-import { useCartAPI } from '../../../hooks/useCartAPI'
+import { useCartMutations } from '../../../hooks/useCart'
 import { Button } from '../../../components/ui/Button'
 import { Badge } from '../../../components/ui/Badge'
 import { Breadcrumb } from '../../../components/ui/Breadcrumb'
@@ -144,7 +144,7 @@ export default function ProductDetailPage() {
   const { isAuthenticated } = useAuthStore()
   const { setCurrentProduct } = useProductsStore()
   const { isInWishlist, toggleWishlist, isLoading: wishlistLoading } = useWishlist()
-  const { addItem, loading: cartLoading } = useCartAPI()
+  const { addToCart, loading: cartLoading } = useCartMutations()
   
   // Real API integration
   const productId = params?.id as string
@@ -157,7 +157,7 @@ export default function ProductDetailPage() {
     
     return {
       filter: {
-        category: apiProduct.category,
+        category: apiProduct.category.name,
       },
       limit: 4
     }
@@ -169,9 +169,9 @@ export default function ProductDetailPage() {
   const product = apiError || error ? mockProduct : apiProduct
   const relatedProducts = apiError || error ? fallbackRelatedProducts : relatedProductsList
   
-  const isProductInWishlist = product ? isInWishlist(product.id) : false
-  const isOutOfStock = !product || product.stock <= 0
-  const isLowStock = product && product.stock <= 5 && product.stock > 0
+  const isProductInWishlist = product ? isInWishlist((product as any)._id || (product as any).id) : false
+  const isOutOfStock = !product || ((product as any).inventory?.quantity || (product as any).stock || 0) <= 0
+  const isLowStock = product && ((product as any).inventory?.quantity || (product as any).stock || 0) <= 5 && ((product as any).inventory?.quantity || (product as any).stock || 0) > 0
   const discount = product?.originalPrice 
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) 
     : 0
@@ -190,8 +190,8 @@ export default function ProductDetailPage() {
   
   useEffect(() => {
     if (product) {
-      setCurrentProduct(product)
-      addToRecentlyViewed(product.id)
+      setCurrentProduct(product as any)
+      addToRecentlyViewed((product as any)._id || (product as any).id)
     }
   }, [product, setCurrentProduct, addToRecentlyViewed])
   
@@ -212,14 +212,12 @@ export default function ProductDetailPage() {
       return
     }
     
-    await addItem({
-      id: product.id,
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.images?.[0] || '',
-      maxStock: product.stock
-    }, quantity)
+    const result = await addToCart((product as any)._id || (product as any).id, quantity)
+    if (result.success) {
+      toast.success(`Added ${quantity}x ${product.name} to cart!`)
+    } else {
+      toast.error(result.error || 'Failed to add to cart')
+    }
   }
 
   const handleWishlistToggle = async () => {
@@ -233,14 +231,14 @@ export default function ProductDetailPage() {
       return
     }
     
-    await toggleWishlist(product.id)
+    await toggleWishlist((product as any)._id || (product as any).id)
   }
 
   const breadcrumbItems = product ? [
     { label: 'Products', href: '/products' },
     { 
-      label: product.category || 'Category', 
-      href: `/products?category=${product.category || ''}` 
+      label: typeof product.category === 'string' ? product.category : product.category?.name || 'Category', 
+      href: `/products?category=${typeof product.category === 'string' ? product.category : product.category?.name || ''}` 
     },
     { label: product.name }
   ] : [
@@ -334,17 +332,17 @@ export default function ProductDetailPage() {
                 <div className="flex-1">
                   {/* Badges */}
                   <div className="flex items-center space-x-2 mb-4">
-                    {product?.isBestseller && (
+                    {(product as any)?.isBestseller && (
                       <Badge variant="secondary">Bestseller</Badge>
                     )}
-                    {product?.isNew && (
+                    {(product as any)?.isNew && (
                       <Badge className="bg-blue-500">New</Badge>
                     )}
-                    {product?.isOnSale && (
+                    {(product as any)?.isOnSale && (
                       <Badge variant="destructive">Sale</Badge>
                     )}
                     {isLowStock && (
-                      <Badge className="bg-orange-500">Only {product?.stock} left</Badge>
+                      <Badge className="bg-orange-500">Only {(product as any)?.inventory?.quantity || (product as any)?.stock} left</Badge>
                     )}
                   </div>
 
@@ -360,7 +358,7 @@ export default function ProductDetailPage() {
                           key={i}
                           className={cn(
                             "w-5 h-5",
-                            i < Math.floor(product?.rating || 0)
+                            i < Math.floor(typeof product?.rating === 'number' ? product.rating : product?.rating?.average || 0)
                               ? "text-yellow-400 fill-current"
                               : "text-gray-300"
                           )}
@@ -368,7 +366,7 @@ export default function ProductDetailPage() {
                       ))}
                     </div>
                     <span className="ml-2 text-sm text-gray-600">
-                      {product?.rating || 0} ({product?.reviewCount || 0} reviews)
+                      {typeof product?.rating === 'number' ? product.rating : product?.rating?.average || 0} ({typeof product?.rating === 'number' ? (product as any)?.reviewCount || 0 : product?.rating?.count || 0} reviews)
                     </span>
                   </div>
 
@@ -454,8 +452,8 @@ export default function ProductDetailPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setQuantity(Math.min(product?.stock || 0, quantity + 1))}
-                      disabled={quantity >= (product?.stock || 0)}
+                      onClick={() => setQuantity(Math.min((product as any)?.inventory?.quantity || (product as any)?.stock || 0, quantity + 1))}
+                      disabled={quantity >= ((product as any)?.inventory?.quantity || (product as any)?.stock || 0)}
                     >
                       <Plus className="w-4 h-4" />
                     </Button>
@@ -501,7 +499,7 @@ export default function ProductDetailPage() {
                 {[
                   { id: 'description', label: 'Description' },
                   { id: 'specifications', label: 'Specifications' },
-                  { id: 'reviews', label: `Reviews (${product?.reviewCount || 0})` }
+                  { id: 'reviews', label: `Reviews (${typeof product?.rating === 'number' ? (product as any)?.reviewCount || 0 : product?.rating?.count || 0})` }
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -553,7 +551,7 @@ export default function ProductDetailPage() {
 
               {selectedTab === 'reviews' && (
                 <div className="space-y-8">
-                  {product?.reviews?.map((review) => (
+                  {(product as any)?.reviews?.map((review: any) => (
                     <div key={review.id} className="border-b border-gray-200 pb-8">
                       <div className="flex items-center mb-4">
                         <div className="flex items-center">
@@ -596,7 +594,7 @@ export default function ProductDetailPage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {relatedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={(product as any)._id || (product as any).id} product={product as any} />
               ))}
             </div>
           </div>

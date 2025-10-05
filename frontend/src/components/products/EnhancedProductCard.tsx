@@ -19,7 +19,7 @@ import { Badge } from '../ui/Badge'
 import { useCartStore } from '../../store/useCartStore'
 import { usePreferencesStore } from '../../store/usePreferencesStore'
 import { useAuthStore } from '../../store/useAuthStore'
-import { Product } from '../../graphql/types'
+import { Product } from '../../lib/api'
 import toast from 'react-hot-toast'
 
 interface EnhancedProductCardProps {
@@ -47,9 +47,9 @@ export function EnhancedProductCard({
   const { wishlist, addToWishlist, removeFromWishlist } = usePreferencesStore()
   const { isAuthenticated } = useAuthStore()
 
-  const isInWishlist = wishlist.includes(product.id)
-  const isOutOfStock = product.stock === 0
-  const isLowStock = product.stock > 0 && product.stock <= 5
+  const isInWishlist = wishlist.includes(product._id)
+  const isOutOfStock = product.inventory.quantity === 0
+  const isLowStock = product.inventory.quantity > 0 && product.inventory.quantity <= 5
   const discount = product.originalPrice 
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) 
     : 0
@@ -64,12 +64,12 @@ export function EnhancedProductCard({
     }
 
     addItem({
-      id: product.id,
-      productId: product.id,
+      id: product._id,
+      productId: product._id,
       name: product.name,
       price: product.price,
       image: product.images[0] || '',
-      maxStock: product.stock
+      maxStock: product.inventory.quantity
     })
     
     toast.success('Added to cart!')
@@ -85,10 +85,10 @@ export function EnhancedProductCard({
     }
 
     if (isInWishlist) {
-      removeFromWishlist(product.id)
+      removeFromWishlist(product._id)
       toast.success('Removed from wishlist')
     } else {
-      addToWishlist(product.id)
+      addToWishlist(product._id)
       toast.success('Added to wishlist')
     }
   }
@@ -115,10 +115,10 @@ export function EnhancedProductCard({
       navigator.share({
         title: product.name,
         text: product.description,
-        url: `/products/${product.id}`
+        url: `/products/${product._id}`
       })
     } else {
-      navigator.clipboard.writeText(`${window.location.origin}/products/${product.id}`)
+      navigator.clipboard.writeText(`${window.location.origin}/products/${product._id}`)
       toast.success('Product link copied to clipboard!')
     }
   }
@@ -130,14 +130,14 @@ export function EnhancedProductCard({
           <Star
             key={i}
             className={`h-4 w-4 ${
-              i < Math.floor(product.rating) 
+              i < Math.floor(product.rating.average) 
                 ? 'fill-current text-yellow-400' 
                 : 'text-gray-300'
             }`}
           />
         ))}
       </div>
-      <span className="text-sm text-gray-600">({product.reviewCount})</span>
+      <span className="text-sm text-gray-600">({product.rating.count})</span>
     </div>
   )
 
@@ -149,7 +149,7 @@ export function EnhancedProductCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Link href={`/products/${product.id}`}>
+      <Link href={`/products/${product._id}`}>
         {/* Image Container */}
         <div className="aspect-square relative overflow-hidden bg-gray-100">
           {!imageError ? (
@@ -171,11 +171,8 @@ export function EnhancedProductCard({
 
           {/* Badges */}
           <div className="absolute top-2 left-2 z-10 flex flex-col space-y-1">
-            {product.isNew && (
-              <Badge className="bg-green-500 text-white text-xs px-2 py-1">New</Badge>
-            )}
-            {product.isBestseller && (
-              <Badge className="bg-orange-500 text-white text-xs px-2 py-1">Bestseller</Badge>
+            {product.featured && (
+              <Badge className="bg-yellow-500 text-white text-xs px-2 py-1">Featured</Badge>
             )}
             {discount > 0 && (
               <Badge className="bg-red-500 text-white text-xs px-2 py-1">-{discount}%</Badge>
@@ -270,7 +267,7 @@ export function EnhancedProductCard({
         <div className="p-4">
           <div className="mb-2">
             <p className="text-sm text-gray-500 mb-1">
-              {product.category || 'Category'}
+              {product.category.name || 'Category'}
             </p>
             <h3 className="font-medium text-gray-900 line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors">
               {product.name}
@@ -299,7 +296,7 @@ export function EnhancedProductCard({
             {!isOutOfStock && (
               <div className="flex items-center">
                 <CheckCircle className="h-3 w-3 text-green-500 mr-1" />
-                <span>{product.stock} in stock</span>
+                <span>{product.inventory.quantity} in stock</span>
               </div>
             )}
             <div className="flex items-center">
@@ -318,7 +315,7 @@ export function EnhancedProductCard({
         isComparing ? 'ring-2 ring-blue-500' : 'hover:border-gray-300'
       }`}
     >
-      <Link href={`/products/${product.id}`} className="flex">
+      <Link href={`/products/${product._id}`} className="flex">
         {/* Image */}
         <div className="w-48 h-48 relative bg-gray-100 flex-shrink-0">
           {!imageError ? (
@@ -338,11 +335,8 @@ export function EnhancedProductCard({
 
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col space-y-1">
-            {product.isNew && (
-              <Badge className="bg-green-500 text-white text-xs">New</Badge>
-            )}
-            {product.isBestseller && (
-              <Badge className="bg-orange-500 text-white text-xs">Bestseller</Badge>
+            {product.featured && (
+              <Badge className="bg-yellow-500 text-white text-xs">Featured</Badge>
             )}
             {discount > 0 && (
               <Badge className="bg-red-500 text-white text-xs">-{discount}%</Badge>
@@ -355,7 +349,7 @@ export function EnhancedProductCard({
           <div className="flex justify-between">
             <div className="flex-1">
               <p className="text-sm text-gray-500 mb-1">
-                {product.category || 'Category'}
+                {product.category.name || 'Category'}
               </p>
               <h3 className="text-lg font-medium text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
                 {product.name}
@@ -385,7 +379,7 @@ export function EnhancedProductCard({
               <div className="text-sm text-gray-600 space-y-1">
                 <div className="flex items-center">
                   <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  <span>{isOutOfStock ? 'Out of stock' : `${product.stock} in stock`}</span>
+                  <span>{isOutOfStock ? 'Out of stock' : `${product.inventory.quantity} in stock`}</span>
                 </div>
                 <div className="flex items-center">
                   <Truck className="h-4 w-4 text-blue-500 mr-2" />

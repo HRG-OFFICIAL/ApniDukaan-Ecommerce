@@ -409,6 +409,15 @@ export interface IPaymentRequest {
   amount: number;
   currency: string;
   paymentData: any;
+  description?: string;
+  items?: Array<{
+    name: string;
+    productId: string;
+    sku?: string;
+    price: number;
+    quantity: number;
+  }>;
+  receipt?: string;
   savePaymentMethod?: boolean;
   metadata?: Record<string, any>;
 }
@@ -417,7 +426,8 @@ export interface IPaymentResponse {
   success: boolean;
   message: string;
   data?: {
-    payment: IPayment;
+    payment?: IPayment;
+    refund?: IRefund;
     clientSecret?: string; // For Stripe
     redirectUrl?: string;   // For PayPal
   };
@@ -431,6 +441,7 @@ export interface IRefundRequest {
   amount: number;
   reason: RefundReason;
   description?: string;
+  paymentMethod?: PaymentMethod;
   metadata?: Record<string, any>;
 }
 

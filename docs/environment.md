@@ -62,6 +62,12 @@ ENABLE_REDIS_CACHE=true
 ENABLE_EMAIL_NOTIFICATIONS=true
 ```
 
+### Dataset-specific notes
+
+- Products may store `category` as an ObjectId (reference to `categories._id`) or as a string (category name) when no mapping exists.
+- The API Gateway resolves and returns `categoryName` for display when possible.
+- Sorting by rating uses `rating.average`.
+
 ## Service-Specific Environment Files
 
 ### Catalog Service (.env)

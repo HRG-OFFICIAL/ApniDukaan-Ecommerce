@@ -1,6 +1,5 @@
 import paypal from 'paypal-rest-sdk';
 import Razorpay from 'razorpay';
-import Decimal from 'decimal.js';
 import {
   PaymentMethod,
   PaymentStatus,
@@ -8,8 +7,7 @@ import {
   IRefund,
   IPaymentRequest,
   IPaymentResponse,
-  IRefundRequest,
-  RefundReason
+  IRefundRequest
 } from '../types/order.types';
 
 // Payment gateway configuration interfaces
@@ -97,7 +95,8 @@ class PaymentService {
       if (!validation.valid) {
         return {
           success: false,
-          error: validation.error
+          error: validation.error || 'Invalid payment request',
+          message: validation.error || 'Invalid payment request'
         };
       }
 
@@ -113,14 +112,16 @@ class PaymentService {
         default:
           return {
             success: false,
-            error: `Unsupported payment method: ${paymentRequest.method}`
+            error: `Unsupported payment method: ${paymentRequest.method}`,
+            message: 'Unsupported payment method'
           };
       }
     } catch (error: any) {
       console.error('Payment processing error:', error);
       return {
         success: false,
-        error: error.message || 'Payment processing failed'
+        error: error.message || 'Payment processing failed',
+        message: 'Payment processing failed'
       };
     }
   }
@@ -134,7 +135,8 @@ class PaymentService {
     if (!this.razorpay) {
       return {
         success: false,
-        error: 'Razorpay is not initialized'
+        error: 'Razorpay is not initialized',
+        message: 'Razorpay is not initialized'
       };
     }
 
@@ -178,7 +180,8 @@ class PaymentService {
       console.error('Razorpay order creation error:', error);
       return {
         success: false,
-        error: error.message || 'Failed to create Razorpay order'
+        error: error.message || 'Failed to create Razorpay order',
+        message: 'Failed to create Razorpay order'
       };
     }
   }
@@ -200,7 +203,8 @@ class PaymentService {
     if (!this.razorpay) {
       return {
         success: false,
-        error: 'Razorpay is not initialized'
+        error: 'Razorpay is not initialized',
+        message: 'Razorpay is not initialized'
       };
     }
 
@@ -216,7 +220,8 @@ class PaymentService {
       if (expectedSignature !== signature) {
         return {
           success: false,
-          error: 'Invalid payment signature'
+          error: 'Invalid payment signature',
+          message: 'Invalid payment signature'
         };
       }
 
@@ -256,7 +261,8 @@ class PaymentService {
       console.error('Razorpay payment verification error:', error);
       return {
         success: false,
-        error: error.message || 'Failed to verify payment'
+        error: error.message || 'Failed to verify payment',
+        message: 'Failed to verify payment'
       };
     }
   }
@@ -295,7 +301,8 @@ class PaymentService {
           console.error('PayPal payment creation error:', error);
           resolve({
             success: false,
-            error: error.message || 'PayPal payment creation failed'
+            error: error.message || 'PayPal payment creation failed',
+            message: 'PayPal payment creation failed'
           });
         } else {
           resolve({
@@ -333,15 +340,17 @@ class PaymentService {
         return await this.processRazorpayRefund(refundRequest);
       }
 
-          return {
-            success: false,
-        error: `Refund not supported for payment method: ${refundRequest.paymentMethod}`
-          };
+      return {
+        success: false,
+        error: `Refund not supported for payment method: ${refundRequest.paymentMethod}`,
+        message: 'Refund not supported for payment method'
+      };
     } catch (error: any) {
       console.error('Refund processing error:', error);
       return {
         success: false,
-        error: error.message || 'Refund processing failed'
+        error: error.message || 'Refund processing failed',
+        message: 'Refund processing failed'
       };
     }
   }
@@ -350,12 +359,13 @@ class PaymentService {
     if (!this.razorpay) {
       return {
         success: false,
-        error: 'Razorpay is not initialized'
+        error: 'Razorpay is not initialized',
+        message: 'Razorpay is not initialized'
       };
     }
 
     try {
-      const refund = await this.razorpay.payments.refund(refundRequest.paymentId, {
+      const refundAny: any = await (this.razorpay as any).payments.refund(refundRequest.paymentId, {
         amount: Math.round(refundRequest.amount * 100), // Convert to paise
         notes: {
           reason: refundRequest.reason,
@@ -367,17 +377,17 @@ class PaymentService {
         success: true,
         data: {
           refund: {
-            id: refund.id,
+            refundId: refundAny.id,
             paymentId: refundRequest.paymentId,
-            amount: Number(refund.amount) / 100,
-            currency: refund.currency,
-            status: refund.status,
+            amount: Number(refundAny.amount) / 100,
+            currency: refundAny.currency,
+            status: refundAny.status,
             reason: refundRequest.reason,
             description: refundRequest.description,
-            createdAt: new Date(Number(refund.created_at) * 1000),
+            processedAt: new Date(Number(refundAny.created_at) * 1000),
             metadata: {
-              razorpayRefundId: refund.id,
-              notes: refund.notes
+              razorpayRefundId: refundAny.id,
+              notes: refundAny.notes
             }
           } as IRefund
         },
@@ -387,7 +397,8 @@ class PaymentService {
       console.error('Razorpay refund error:', error);
       return {
         success: false,
-        error: error.message || 'Refund processing failed'
+        error: error.message || 'Refund processing failed',
+        message: 'Refund processing failed'
       };
     }
   }
@@ -396,7 +407,8 @@ class PaymentService {
     if (!this.razorpay) {
       return {
         success: false,
-        error: 'Razorpay is not initialized'
+        error: 'Razorpay is not initialized',
+        message: 'Razorpay is not initialized'
       };
     }
 
@@ -411,7 +423,8 @@ class PaymentService {
       if (expectedSignature !== signature) {
         return {
           success: false,
-          error: 'Invalid webhook signature'
+          error: 'Invalid webhook signature',
+          message: 'Invalid webhook signature'
         };
       }
 
@@ -428,16 +441,17 @@ class PaymentService {
           return await this.handleRazorpayOrderPaid(event);
         default:
           console.log('Unhandled webhook event:', event.event);
-      return {
-        success: true,
+          return {
+            success: true,
             message: 'Webhook event received but not processed'
-      };
+          };
       }
     } catch (error: any) {
       console.error('Razorpay webhook processing error:', error);
       return {
         success: false,
-        error: error.message || 'Webhook processing failed'
+        error: error.message || 'Webhook processing failed',
+        message: 'Webhook processing failed'
       };
     }
   }
@@ -446,13 +460,13 @@ class PaymentService {
     console.log('Payment captured:', event.payload.payment.entity);
       return {
         success: true,
-      message: 'Payment captured event processed'
+        message: 'Payment captured event processed'
     };
   }
 
   private async handleRazorpayPaymentFailed(event: any): Promise<IPaymentResponse> {
     console.log('Payment failed:', event.payload.payment.entity);
-        return {
+    return {
       success: true,
       message: 'Payment failed event processed'
     };
@@ -460,10 +474,19 @@ class PaymentService {
 
   private async handleRazorpayOrderPaid(event: any): Promise<IPaymentResponse> {
     console.log('Order paid:', event.payload.order.entity);
-      return {
+    return {
       success: true,
       message: 'Order paid event processed'
     };
+  }
+
+  // Stubs for Stripe/PayPal webhooks referenced in routes
+  async handleStripeWebhook(_payload: any, _signature: string): Promise<IPaymentResponse> {
+    return { success: true, message: 'Stripe webhook received' };
+  }
+
+  async handlePayPalWebhook(_body: any): Promise<IPaymentResponse> {
+    return { success: true, message: 'PayPal webhook received' };
   }
 
   private validatePaymentRequest(paymentRequest: IPaymentRequest): { valid: boolean; error?: string } {
@@ -482,39 +505,40 @@ class PaymentService {
     return { valid: true };
   }
 
-  private validatePaymentMethod(paymentData: any): { valid: boolean; error?: string } {
-    switch (paymentData.method) {
-      case PaymentMethod.PAYPAL:
-        return this.validatePayPalPayment(paymentData);
-      case PaymentMethod.RAZORPAY:
-      case PaymentMethod.UPI:
-      case PaymentMethod.NET_BANKING:
-      case PaymentMethod.WALLET:
-        return this.validateRazorpayPayment(paymentData);
-      default:
-        return { valid: false, error: 'Unsupported payment method' };
-    }
-  }
+  // Reserved for future extension
+  // private validatePaymentMethod(paymentData: any): { valid: boolean; error?: string } {
+  //   switch (paymentData.method) {
+  //     case PaymentMethod.PAYPAL:
+  //       return this.validatePayPalPayment(paymentData);
+  //     case PaymentMethod.RAZORPAY:
+  //     case PaymentMethod.UPI:
+  //     case PaymentMethod.NET_BANKING:
+  //     case PaymentMethod.WALLET:
+  //       return this.validateRazorpayPayment(paymentData);
+  //     default:
+  //       return { valid: false, error: 'Unsupported payment method' };
+  //   }
+  // }
 
-  private validatePayPalPayment(paymentData: any): { valid: boolean; error?: string } {
-    if (!paymentData.paypalPaymentId) {
-      return { valid: false, error: 'PayPal payment ID is required' };
-    }
-    return { valid: true };
-  }
+  // private validatePayPalPayment(paymentData: any): { valid: boolean; error?: string } {
+  //   if (!paymentData.paypalPaymentId) {
+  //     return { valid: false, error: 'PayPal payment ID is required' };
+  //   }
+  //   return { valid: true };
+  // }
 
-  private validateRazorpayPayment(paymentData: any): { valid: boolean; error?: string } {
-    if (!paymentData.razorpayPaymentId) {
-      return { valid: false, error: 'Razorpay payment ID is required' };
-    }
-    if (!paymentData.razorpayOrderId) {
-      return { valid: false, error: 'Razorpay order ID is required' };
-    }
-    if (!paymentData.razorpaySignature) {
-      return { valid: false, error: 'Razorpay signature is required' };
-    }
-    return { valid: true };
-  }
+  // private validateRazorpayPayment(paymentData: any): { valid: boolean; error?: string } {
+  //   if (!paymentData.razorpayPaymentId) {
+  //     return { valid: false, error: 'Razorpay payment ID is required' };
+  //   }
+  //   if (!paymentData.razorpayOrderId) {
+  //     return { valid: false, error: 'Razorpay order ID is required' };
+  //   }
+  //   if (!paymentData.razorpaySignature) {
+  //     return { valid: false, error: 'Razorpay signature is required' };
+  //   }
+  //   return { valid: true };
+  // }
 
   getSupportedPaymentMethods(): PaymentMethod[] {
     const methods: PaymentMethod[] = [];

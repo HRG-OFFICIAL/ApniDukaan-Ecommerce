@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { ArrowRight, Zap, Gift, Store } from 'lucide-react'
 import { sampleProducts, categories } from '../lib/data'
-import ProductCard from '../components/ProductCard'
+// import ProductCard from '../components/ProductCard'
 import MainLayout from '../components/layout/MainLayout'
 
 export default function Home() {
@@ -58,7 +58,15 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
               {sampleProducts.map((p) => (
-                <ProductCard key={p.id} product={p} />
+                <div key={p.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                  <div className="aspect-square bg-gray-200 rounded-lg mb-4"></div>
+                  <h3 className="font-semibold text-gray-900 mb-2">{p.name}</h3>
+                  <p className="text-sm text-gray-600 mb-2">{p.description}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-bold text-blue-600">₹{p.price}</span>
+                    <span className="text-sm text-gray-500">{p.rating} ⭐</span>
+                  </div>
+                </div>
               ))}
             </div>
           </div>

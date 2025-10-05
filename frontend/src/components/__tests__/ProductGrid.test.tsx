@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import ProductGrid from '../ProductGrid';
-import { Product } from '../../graphql/types';
+import { Product } from '../../lib/data';
 
 // Mock product data
 const mockProducts: Product[] = [

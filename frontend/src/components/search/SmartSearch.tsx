@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
+import { searchService } from '../../services/searchService';
 
 interface SearchSuggestion {
   id: string;
@@ -84,15 +85,25 @@ export default function SmartSearch({
   useEffect(() => {
     if (query.length > 1) {
       setIsLoading(true);
-      // Simulate API delay
-      const timer = setTimeout(() => {
-        const filtered = mockSuggestions.filter(s => 
-          s.text.toLowerCase().includes(query.toLowerCase())
-        );
-        setSuggestions(filtered);
-        setIsLoading(false);
-      }, 200);
       
+      // Use real search service
+      const fetchSuggestions = async () => {
+        try {
+          const suggestions = await searchService.getSearchSuggestions(query);
+          setSuggestions(suggestions);
+          setIsLoading(false);
+        } catch (error) {
+          console.error('Failed to fetch search suggestions:', error);
+          // Fallback to mock suggestions
+          const filtered = mockSuggestions.filter(s => 
+            s.text.toLowerCase().includes(query.toLowerCase())
+          );
+          setSuggestions(filtered);
+          setIsLoading(false);
+        }
+      };
+
+      const timer = setTimeout(fetchSuggestions, 200);
       return () => clearTimeout(timer);
     } else {
       setSuggestions([]);

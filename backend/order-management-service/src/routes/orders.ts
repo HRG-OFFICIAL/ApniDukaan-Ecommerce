@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Router } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
 import multer from 'multer';
 
@@ -25,7 +25,7 @@ import {
 } from '../types/order.types';
 import { logger } from '@apnidukaan/shared';
 
-const router = express.Router();
+const router: Router = express.Router();
 
 // Initialize services
 const orderService = OrderService.createWithMockServices();
@@ -575,7 +575,7 @@ router.post('/:orderId/refunds',
       return res.json({
         success: true,
         message: 'Refund processed successfully',
-        data: { refund: result.refund }
+        data: { refund: result.data?.refund }
       });
 
     } catch (error) {

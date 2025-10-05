@@ -4,15 +4,14 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Star, ShoppingCart, Heart } from 'lucide-react'
-import { Product } from '../graphql/types'
+import { Product } from '../lib/api'
 
 interface ProductCardProps {
   product: Product;
 }
 
 const getBadge = (product: Product) => {
-  if (product.isBestseller) return { text: 'Best Seller', classes: 'bg-yellow-400 text-yellow-900' };
-  if (product.isNew) return { text: 'New', classes: 'bg-blue-500 text-white' };
+  if (product.featured) return { text: 'Featured', classes: 'bg-yellow-400 text-yellow-900' };
   if (product.isOnSale) return { text: 'Sale', classes: 'bg-red-500 text-white' };
   return null;
 };
@@ -27,8 +26,8 @@ export default function SimpleProductCard({ product }: ProductCardProps) {
   const badge = getBadge(product)
   const productImage = Array.isArray(product.images) ? product.images[0] : product.images
   const imageUrl = typeof productImage === 'string' ? productImage : productImage || '/placeholder.jpg'
-  const isOutOfStock = product.stock <= 0
-  const isLowStock = product.stock <= 5 && product.stock > 0
+  const isOutOfStock = product.inventory.quantity <= 0
+  const isLowStock = product.inventory.quantity <= 5 && product.inventory.quantity > 0
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 relative">
@@ -41,7 +40,7 @@ export default function SimpleProductCard({ product }: ProductCardProps) {
         <Heart className="w-4 h-4" />
       </button>
 
-      <Link href={`/products/${product.id}`} aria-label={`View details for ${product.name}`}>
+      <Link href={`/products/${product._id}`} aria-label={`View details for ${product.name}`}>
         <div className="relative">
           <Image
             src={imageUrl}
@@ -66,7 +65,7 @@ export default function SimpleProductCard({ product }: ProductCardProps) {
             )}
             {isLowStock && !isOutOfStock && (
               <span className="bg-orange-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                Only {product.stock} left
+                Only {product.inventory.quantity} left
               </span>
             )}
           </div>
@@ -79,12 +78,12 @@ export default function SimpleProductCard({ product }: ProductCardProps) {
           
           {/* Rating */}
           <div className="flex items-center mb-3">
-            <div className="flex items-center" role="img" aria-label={`Rating: ${product.rating} out of 5 stars`}>
+            <div className="flex items-center" role="img" aria-label={`Rating: ${product.rating.average} out of 5 stars`}>
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
                   className={`w-3 h-3 ${
-                    i < Math.floor(product.rating) 
+                    i < Math.floor(product.rating.average) 
                       ? "text-yellow-400 fill-current" 
                       : "text-gray-300"
                   }`}
@@ -93,7 +92,7 @@ export default function SimpleProductCard({ product }: ProductCardProps) {
               ))}
             </div>
             <span className="text-xs text-gray-600 ml-2">
-              {product.rating} ({product.reviewCount})
+              {product.rating.average} ({product.rating.count})
             </span>
           </div>
           

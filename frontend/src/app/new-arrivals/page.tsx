@@ -2,7 +2,7 @@
 
 import ProductGrid from '../../components/ProductGrid';
 import { productService } from '../../services/productService';
-import { Product } from '../../graphql/types';
+import { Product } from '../../lib/api';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useEffect, useState } from 'react';
 

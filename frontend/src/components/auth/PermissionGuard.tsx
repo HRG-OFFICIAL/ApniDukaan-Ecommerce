@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { User } from '../../store/useAuthStore'
+import { User } from '../../lib/api'
 import { Permission, usePermissions } from '../../services/rbac'
 
 // Permission-based component wrapper

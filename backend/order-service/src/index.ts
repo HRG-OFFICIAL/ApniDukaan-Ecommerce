@@ -2,7 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { logger } from '@apnidukaan/shared';
+import { createLogger, transports, format } from 'winston';
+const logger = createLogger({
+  level: 'info',
+  format: format.json(),
+  transports: [new transports.Console({ format: format.simple() })]
+});
 
 async function startServer() {
   const app = express();

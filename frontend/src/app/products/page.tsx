@@ -12,8 +12,8 @@ import {
   SlidersHorizontal,
   AlertCircle
 } from 'lucide-react'
-import ProductCard from '../../components/ProductCard'
-import { Product } from '../../graphql/types'
+// import ProductCard from '../../components/ProductCard'
+import { Product } from '../../lib/api'
 import { useProductsStore } from '../../store/useProductsStore'
 import { usePreferencesStore } from '../../store/usePreferencesStore'
 import { useProducts, useProductFilters } from '../../hooks/useProductsAPI'
@@ -26,112 +26,7 @@ import { SyncErrorAlert } from '../../components/ui/ApiErrorAlert'
 import toast from 'react-hot-toast'
 
 // Fallback mock data in case API fails
-const fallbackProducts: Product[] = [
-  {
-    id: '1',
-    name: 'Premium Wireless Headphones',
-    description: 'High-quality wireless headphones with noise cancellation',
-    price: 299.99,
-    originalPrice: 399.99,
-    images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400'],
-    category: 'Electronics',
-    rating: 4.5,
-    reviewCount: 128,
-    stock: 15,
-    isBestseller: true,
-    isOnSale: true,
-    isNew: false,
-    reviews: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: '2',
-    name: 'Organic Cotton T-Shirt',
-    description: 'Comfortable organic cotton t-shirt in multiple colors',
-    price: 29.99,
-    images: ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400'],
-    category: 'Clothing',
-    rating: 4.2,
-    reviewCount: 64,
-    stock: 42,
-    isBestseller: false,
-    isOnSale: false,
-    isNew: true,
-    reviews: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: '3',
-    name: 'Smart Watch Pro',
-    description: 'Advanced smartwatch with health monitoring features',
-    price: 399.99,
-    images: ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400'],
-    category: 'Electronics',
-    rating: 4.7,
-    reviewCount: 201,
-    stock: 8,
-    isBestseller: false,
-    isOnSale: false,
-    isNew: false,
-    reviews: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: '4',
-    name: 'Leather Messenger Bag',
-    description: 'Handcrafted leather messenger bag for professionals',
-    price: 149.99,
-    originalPrice: 199.99,
-    images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400'],
-    category: 'Accessories',
-    rating: 4.8,
-    reviewCount: 87,
-    stock: 12,
-    isBestseller: false,
-    isOnSale: true,
-    isNew: false,
-    reviews: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: '5',
-    name: 'Yoga Mat Pro',
-    description: 'Professional grade yoga mat with superior grip',
-    price: 79.99,
-    images: ['https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400'],
-    category: 'Sports & Fitness',
-    rating: 4.4,
-    reviewCount: 156,
-    stock: 25,
-    isBestseller: false,
-    isOnSale: false,
-    isNew: true,
-    reviews: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: '6',
-    name: 'Coffee Maker Deluxe',
-    description: 'Premium coffee maker with programmable features',
-    price: 189.99,
-    images: ['https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400'],
-    category: 'Home & Kitchen',
-    rating: 4.6,
-    reviewCount: 93,
-    stock: 18,
-    isBestseller: true,
-    isOnSale: false,
-    isNew: false,
-    reviews: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-]
+// Fallback products removed - using API products only
 
 const categories = [
   'All Categories',
@@ -202,9 +97,9 @@ function ProductsContent() {
   })
   
   // Use API data or fallback to mock data
-  const displayProducts = apiError || apiErrorData ? fallbackProducts : apiProducts
+  const displayProducts = apiProducts
   const loading = apiLoading
-  const totalProducts = apiError || apiErrorData ? fallbackProducts.length : totalCount
+  const totalProducts = totalCount
 
   // Handle API errors
   useEffect(() => {
@@ -601,11 +496,15 @@ function ProductsContent() {
                       : 'grid-cols-1'
                   }`} style={{ minHeight: '200px' }}>
                     {displayProducts.map((product) => (
-                      <ProductCard 
-                        key={product.id} 
-                        product={product}
-                        viewMode={viewMode}
-                      />
+                      <div key={(product as any)._id || (product as any).id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                        <div className="aspect-square bg-gray-200 rounded-lg mb-4"></div>
+                        <h3 className="font-semibold text-gray-900 mb-2">{product.name}</h3>
+                        <p className="text-sm text-gray-600 mb-2">{product.description}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-lg font-bold text-blue-600">₹{product.price}</span>
+                          <span className="text-sm text-gray-500">{typeof product.rating === 'number' ? product.rating : product.rating?.average || 0} ⭐</span>
+                        </div>
+                      </div>
                     ))}
                   </div>
                   

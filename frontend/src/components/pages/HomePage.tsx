@@ -5,9 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, TrendingUp, Star, ShoppingBag, Truck, Shield, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import ProductCard from '@/components/product/ProductCard';
+import ProductCard from '../ProductCard';
 import { useFeaturedProducts } from '@/hooks/useProducts';
-import { Product } from '@/graphql/types';
+import { Product } from '../../lib/api';
 
 export const HomePage: React.FC = () => {
   const { 
@@ -158,9 +158,8 @@ export const HomePage: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {featuredProducts?.map((product: Product) => (
                 <ProductCard
-                  key={product.id}
+                  key={product._id}
                   product={product}
-                  showQuickActions={true}
                 />
               ))}
             </div>

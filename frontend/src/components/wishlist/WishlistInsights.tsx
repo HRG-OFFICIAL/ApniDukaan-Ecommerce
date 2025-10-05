@@ -33,12 +33,12 @@ export default function WishlistInsights({ className = '' }: WishlistInsightsPro
     
     // Category breakdown
     const categories = wishlistItems.reduce((acc, item) => {
-      const category = item.product.category || 'Other';
+      const category = (item as any).product.category?.name || 'Other';
       acc[category] = (acc[category] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     
-    const topCategory = Object.entries(categories).sort(([,a], [,b]) => b - a)[0];
+    const topCategory = Object.entries(categories).sort(([,a], [,b]) => (b as number) - (a as number))[0];
     
     // Price analysis
     const prices = wishlistItems.map(item => item.product.price).sort((a, b) => a - b);
@@ -182,12 +182,12 @@ export default function WishlistInsights({ className = '' }: WishlistInsightsPro
           
           <div className="space-y-3">
             {Object.entries(insights.categories)
-              .sort(([,a], [,b]) => b - a)
+              .sort(([,a], [,b]) => (b as number) - (a as number))
               .slice(0, 4)
               .map(([category, count]) => (
                 <div key={category} className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">{category}</span>
-                  <Badge variant="secondary">{count} items</Badge>
+                  <Badge variant="secondary">{count as number} items</Badge>
                 </div>
               ))}
           </div>
@@ -196,7 +196,7 @@ export default function WishlistInsights({ className = '' }: WishlistInsightsPro
             <div className="mt-4 p-3 bg-purple-50 rounded-lg">
               <p className="text-sm text-purple-700">
                 <span className="font-semibold">{insights.topCategory[0]}</span> is your favorite category
-                with {insights.topCategory[1]} items
+                with {insights.topCategory[1] as number} items
               </p>
             </div>
           )}

@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Product } from '../graphql/types'
-import { productsApi, ProductFilters, ProductSort, Product as ApiProduct } from '../lib/api'
+import { productsApi, ProductFilters, ProductSort, Product } from '../lib/api'
 
 interface UseProductsOptions {
   filter?: {
@@ -37,30 +36,46 @@ interface UseProductsResult {
 // Mock products for fallback
 const mockProducts: Product[] = [
   {
-    id: '1',
+    _id: '1',
     name: 'Wireless Bluetooth Headphones',
+    slug: 'wireless-bluetooth-headphones',
     description: 'High-quality wireless headphones with noise cancellation',
+    shortDescription: 'Wireless ANC headphones',
     sku: 'WBH-001',
     price: 199.99,
     originalPrice: 249.99,
+    currency: 'USD',
     images: ['/images/products/headphones-1.jpg'],
-    category: 'Electronics',
-    brand: { name: 'TechSound' },
+    thumbnailImage: '/images/products/headphones-1.jpg',
+    category: { _id: 'cat1', name: 'Electronics', slug: 'electronics' },
+    subcategory: { _id: 'sub1', name: 'Headphones', slug: 'headphones' },
+    brand: 'TechSound',
     tags: ['wireless', 'bluetooth', 'headphones'],
-    rating: 4.5,
-    reviewCount: 128,
-    stock: 50,
-    isNew: false,
-    isBestseller: true,
-    isOnSale: true,
-    isFeatured: true,
-    isActive: true,
-    inStock: true,
-    specifications: {
-      'Color': 'Black',
-      'Battery Life': '30 hours'
+    attributes: [
+      { name: 'Color', value: 'Black' },
+      { name: 'Battery Life', value: '30 hours' }
+    ],
+    inventory: {
+      quantity: 50,
+      lowStockThreshold: 5,
+      trackQuantity: true,
+      allowBackorder: false
     },
-    reviews: [],
+    shipping: {
+      weight: 0.5,
+      dimensions: { length: 20, width: 18, height: 8 },
+      freeShipping: false,
+      shippingClass: 'standard'
+    },
+    seo: { title: 'Wireless Bluetooth Headphones', description: 'ANC wireless headphones' },
+    status: 'published',
+    featured: true,
+    visibility: 'public',
+    rating: { average: 4.5, count: 128 },
+    sales: { totalSold: 500, revenue: 99999 },
+    isOnSale: true,
+    saleStartDate: new Date().toISOString(),
+    saleEndDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }
@@ -78,38 +93,7 @@ export function useProducts(options: UseProductsOptions = {}): UseProductsResult
   // Memoize the filter object to prevent unnecessary re-renders
   const stableFilter = useMemo(() => filter, [JSON.stringify(filter)])
   
-  // Convert API product to frontend format
-  function convertApiProductToFrontend(apiProduct: ApiProduct): Product {
-    return {
-      id: apiProduct._id,
-      name: apiProduct.name,
-      description: apiProduct.description,
-      sku: apiProduct.sku,
-      price: apiProduct.price,
-      originalPrice: apiProduct.originalPrice,
-      images: apiProduct.images,
-      category: apiProduct.category.name,
-      subcategory: apiProduct.subcategory?.name,
-      brand: apiProduct.brand ? { name: apiProduct.brand } : undefined,
-      tags: apiProduct.tags,
-      stock: apiProduct.inventory?.quantity || 0,
-      isFeatured: apiProduct.featured || false,
-      isActive: apiProduct.status === 'published',
-      rating: apiProduct.rating?.average || 0,
-      reviewCount: apiProduct.rating?.count || 0,
-      isOnSale: apiProduct.isOnSale,
-      isNew: new Date(apiProduct.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-      isBestseller: apiProduct.sales?.totalSold > 100,
-      inStock: (apiProduct.inventory?.quantity || 0) > 0,
-      specifications: apiProduct.attributes?.reduce((acc, attr) => {
-        acc[attr.name] = attr.value;
-        return acc;
-      }, {} as Record<string, string | number | boolean>) || {},
-      reviews: [],
-      createdAt: apiProduct.createdAt,
-      updatedAt: apiProduct.updatedAt
-    };
-  }
+  // No conversion needed: API client returns `Product` shape already
 
   // Real API call
   useEffect(() => {
@@ -145,9 +129,7 @@ export function useProducts(options: UseProductsOptions = {}): UseProductsResult
         const response = await productsApi.getAll(apiFilters, apiSort, page, limit);
         
         if (response.success) {
-          // Convert API products to frontend format
-          const convertedProducts = response.data.map(convertApiProductToFrontend);
-          setProducts(convertedProducts);
+          setProducts(response.data);
           setTotalCount(response.pagination?.total || 0);
         } else {
           throw new Error(response.error || 'Failed to fetch products');
@@ -218,37 +200,8 @@ export function useProduct(id: string): UseProductResult {
         const response = await productsApi.getById(id);
         
         if (response.success) {
-          // Convert API product to frontend format
-          const convertedProduct = {
-            id: response.data._id,
-            name: response.data.name,
-            description: response.data.description,
-            sku: response.data.sku,
-            price: response.data.price,
-            originalPrice: response.data.originalPrice,
-            images: response.data.images,
-            category: response.data.category.name,
-            subcategory: response.data.subcategory?.name,
-            brand: response.data.brand ? { name: response.data.brand } : undefined,
-            tags: response.data.tags,
-            stock: response.data.inventory?.quantity || 0,
-            isFeatured: response.data.featured || false,
-            isActive: response.data.status === 'published',
-            rating: response.data.rating.average,
-            reviewCount: response.data.rating.count,
-            isOnSale: response.data.isOnSale,
-            isNew: new Date(response.data.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-            isBestseller: response.data.sales?.totalSold > 100,
-            inStock: (response.data.inventory?.quantity || 0) > 0,
-            specifications: response.data.attributes?.reduce((acc, attr) => {
-              acc[attr.name] = attr.value;
-              return acc;
-            }, {} as Record<string, string | number | boolean>) || {},
-            reviews: [],
-            createdAt: response.data.createdAt,
-            updatedAt: response.data.updatedAt
-          };
-          setProduct(convertedProduct);
+          // Return the API product directly since it matches the lib/api Product interface
+          setProduct(response.data);
         } else {
           throw new Error(response.error || 'Failed to fetch product');
         }
@@ -312,65 +265,7 @@ export function useProductSearch(options: UseProductSearchOptions): UseProductSe
         const response = await productsApi.search(query, {}, 1, limit);
         
         if (response.success) {
-          // Convert API products to frontend format
-          const convertedProducts = response.data.map((apiProduct: ApiProduct) => ({
-            id: apiProduct._id,
-            name: apiProduct.name,
-            slug: apiProduct.slug,
-            description: apiProduct.description,
-            shortDescription: apiProduct.shortDescription,
-            sku: apiProduct.sku,
-            price: apiProduct.price,
-            originalPrice: apiProduct.originalPrice,
-            currency: apiProduct.currency,
-            images: apiProduct.images,
-            thumbnailImage: apiProduct.thumbnailImage,
-            category: apiProduct.category.name,
-            subcategory: apiProduct.subcategory?.name,
-            brand: apiProduct.brand ? { name: apiProduct.brand } : undefined,
-            tags: apiProduct.tags,
-            attributes: apiProduct.attributes,
-            inventory: {
-              quantity: apiProduct.inventory.quantity,
-              lowStockThreshold: apiProduct.inventory.lowStockThreshold,
-              trackQuantity: apiProduct.inventory.trackQuantity,
-              allowBackorder: apiProduct.inventory.allowBackorder
-            },
-            shipping: apiProduct.shipping ? {
-              weight: apiProduct.shipping.weight || 0,
-              dimensions: apiProduct.shipping.dimensions || { length: 0, width: 0, height: 0 },
-              freeShipping: apiProduct.shipping.freeShipping || false,
-              shippingClass: apiProduct.shipping.shippingClass || 'standard'
-            } : {
-              weight: 0,
-              dimensions: { length: 0, width: 0, height: 0 },
-              freeShipping: false,
-              shippingClass: 'standard'
-            },
-            seo: apiProduct.seo,
-            status: apiProduct.status,
-            featured: apiProduct.featured,
-            visibility: apiProduct.visibility,
-            rating: apiProduct.rating.average,
-            reviewCount: apiProduct.rating.count,
-            sales: {
-              totalSold: apiProduct.sales.totalSold,
-              revenue: apiProduct.sales.revenue
-            },
-            isOnSale: apiProduct.isOnSale,
-            saleStartDate: apiProduct.saleStartDate,
-            saleEndDate: apiProduct.saleEndDate,
-            createdAt: apiProduct.createdAt,
-            updatedAt: apiProduct.updatedAt,
-            // Frontend-specific fields
-            stock: apiProduct.inventory.quantity,
-            isNew: new Date(apiProduct.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-            isBestseller: apiProduct.sales.totalSold > 100,
-            discount: apiProduct.originalPrice ? 
-              Math.round(((apiProduct.originalPrice - apiProduct.price) / apiProduct.originalPrice) * 100) : 0,
-            reviews: []
-          }));
-          setProducts(convertedProducts);
+          setProducts(response.data);
         } else {
           throw new Error(response.error || 'Failed to search products');
         }

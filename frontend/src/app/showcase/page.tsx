@@ -111,11 +111,23 @@ export default function ShowcasePage() {
     // Test authentication
     if (!isAuthenticated) {
       login({
-        id: 'u1',
+        _id: 'u1',
         email: 'showcase@apnidukaan.com',
         name: 'Showcase User',
         role: 'user',
-        createdAt: new Date().toISOString()
+        isEmailVerified: true,
+        isPhoneVerified: false,
+        isActive: true,
+        preferences: {
+          newsletter: true,
+          notifications: { email: true, sms: false, push: true },
+          language: 'en',
+          currency: 'USD',
+          theme: 'light'
+        },
+        addresses: [],
+        createdAt: new Date(),
+        updatedAt: new Date()
       }, 'demo_token_123')
     }
 

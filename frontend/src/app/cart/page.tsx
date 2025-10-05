@@ -15,21 +15,25 @@ import {
   Truck,
   Shield
 } from 'lucide-react';
-import { useCartAPI } from '../../hooks/useCartAPI';
+import { useCart, useCartMutations } from '../../hooks/useCart';
 import { Button } from '../../components/ui/Button';
 import MainLayout from '../../components/layout/MainLayout';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
+import { useAuthStore } from '../../store/useAuthStore';
 
 export default function CartPage() {
-  const { cart, loading, updateQuantity, removeItem, clearCart, syncError, retrySync, isAuthenticated, isSynced } = useCartAPI();
+  const { cart, loading, refetch } = useCart();
+  const { updateCartItem, removeFromCart, clearCart, loading: mutationLoading } = useCartMutations();
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
+  const { isAuthenticated } = useAuthStore();
+  const isSynced = Boolean(cart?.id);
 
   const handleQuantityChange = async (productId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
     
     setUpdatingItems(prev => new Set(prev).add(productId));
     try {
-      await updateQuantity(productId, newQuantity);
+      await updateCartItem(productId, newQuantity);
     } finally {
       setUpdatingItems(prev => {
         const newSet = new Set(prev);
@@ -42,7 +46,7 @@ export default function CartPage() {
   const handleRemoveItem = async (productId: string) => {
     setUpdatingItems(prev => new Set(prev).add(productId));
     try {
-      await removeItem(productId);
+      await removeFromCart(productId);
     } finally {
       setUpdatingItems(prev => {
         const newSet = new Set(prev);
@@ -110,17 +114,6 @@ export default function CartPage() {
         </div>
         
         {/* Sync Error Display */}
-        {syncError && (
-          <div className="mb-6">
-            <ApiErrorAlert
-              error={syncError}
-              onRetry={retrySync}
-              title="Cart Sync Issue"
-              variant="warning"
-              context="Your cart is saved locally and will sync when the connection is restored."
-            />
-          </div>
-        )}
         
         {/* Sync Status */}
         {isAuthenticated && (

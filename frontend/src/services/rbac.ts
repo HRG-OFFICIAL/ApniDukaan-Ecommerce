@@ -1,6 +1,6 @@
 'use client'
 
-import { User } from '../store/useAuthStore'
+import type { User } from '../lib/api'
 
 // Define available permissions
 export enum Permission {

@@ -245,7 +245,7 @@ export default function CategoryPage() {
             )}>
               {products.map((product) => (
                 <ProductCard
-                  key={product.id}
+                  key={product._id}
                   product={product}
                 />
               ))}
