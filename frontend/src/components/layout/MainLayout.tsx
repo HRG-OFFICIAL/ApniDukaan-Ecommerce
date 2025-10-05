@@ -1,7 +1,7 @@
 'use client'
 
 import React, { ReactNode } from 'react'
-import { EnhancedNavbar } from './EnhancedNavbar'
+import { Navbar } from './EnhancedNavbar'
 import Footer from './Footer'
 import CartSidebar from '../cart/CartSidebar'
 import { ErrorBoundary } from '../ui/ErrorBoundary'
@@ -67,7 +67,7 @@ export default function MainLayout({
       {/* Navigation */}
       {showNavbar && (
         <header role="banner" id="navigation">
-          <EnhancedNavbar />
+          <Navbar />
         </header>
       )}
 

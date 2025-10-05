@@ -20,13 +20,6 @@ export function Logo({
   className = '',
   href = '/'
 }: LogoProps) {
-  const sizeClasses = {
-    sm: 'h-6 w-6',
-    md: 'h-8 w-8', 
-    lg: 'h-10 w-10',
-    xl: 'h-12 w-12'
-  }
-
   const textSizeClasses = {
     sm: 'text-lg',
     md: 'text-xl',
@@ -40,15 +33,6 @@ export function Logo({
     lg: 'text-sm',
     xl: 'text-sm'
   }
-
-  const LogoIcon = () => (
-    <div className={cn(
-      'rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center',
-      sizeClasses[size]
-    )}>
-      <span className="text-white font-bold text-lg">A</span>
-    </div>
-  )
 
   const LogoText = () => (
     <div className="flex flex-col">
@@ -70,18 +54,14 @@ export function Logo({
   )
 
   const LogoContent = () => (
-    <div className="flex items-center space-x-2">
-      <LogoIcon />
+    <div className="flex items-center">
       {showText && <LogoText />}
     </div>
   )
 
   if (variant === 'footer') {
     return (
-      <Link href={href} className={cn('flex items-center space-x-2', className)}>
-        <div className="h-10 w-10 rounded bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
-          <span className="text-white font-bold text-lg">A</span>
-        </div>
+      <Link href={href} className={cn('flex items-center', className)}>
         <span className="text-2xl font-bold text-white">ApniDukaan</span>
       </Link>
     )
@@ -98,8 +78,7 @@ export function Logo({
   if (variant === 'navbar') {
     return (
       <Link href={href} className={cn('flex-shrink-0', className)}>
-        <div className="flex items-center space-x-2">
-          <LogoIcon />
+        <div className="flex items-center">
           <div>
             <h1 className={cn('font-bold text-gray-900', textSizeClasses[size])}>
               ApniDukaan

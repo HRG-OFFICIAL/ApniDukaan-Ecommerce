@@ -6,20 +6,13 @@ import { useRouter } from 'next/navigation'
 import { 
   Search, 
   ShoppingCart, 
-  Heart, 
-  User, 
+  CircleUser,
   Menu, 
   X, 
   ChevronDown,
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
-  Shield,
-  Truck,
-  RotateCcw
+  ShoppingBag,
+  MoreVertical
 } from 'lucide-react'
-import { ThemeToggle } from '../ui/ThemeToggle'
 
 // Categories for mega menu
 const categoryGroups = [
@@ -83,11 +76,11 @@ const searchSuggestions = [
   'Dyson V15 Detect'
 ]
 
-interface EnhancedNavbarProps {
+interface NavbarProps {
   className?: string
 }
 
-export function EnhancedNavbar({ className = '' }: EnhancedNavbarProps) {
+export function Navbar({ className = '' }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
@@ -166,50 +159,22 @@ export function EnhancedNavbar({ className = '' }: EnhancedNavbarProps) {
 
   return (
     <>
-      {/* Top Bar */}
-      <div className="bg-blue-600 text-white text-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-2">
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4" />
-                <span>Deliver to India</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Phone className="h-4 w-4" />
-                <span>+91 98765 43210</span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Mail className="h-4 w-4" />
-                <span>support@apnidukaan.com</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Globe className="h-4 w-4" />
-                <span>English</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Navigation */}
-      <nav className={`bg-white shadow-sm sticky top-0 z-40 ${className}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className={`bg-white sticky top-0 z-40 text-gray-900 ${className}`}>
+        <div className="mx-auto px-4 sm:px-6 lg:px-10">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">A</span>
-              </div>
+            <Link href="/" className="flex items-center">
               <span className="font-bold text-xl text-gray-900">ApniDukaan</span>
             </Link>
 
             {/* Search Bar */}
-            <div className="hidden md:block flex-1 max-w-2xl mx-8" ref={searchRef}>
+            <div className="hidden md:block flex-1 max-w-2xl mx-8 navbar-search" ref={searchRef}>
               <form onSubmit={handleSearch} className="relative">
-                <div className="relative">
+                <div className="relative rounded-md bg-gray-100">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-500" />
+                  </div>
                   <input
                     type="text"
                     value={searchQuery}
@@ -219,15 +184,10 @@ export function EnhancedNavbar({ className = '' }: EnhancedNavbarProps) {
                     }}
                     onFocus={() => setIsSearchFocused(true)}
                     onKeyDown={handleSearchKeyDown}
-                    placeholder="Search for products, brands, and more..."
-                    className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-colors"
+                    placeholder="Search for Products, Brands and More"
+                    className="w-full pl-10 pr-3 py-1.5 rounded-md bg-gray-100 focus:bg-gray-100 text-gray-900 placeholder-gray-600 border border-transparent focus:border-transparent outline-none focus:outline-none focus:ring-0 focus:shadow-none appearance-none autofill:shadow-[inset_0_0_0px_1000px_#f3f4f6]"
                   />
-                  <button
-                    type="submit"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md transition-colors"
-                  >
-                    <Search className="h-4 w-4" />
-                  </button>
+                  {/* submit icon removed for compact style */}
                 </div>
 
                 {/* Search Suggestions */}
@@ -258,41 +218,14 @@ export function EnhancedNavbar({ className = '' }: EnhancedNavbarProps) {
 
             {/* Right Side Actions */}
             <div className="flex items-center space-x-4">
-              {/* Cart */}
-              <Link href="/cart" className="relative p-2 text-gray-700 hover:text-blue-600 transition-colors">
-                <ShoppingCart className="h-6 w-6" />
-                {cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {cartItemCount}
-                  </span>
-                )}
-              </Link>
-
-              {/* Wishlist */}
-              <Link href="/wishlist" className="relative p-2 text-gray-700 hover:text-red-600 transition-colors">
-                <Heart className="h-6 w-6" />
-                {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {wishlistCount}
-                  </span>
-                )}
-              </Link>
-
-              {/* Theme Toggle */}
-              <div className="flex items-center">
-                <ThemeToggle variant="icon" size="md" />
-              </div>
-
-              {/* User Menu */}
+              {/* Account Dropdown */}
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 p-2 text-gray-700 hover:text-blue-600 transition-colors"
+                  className="flex items-center space-x-2 p-2 text-black hover:text-black transition-colors"
                 >
-                  <User className="h-6 w-6" />
-                  <span className="hidden md:block">
-                    {isAuthenticated ? (user as any)?.name || 'Account' : 'Sign In'}
-                  </span>
+                  <CircleUser className="h-5 w-5" />
+                  <span className="hidden md:block text-black text-sm font-medium">{isAuthenticated ? (user as any)?.name || 'Account' : 'Sign In'}</span>
                   <ChevronDown className="h-4 w-4" />
                 </button>
 
@@ -331,6 +264,28 @@ export function EnhancedNavbar({ className = '' }: EnhancedNavbarProps) {
                 )}
               </div>
 
+              {/* Cart with label */}
+              <Link href="/cart" className="relative flex items-center gap-2 p-2 text-black hover:text-black transition-colors">
+                <ShoppingCart className="h-5 w-5" />
+                <span className="hidden md:inline text-sm font-medium text-black">Cart</span>
+                {cartItemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartItemCount}
+                  </span>
+                )}
+              </Link>
+
+              {/* Become a Seller */}
+              <Link href="/seller" className="hidden md:flex items-center gap-2 p-2 text-black hover:text-black transition-colors">
+                <ShoppingBag className="h-5 w-5" />
+                <span className="text-sm font-medium text-black">Become a Seller</span>
+              </Link>
+
+              {/* More options */}
+              <button className="p-2 text-black hover:text-black transition-colors" aria-label="More options">
+                <MoreVertical className="h-5 w-5" />
+              </button>
+
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -365,7 +320,7 @@ export function EnhancedNavbar({ className = '' }: EnhancedNavbarProps) {
 
               {isCategoriesOpen && (
                 <div className="absolute top-full left-0 w-full bg-white border-t border-gray-200 shadow-lg z-50">
-                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                  <div className="mx-auto px-4 sm:px-6 lg:px-10 py-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                       {categoryGroups.map((group) => (
                         <div key={group.title}>
