@@ -163,10 +163,25 @@ app.get('/api/catalog/products', async (req, res) => {
             ]
           });
           if (catDoc && catDoc._id) {
-            query.category = catDoc._id;
+            query.category = { $in: [catDoc._id, catDoc.name] };
           } else {
-            // Fallback to raw string match (for legacy datasets)
-            query.category = category;
+            // Try to find in children
+            const parentWithChild = await categoriesCol.findOne({
+              'children.slug': { $regex: new RegExp(`^${category}$`, 'i') }
+            });
+            if (parentWithChild) {
+              const matchedChild = parentWithChild.children.find(c => 
+                new RegExp(`^${category}$`, 'i').test(c.slug || '')
+              );
+              if (matchedChild && matchedChild.name) {
+                query.category = matchedChild.name;
+              } else {
+                query.category = category;
+              }
+            } else {
+              // Fallback to raw string match (for legacy datasets)
+              query.category = category;
+            }
           }
         }
       }

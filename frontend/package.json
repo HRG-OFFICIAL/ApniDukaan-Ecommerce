@@ -26,6 +26,8 @@
     "clsx": "^2.0.0",
     "critters": "^0.0.23",
     "framer-motion": "^10.18.0",
+    "react-icons": "^5.0.1",
+    "swiper": "^11.0.5",
     "google-auth-library": "^10.3.0",
     "graphql": "^16.11.0",
     "jose": "^6.1.0",

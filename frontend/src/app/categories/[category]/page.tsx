@@ -14,13 +14,13 @@ import MainLayout from '../../../components/layout/MainLayout'
 
 const VALID_CATEGORIES = [
   'electronics',
-  'clothing',
+  'fashion',
   'home-garden',
-  'sports',
-  'books',
-  'beauty',
-  'toys',
-  'automotive'
+  'sports-fitness',
+  'health-beauty',
+  'automotive',
+  'industrial-tools',
+  'baby-kids'
 ]
 
 const CATEGORY_INFO = {
@@ -29,9 +29,9 @@ const CATEGORY_INFO = {
     description: 'Discover the latest in technology and electronics',
     icon: '💻'
   },
-  clothing: {
-    name: 'Clothing & Fashion',
-    description: 'Trendy clothing and fashion accessories',
+  fashion: {
+    name: 'Fashion',
+    description: 'Fashion and apparel for everyone',
     icon: '👕'
   },
   'home-garden': {
@@ -39,30 +39,30 @@ const CATEGORY_INFO = {
     description: 'Everything for your home and garden needs',
     icon: '🏠'
   },
-  sports: {
+  'sports-fitness': {
     name: 'Sports & Fitness',
     description: 'Sports equipment and fitness gear',
     icon: '🏃‍♂️'
   },
-  books: {
-    name: 'Books & Media',
-    description: 'Books, audiobooks, and educational materials',
-    icon: '📚'
-  },
-  beauty: {
-    name: 'Beauty & Personal Care',
-    description: 'Beauty products and personal care items',
+  'health-beauty': {
+    name: 'Health & Beauty',
+    description: 'Health and beauty products',
     icon: '💄'
-  },
-  toys: {
-    name: 'Toys & Games',
-    description: 'Fun toys and games for all ages',
-    icon: '🧸'
   },
   automotive: {
     name: 'Automotive',
     description: 'Car parts and automotive accessories',
     icon: '🚗'
+  },
+  'industrial-tools': {
+    name: 'Industrial & Tools',
+    description: 'Professional tools and industrial equipment',
+    icon: '🔧'
+  },
+  'baby-kids': {
+    name: 'Baby & Kids',
+    description: 'Products for babies and children',
+    icon: '🧒'
   }
 }
 

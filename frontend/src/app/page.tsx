@@ -1,79 +1,121 @@
 'use client'
 
-import Link from 'next/link'
-import { ArrowRight, Zap, Gift, Store } from 'lucide-react'
-import { sampleProducts, categories } from '../lib/data'
-// import ProductCard from '../components/ProductCard'
+import { useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import MainLayout from '../components/layout/MainLayout'
+import FeaturedProducts from '../components/FeaturedProducts'
+import CategoriesGrid from '../components/CategoriesGrid'
+import DealsOfTheDay from '../components/DealsOfTheDay'
+import Testimonials from '../components/Testimonials'
+import Newsletter from '../components/Newsletter'
+import { useProducts } from '../hooks/useProducts'
+import { categories as sampleCategories } from '../lib/data'
+import { ArrowRight } from 'lucide-react'
+import Image from 'next/image'
 
 export default function Home() {
+  const { products, loading } = useProducts(undefined, undefined, undefined, 20)
+  const [featured, setFeatured] = useState<any[]>([])
+
+  useEffect(() => {
+    if (products && products.length > 0) {
+      setFeatured(products.slice(0, 8))
+    }
+  }, [products])
+
+  const categories = useMemo(() => {
+    return (sampleCategories || []).map((c: any) => ({
+      name: c.name,
+      slug: (c.name || '').toLowerCase(),
+      image: '/placeholder-category.jpg'
+    }))
+  }, [])
+
+  if (loading) {
+    return (
+      <MainLayout pageTitle="Home" className="bg-gray-50">
+        <div className="min-h-[60vh] flex items-center justify-center">Loading...</div>
+      </MainLayout>
+    )
+  }
+
   return (
     <MainLayout pageTitle="Home" className="bg-gray-50">
       <div className="min-h-screen bg-gray-50">
-
-      <main className="bg-gray-50">
-        <section className="relative bg-blue-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
-            <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 tracking-tight">
-              <span className="block">India's Biggest</span>
-              <span className="block text-blue-600">Online Marketplace</span>
-            </h1>
-            <p className="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
-              Discover millions of products at great prices. Shop from top brands with fast delivery and secure payments.
-            </p>
-            <div className="mt-8">
-              <Link
-                href="/products"
-                className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                Shop Now <ArrowRight className="ml-2 -mr-1 h-5 w-5" />
-              </Link>
+        <main className="bg-gray-50">
+          {/* Restored original in-page Hero section */}
+          <section className="relative min-h-[80vh] overflow-hidden">
+            <div className="absolute bottom-0 left-0 right-0 h-3/5">
+              <Image
+                src="/bg.jpg"
+                alt="Background"
+                fill
+                className="object-contain scale-110"
+                priority
+              />
             </div>
-          </div>
-        </section>
-
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Shop by Category</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {categories.map((cat, i) => {
-                const Icon = cat.icon;
-                return (
-                    <Link href="#" key={i} className="group block text-center p-4 bg-white rounded-xl border hover:border-blue-500 hover:shadow-lg transition-all duration-300">
-                        <div className="flex items-center justify-center h-16 w-16 mx-auto bg-blue-100 rounded-full">
-                            <Icon className="h-8 w-8 text-blue-600"/>
-                        </div>
-                        <h3 className="mt-4 font-semibold text-gray-800">{cat.name}</h3>
-                        <p className="text-sm text-gray-500">{cat.count}+ items</p>
-                    </Link>
-                )
-            })}
-          </div>
-        </section>
-
-        <section className="bg-white py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 flex items-center"><Gift className="mr-3 h-8 w-8 text-blue-600" /> Today's Offers</h2>
-              <span className="text-sm font-mono bg-gray-900 text-white px-3 py-1.5 rounded">⏰ 22:56:00 left</span>
+            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-20 md:pt-12 md:pb-28 text-center">
+              <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 tracking-tight">
+                <span className="block">India's Biggest</span>
+                <span className="block text-blue-600">Online Marketplace</span>
+              </h1>
+              <p className="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+                Discover millions of products at great prices. Shop from top brands with fast delivery and secure payments.
+              </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-              {sampleProducts.map((p) => (
-                <div key={p.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                  <div className="aspect-square bg-gray-200 rounded-lg mb-4"></div>
-                  <h3 className="font-semibold text-gray-900 mb-2">{p.name}</h3>
-                  <p className="text-sm text-gray-600 mb-2">{p.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold text-blue-600">₹{p.price}</span>
-                    <span className="text-sm text-gray-500">{p.rating} ⭐</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Promotional section removed per request */}
-      </main>
+          <section className="py-16 bg-white">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+            >
+              <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Featured Products</h2>
+              <FeaturedProducts products={featured} />
+            </motion.div>
+          </section>
+
+          <section className="py-16 bg-gray-50">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+            >
+              <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Shop by Category</h2>
+              <CategoriesGrid categories={categories} />
+            </motion.div>
+          </section>
+
+          <section className="py-16 bg-gradient-to-r from-primary-500 to-emerald-500 text-white">
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
+            >
+              <h2 className="text-3xl font-bold mb-4">Deals of the Day</h2>
+              <p className="text-xl mb-8">Save up to 50% on top picks!</p>
+              <DealsOfTheDay products={products.slice(0, 8)} />
+            </motion.div>
+          </section>
+
+          <section className="py-16 bg-white">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+            >
+              <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">What Our Customers Say</h2>
+              <Testimonials />
+            </motion.div>
+          </section>
+
+          <Newsletter />
+        </main>
       </div>
     </MainLayout>
   )

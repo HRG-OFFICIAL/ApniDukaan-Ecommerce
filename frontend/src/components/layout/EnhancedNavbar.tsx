@@ -11,7 +11,8 @@ import {
   X, 
   ChevronDown,
   ShoppingBag,
-  MoreVertical
+  MoreVertical,
+  Heart
 } from 'lucide-react'
 
 // Categories for mega menu
@@ -301,20 +302,20 @@ export function Navbar({ className = '' }: NavbarProps) {
             <div className="flex items-center space-x-8 py-3" ref={categoriesRef}>
               <button
                 onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
-                className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors"
+                className="flex items-center space-x-2 text-black hover:text-black transition-colors"
               >
                 <Menu className="h-5 w-5" />
                 <span>Categories</span>
                 <ChevronDown className="h-4 w-4" />
               </button>
 
-              <Link href="/products" className="text-gray-700 hover:text-blue-600 transition-colors">
+              <Link href="/products" className="text-black hover:text-black transition-colors">
                 All Products
               </Link>
-              <Link href="/deals" className="text-gray-700 hover:text-blue-600 transition-colors">
-                Deals
+              <Link href="/deals" className="text-black hover:text-black transition-colors">
+                Trending Deals
               </Link>
-              <Link href="/new-arrivals" className="text-gray-700 hover:text-blue-600 transition-colors">
+              <Link href="/new-arrivals" className="text-black hover:text-black transition-colors">
                 New Arrivals
               </Link>
 
