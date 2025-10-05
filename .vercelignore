@@ -19,7 +19,6 @@ docs/
 **/*.spec.*
 
 # Ignore build artifacts from other services
-**/node_modules/
 **/dist/
 **/build/
 
@@ -29,4 +28,6 @@ docs/
 # Ignore root package files (use frontend package.json)
 package.json
 package-lock.json
-node_modules/
+
+# Allow frontend node_modules for build
+!frontend/node_modules/

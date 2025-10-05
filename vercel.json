@@ -15,14 +15,20 @@
     "NEXT_PUBLIC_API_URL": "https://apnidukaan-api-gateway.onrender.com",
     "NEXT_PUBLIC_APP_NAME": "ApniDukaan"
   },
-  "rewrites": [
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_API_URL": "https://apnidukaan-api-gateway.onrender.com",
+      "NEXT_PUBLIC_APP_NAME": "ApniDukaan"
+    }
+  },
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://apnidukaan-api-gateway.onrender.com/api/$1"
+      "src": "/api/(.*)",
+      "dest": "https://apnidukaan-api-gateway.onrender.com/api/$1"
     },
     {
-      "source": "/(.*)",
-      "destination": "/$1"
+      "src": "/(.*)",
+      "dest": "/$1"
     }
   ]
 }
