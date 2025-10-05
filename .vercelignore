@@ -25,3 +25,8 @@ docs/
 
 # Keep only frontend directory for deployment
 !frontend/
+
+# Ignore root package files (use frontend package.json)
+package.json
+package-lock.json
+node_modules/
