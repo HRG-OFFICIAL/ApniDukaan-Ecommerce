@@ -12,8 +12,9 @@ import {
 import { useSearchProducts } from '../../hooks/useProducts';
 import { Button } from '../../components/ui/Button';
 import MainLayout from '../../components/layout/MainLayout';
-import ProductCard from '../../components/product/ProductCard';
-import { ProductFilter, ProductSort, Product } from '../../graphql/types';
+import ProductCard from '../../components/ProductCard';
+import { Product } from '../../lib/api';
+import { ProductFilter, ProductSort } from '../../hooks/useProducts';
 
 function SearchPageContent() {
   const searchParams = useSearchParams();
@@ -23,7 +24,7 @@ function SearchPageContent() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<ProductFilter>({});
-  const [sort, setSort] = useState<ProductSort>({ field: 'name', direction: 'ASC' });
+  const [sort, setSort] = useState<ProductSort>({ field: 'name', order: 'asc' });
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
 
   const { products, loading, error } = useSearchProducts(
@@ -38,7 +39,7 @@ function SearchPageContent() {
     setSearchTerm(query);
   }, [query]);
 
-  const handleFilterChange = (key: keyof ProductFilter, value: string | number | boolean | undefined) => {
+  const handleFilterChange = (key: keyof ProductFilter, value: any) => {
     setFilters(prev => ({
       ...prev,
       [key]: value
@@ -47,15 +48,13 @@ function SearchPageContent() {
 
   const handlePriceRangeChange = () => {
     const newFilters = { ...filters };
-    if (priceRange.min) {
-      newFilters.minPrice = parseFloat(priceRange.min);
+    if (priceRange.min || priceRange.max) {
+      newFilters.priceRange = [
+        priceRange.min ? parseFloat(priceRange.min) : 0,
+        priceRange.max ? parseFloat(priceRange.max) : 10000
+      ];
     } else {
-      delete newFilters.minPrice;
-    }
-    if (priceRange.max) {
-      newFilters.maxPrice = parseFloat(priceRange.max);
-    } else {
-      delete newFilters.maxPrice;
+      delete newFilters.priceRange;
     }
     setFilters(newFilters);
   };
@@ -141,8 +140,8 @@ function SearchPageContent() {
                     <label key={category} className="flex items-center">
                       <input
                         type="checkbox"
-                        checked={filters.category === category}
-                        onChange={(e) => handleFilterChange('category', e.target.checked ? category : undefined)}
+                        checked={filters.categories?.includes(category) || false}
+                        onChange={(e) => handleFilterChange('categories', e.target.checked ? [...(filters.categories || []), category] : (filters.categories || []).filter(c => c !== category))}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500"
                       />
                       <span className="ml-2 text-sm text-gray-700">{category}</span>
@@ -209,8 +208,8 @@ function SearchPageContent() {
                   <label className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={filters.inStock === true}
-                      onChange={(e) => handleFilterChange('inStock', e.target.checked ? true : undefined)}
+                      checked={filters.availability === 'in-stock'}
+                      onChange={(e) => handleFilterChange('availability', e.target.checked ? 'in-stock' : undefined)}
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500"
                     />
                     <span className="ml-2 text-sm text-gray-700">In Stock</span>
@@ -251,19 +250,19 @@ function SearchPageContent() {
               <div className="flex items-center space-x-2">
                 {/* Sort */}
                 <select
-                  value={`${sort.field}-${sort.direction}`}
+                  value={`${sort.field}-${sort.order}`}
                   onChange={(e) => {
-                    const [field, direction] = e.target.value.split('-');
-                    setSort({ field: field as 'name' | 'price' | 'rating' | 'createdAt' | 'updatedAt', direction: direction as 'ASC' | 'DESC' });
+                    const [field, order] = e.target.value.split('-');
+                    setSort({ field: field as 'name' | 'price' | 'rating' | 'createdAt', order: order as 'asc' | 'desc' });
                   }}
                   className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="name-ASC">Name A-Z</option>
-                  <option value="name-DESC">Name Z-A</option>
-                  <option value="price-ASC">Price Low to High</option>
-                  <option value="price-DESC">Price High to Low</option>
-                  <option value="rating-DESC">Highest Rated</option>
-                  <option value="createdAt-DESC">Newest</option>
+                  <option value="name-asc">Name A-Z</option>
+                  <option value="name-desc">Name Z-A</option>
+                  <option value="price-asc">Price Low to High</option>
+                  <option value="price-desc">Price High to Low</option>
+                  <option value="rating-desc">Highest Rated</option>
+                  <option value="createdAt-desc">Newest</option>
                 </select>
 
                 {/* View Mode */}
@@ -314,7 +313,7 @@ function SearchPageContent() {
               }>
                 {products.map((product: Product) => (
                   <ProductCard
-                    key={product.id}
+                    key={product._id}
                     product={product}
                     viewMode={viewMode}
                   />

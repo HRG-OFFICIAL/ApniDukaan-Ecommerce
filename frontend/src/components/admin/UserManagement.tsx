@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
+import { useState, useEffect } from 'react';
 import { 
   Search, 
   Download, 
@@ -22,8 +21,7 @@ import { mockUsers } from '../../services/mockData';
 import { Button } from '../ui/Button';
 import { UserDetails } from './UserDetails';
 import { UserForm } from './UserForm';
-import { GET_ALL_USERS } from '../../graphql/queries';
-import { UPDATE_USER_ROLE, DELETE_USER } from '../../graphql/mutations';
+// Admin user management with REST API - GraphQL removed
 
 interface User {
   id: string;
@@ -48,19 +46,30 @@ export function UserManagement() {
   const [showUserForm, setShowUserForm] = useState(false);
   const [showBulkActions, setShowBulkActions] = useState(false);
 
-  const { data: usersData, loading: usersLoading, refetch: refetchUsers } = useQuery(GET_ALL_USERS, {
-    variables: {
-      filter: {
-        role: roleFilter === 'all' ? undefined : roleFilter,
-        isActive: statusFilter === 'all' ? undefined : statusFilter === 'active',
-        search: searchTerm || undefined
-      },
-      limit: 20,
-      offset: (currentPage - 1) * 20
-    }
-  });
+  const [usersData, setUsersData] = useState<any>(null);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [refetchUsers, setRefetchUsers] = useState(0);
 
-  const [updateUserRole] = useMutation(UPDATE_USER_ROLE);
+  // Mock data for now - replace with actual API calls
+  useEffect(() => {
+    setUsersLoading(true);
+    // Simulate API call
+    setTimeout(() => {
+      setUsersData({
+        users: mockUsers,
+        totalCount: mockUsers.length,
+        page: 1,
+        limit: 20,
+        totalPages: 1
+      });
+      setUsersLoading(false);
+    }, 1000);
+  }, [roleFilter, statusFilter, searchTerm, currentPage, refetchUsers]);
+
+  const updateUserRole = async (userId: string, role: string) => {
+    // TODO: Implement update user role API call
+    console.log('Updating user role:', userId, role);
+  };
 
   const users = usersData?.users || [];
   const totalCount = usersData?.totalCount || 0;
@@ -99,13 +108,8 @@ export function UserManagement() {
 
   const handleRoleUpdate = async (userId: string, newRole: string) => {
     try {
-      await updateUserRole({
-        variables: { 
-          id: userId, 
-          role: newRole 
-        }
-      });
-      refetchUsers();
+      await updateUserRole(userId, newRole);
+      setRefetchUsers(prev => prev + 1);
     } catch (error) {
       console.error('Error updating user role:', error);
     }
@@ -129,7 +133,7 @@ export function UserManagement() {
           break;
       }
       setSelectedUsers([]);
-      refetchUsers();
+      setRefetchUsers(prev => prev + 1);
     } catch (error) {
       console.error('Error performing bulk action:', error);
     }
@@ -181,12 +185,12 @@ export function UserManagement() {
             // Handle user update
             setEditingUser(null);
             setShowUserForm(false);
-            refetchUsers();
+            setRefetchUsers(prev => prev + 1);
           } : 
           (data) => {
             // Handle user creation
             setShowUserForm(false);
-            refetchUsers();
+            setRefetchUsers(prev => prev + 1);
           }
         }
         onCancel={() => {

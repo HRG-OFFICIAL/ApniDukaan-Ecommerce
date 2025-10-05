@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
+import { useState, useEffect } from 'react';
 import { 
   Search, 
   Download, 
@@ -17,8 +16,7 @@ import {
 import { mockOrders } from '../../services/mockData';
 import { Button } from '../ui/Button';
 import { OrderDetails } from './OrderDetails';
-import { GET_ALL_ORDERS } from '../../graphql/queries';
-import { UPDATE_ORDER_STATUS } from '../../graphql/mutations';
+// Admin order management with REST API - GraphQL removed
 
 interface Order {
   id: string;
@@ -82,18 +80,30 @@ export function OrderManagement() {
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
   const [showBulkActions, setShowBulkActions] = useState(false);
 
-  const { data: ordersData, loading: ordersLoading, refetch: refetchOrders } = useQuery(GET_ALL_ORDERS, {
-    variables: {
-      filter: {
-        status: statusFilter === 'all' ? undefined : statusFilter,
-        search: searchTerm || undefined
-      },
-      limit: 20,
-      offset: (currentPage - 1) * 20
-    }
-  });
+  const [ordersData, setOrdersData] = useState<any>(null);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [refetchOrders, setRefetchOrders] = useState(0);
 
-  const [updateOrderStatus] = useMutation(UPDATE_ORDER_STATUS);
+  // Mock data for now - replace with actual API calls
+  useEffect(() => {
+    setOrdersLoading(true);
+    // Simulate API call
+    setTimeout(() => {
+      setOrdersData({
+        orders: mockOrders,
+        totalCount: mockOrders.length,
+        page: 1,
+        limit: 20,
+        totalPages: 1
+      });
+      setOrdersLoading(false);
+    }, 1000);
+  }, [statusFilter, searchTerm, currentPage, refetchOrders]);
+
+  const updateOrderStatus = async (orderId: string, status: string) => {
+    // TODO: Implement update order status API call
+    console.log('Updating order status:', orderId, status);
+  };
 
   const orders = ordersData?.orders || [];
   const totalCount = ordersData?.totalCount || 0;
@@ -132,13 +142,8 @@ export function OrderManagement() {
 
   const handleStatusUpdate = async (orderId: string, newStatus: string) => {
     try {
-      await updateOrderStatus({
-        variables: { 
-          id: orderId, 
-          status: newStatus 
-        }
-      });
-      refetchOrders();
+      await updateOrderStatus(orderId, newStatus);
+      setRefetchOrders(prev => prev + 1);
     } catch (error) {
       console.error('Error updating order status:', error);
     }
@@ -151,28 +156,22 @@ export function OrderManagement() {
       switch (action) {
         case 'mark_processing':
           for (const orderId of selectedOrders) {
-            await updateOrderStatus({
-              variables: { id: orderId, status: 'PROCESSING' }
-            });
+            await updateOrderStatus(orderId, 'PROCESSING');
           }
           break;
         case 'mark_shipped':
           for (const orderId of selectedOrders) {
-            await updateOrderStatus({
-              variables: { id: orderId, status: 'SHIPPED' }
-            });
+            await updateOrderStatus(orderId, 'SHIPPED');
           }
           break;
         case 'mark_delivered':
           for (const orderId of selectedOrders) {
-            await updateOrderStatus({
-              variables: { id: orderId, status: 'DELIVERED' }
-            });
+            await updateOrderStatus(orderId, 'DELIVERED');
           }
           break;
       }
       setSelectedOrders([]);
-      refetchOrders();
+      setRefetchOrders(prev => prev + 1);
     } catch (error) {
       console.error('Error performing bulk action:', error);
     }

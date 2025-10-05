@@ -1,14 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-
-export interface User {
-  id: string
-  email: string
-  name: string
-  role: 'user' | 'admin' | 'moderator'
-  avatar?: string
-  createdAt: string
-}
+import { User } from '../lib/api'
 
 interface AuthState {
   user: User | null

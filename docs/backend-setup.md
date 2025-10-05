@@ -12,6 +12,10 @@
 - **Features**: CRUD operations for products, categories, reviews
 - **Dependencies**: Express, Mongoose, GraphQL, Redis
 
+Note on dataset compatibility:
+- Products may store `category` as an ObjectId referencing `categories._id` or as a plain string (category name) when no mapping exists.
+- The API Gateway enriches responses with `categoryName` by joining on `categories` when possible.
+
 ### 3. User Service (Port 4002)
 - **Purpose**: User authentication and profile management
 - **Features**: Registration, login, profile management, JWT tokens
@@ -54,6 +58,8 @@ export const config = {
   },
 }
 ```
+
+Set `MONGODB_URI` to your Atlas URI. The gateway endpoints `/api/catalog/products` and `/api/catalog/categories` will query your MongoDB directly.
 
 ### Catalog Service Configuration
 ```typescript

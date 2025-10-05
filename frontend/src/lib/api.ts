@@ -265,3 +265,195 @@ export const categoriesApi = {
 export const healthApi = {
   check: () => apiClient.healthCheck(),
 };
+
+// Additional interfaces for admin dashboard
+export interface DashboardStats {
+  totalUsers: number;
+  totalOrders: number;
+  totalRevenue: number;
+  totalProducts: number;
+  recentOrders: number;
+  pendingOrders: number;
+  completedOrders: number;
+  cancelledOrders: number;
+  totalCategories: number;
+  totalBrands: number;
+  averageOrderValue: number;
+  conversionRate: number;
+  topSellingProducts: Array<{
+    product: Product;
+    totalSold: number;
+    revenue: number;
+  }>;
+  recentUsers: User[];
+  monthlyRevenue: Array<{
+    month: string;
+    revenue: number;
+  }>;
+}
+
+export interface OrderResponse {
+  orders: Order[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface Order {
+  _id: string;
+  orderNumber: string;
+  user: User;
+  items: Array<{
+    product: Product;
+    quantity: number;
+    price: number;
+    total: number;
+  }>;
+  shippingAddress: Address;
+  billingAddress: Address;
+  paymentMethod: string;
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
+  orderStatus: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  totalAmount: number;
+  shippingCost: number;
+  taxAmount: number;
+  discountAmount: number;
+  finalAmount: number;
+  notes?: string;
+  trackingNumber?: string;
+  estimatedDelivery?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Address {
+  _id: string;
+  type: 'home' | 'work' | 'other' | 'shipping';
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  isDefault: boolean;
+  landmark?: string;
+  phone?: string;
+}
+
+export interface User {
+  _id: string;
+  email: string;
+  name: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  avatar?: string;
+  role: 'user' | 'admin' | 'moderator';
+  isEmailVerified: boolean;
+  isPhoneVerified: boolean;
+  isActive: boolean;
+  preferences: {
+    theme: 'light' | 'dark' | 'system';
+    language: string;
+    currency: string;
+    newsletter: boolean;
+    notifications: {
+      email: boolean;
+      sms: boolean;
+      push: boolean;
+    };
+  };
+  addresses: Address[];
+  createdAt: Date;
+  updatedAt: Date;
+  lastLoginAt?: Date;
+}
+
+export interface RegisterInput {
+  email: string;
+  password: string;
+  name: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+}
+
+export interface UpdateProfileInput {
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  avatar?: string;
+  preferences?: {
+    theme?: 'light' | 'dark' | 'system';
+    language?: string;
+    currency?: string;
+    newsletter?: boolean;
+    notifications?: {
+      email?: boolean;
+      sms?: boolean;
+      push?: boolean;
+    };
+  };
+}
+
+export interface AddressInput {
+  type: 'home' | 'work' | 'other' | 'shipping';
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  isDefault?: boolean;
+  landmark?: string;
+  phone?: string;
+}
+
+export interface UserPreferences {
+  theme: 'light' | 'dark' | 'system';
+  language: string;
+  currency: string;
+  newsletter: boolean;
+  notifications: {
+    email: boolean;
+    sms: boolean;
+    push: boolean;
+  };
+}
+
+export interface CartItem {
+  _id: string;
+  product: Product;
+  quantity: number;
+  price: number;
+  addedAt: Date;
+}
+
+export interface Cart {
+  _id: string;
+  userId: string;
+  items: CartItem[];
+  totalItems: number;
+  subtotal: number;
+  tax: number;
+  shipping: number;
+  total: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WishlistItem {
+  id: string;
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    originalPrice?: number | null;
+    images: string[];
+    rating: number;
+    reviewCount: number;
+    stock: number;
+    isOnSale: boolean;
+  };
+  createdAt: string;
+}

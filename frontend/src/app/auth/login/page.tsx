@@ -84,7 +84,7 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setOauthLoading(true);
     try {
-      const result = await loginWithGoogle(true); // Use popup
+      const result = await loginWithGoogle();
       
       if (result.success) {
         // Success handling is done in the OAuth service
@@ -231,7 +231,7 @@ export default function LoginPage() {
                       Login failed
                     </h3>
                     <div className="mt-2 text-sm text-red-700">
-                      {errors.login.message || 'Invalid email or password'}
+                      {errors.login || 'Invalid email or password'}
                     </div>
                   </div>
                 </div>

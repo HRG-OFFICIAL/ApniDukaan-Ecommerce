@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
@@ -15,12 +15,24 @@ import {
   SortAsc,
   SortDesc
 } from 'lucide-react';
-import { useQuery, useMutation } from '@apollo/client';
-import { GET_WISHLIST } from '../../graphql/queries';
-import { ADD_TO_CART, REMOVE_FROM_WISHLIST } from '../../graphql/mutations';
 import { Button } from '../../components/ui/Button';
 import MainLayout from '../../components/layout/MainLayout';
-import { WishlistItem } from '../../graphql/types';
+
+// Wishlist types
+export interface WishlistItem {
+  id: string;
+  productId: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  discount?: number;
+  image: string;
+  brand: string;
+  rating: number;
+  reviewCount: number;
+  stock: number;
+  addedAt: string;
+}
 
 export default function WishlistPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -28,19 +40,62 @@ export default function WishlistPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data, loading, error, refetch } = useQuery(GET_WISHLIST);
-  const [addToCart] = useMutation(ADD_TO_CART, {
-    refetchQueries: ['GetCart']
-  });
-  const [removeFromWishlist] = useMutation(REMOVE_FROM_WISHLIST, {
-    refetchQueries: ['GetWishlist']
-  });
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const wishlistItems = data?.wishlist || [];
+  // Mock data for now - replace with actual API calls
+  useEffect(() => {
+    const mockWishlistItems: WishlistItem[] = [
+      {
+        id: '1',
+        productId: '1',
+        name: 'Premium Wireless Headphones',
+        price: 1499,
+        originalPrice: 2990,
+        discount: 50,
+        image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop',
+        brand: 'boAt',
+        rating: 4.2,
+        reviewCount: 1284,
+        stock: 25,
+        addedAt: '2024-01-15T10:30:00Z'
+      },
+      {
+        id: '2',
+        productId: '2',
+        name: 'Smart Fitness Watch',
+        price: 1999,
+        originalPrice: 7999,
+        discount: 75,
+        image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop',
+        brand: 'Fire-Boltt',
+        rating: 4.1,
+        reviewCount: 876,
+        stock: 50,
+        addedAt: '2024-01-14T15:45:00Z'
+      }
+    ];
+    
+    setWishlistItems(mockWishlistItems);
+    setLoading(false);
+  }, []);
+
+  const addToCart = async (productId: string) => {
+    // TODO: Implement add to cart API call
+    console.log('Adding to cart:', productId);
+  };
+
+  const removeFromWishlist = async (itemId: string) => {
+    // TODO: Implement remove from wishlist API call
+    setWishlistItems(prev => prev.filter(item => item.id !== itemId));
+  };
+
+  // wishlistItems is now managed by state
 
   const handleAddToCart = async (productId: string) => {
     try {
-      await addToCart({ variables: { productId, quantity: 1 } });
+      await addToCart(productId);
       // You could show a success toast here
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -49,7 +104,7 @@ export default function WishlistPage() {
 
   const handleRemoveFromWishlist = async (productId: string) => {
     try {
-      await removeFromWishlist({ variables: { productId } });
+      await removeFromWishlist(productId);
     } catch (error) {
       console.error('Error removing from wishlist:', error);
     }
@@ -57,19 +112,19 @@ export default function WishlistPage() {
 
   const filteredItems = wishlistItems
     .filter((item: WishlistItem) => 
-      item.product.name.toLowerCase().includes(searchTerm.toLowerCase())
+      item.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a: WishlistItem, b: WishlistItem) => {
       let comparison = 0;
       switch (sortBy) {
         case 'name':
-          comparison = a.product.name.localeCompare(b.product.name);
+          comparison = a.name.localeCompare(b.name);
           break;
         case 'price':
-          comparison = a.product.price - b.product.price;
+          comparison = a.price - b.price;
           break;
         case 'date':
-          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          comparison = new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime();
           break;
       }
       return sortOrder === 'asc' ? comparison : -comparison;
@@ -100,7 +155,7 @@ export default function WishlistPage() {
             <Heart className="mx-auto h-24 w-24 text-gray-400 mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Wishlist</h1>
             <p className="text-gray-600 mb-8">There was an error loading your wishlist. Please try again.</p>
-            <Button onClick={() => refetch()}>
+            <Button onClick={() => window.location.reload()}>
               Try Again
             </Button>
           </div>
@@ -212,8 +267,8 @@ export default function WishlistPage() {
               >
                 <div className={`${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'aspect-w-1 aspect-h-1'}`}>
                   <Image
-                    src={item.product.images[0] || '/placeholder-product.jpg'}
-                    alt={item.product.name}
+                    src={item.image || '/placeholder-product.jpg'}
+                    alt={item.name}
                     width={viewMode === 'list' ? 192 : 300}
                     height={viewMode === 'list' ? 192 : 300}
                     className="w-full h-full object-cover"
@@ -223,10 +278,10 @@ export default function WishlistPage() {
                 <div className={`p-4 ${viewMode === 'list' ? 'flex-1' : ''}`}>
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-sm font-medium text-gray-900 line-clamp-2">
-                      {item.product.name}
+                      {item.name}
                     </h3>
                     <button
-                      onClick={() => handleRemoveFromWishlist(item.product.id)}
+                      onClick={() => handleRemoveFromWishlist(item.id)}
                       className="text-gray-400 hover:text-red-500 transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -239,7 +294,7 @@ export default function WishlistPage() {
                         <Heart
                           key={i}
                           className={`h-4 w-4 ${
-                            i < Math.floor(item.product.rating)
+                            i < Math.floor(item.rating)
                               ? 'text-yellow-400 fill-current'
                               : 'text-gray-300'
                           }`}
@@ -247,22 +302,22 @@ export default function WishlistPage() {
                       ))}
                     </div>
                     <span className="ml-2 text-sm text-gray-500">
-                      ({item.product.reviewCount})
+                      ({item.reviewCount})
                     </span>
                   </div>
                   
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-2">
                       <span className="text-lg font-semibold text-gray-900">
-                        ${item.product.price.toFixed(2)}
+                        ${item.price.toFixed(2)}
                       </span>
-                      {item.product.originalPrice && item.product.originalPrice > item.product.price && (
+                      {item.originalPrice && item.originalPrice > item.price && (
                         <span className="text-sm text-gray-500 line-through">
-                          ${item.product.originalPrice.toFixed(2)}
+                          ${item.originalPrice.toFixed(2)}
                         </span>
                       )}
                     </div>
-                    {item.product.isOnSale && (
+                    {item.discount && item.discount > 0 && (
                       <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
                         Sale
                       </span>
@@ -271,12 +326,12 @@ export default function WishlistPage() {
                   
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">
-                      Added {new Date(item.createdAt).toLocaleDateString()}
+                      Added {new Date(item.addedAt).toLocaleDateString()}
                     </span>
                     <div className="flex space-x-2">
                       <Button
                         size="sm"
-                        onClick={() => handleAddToCart(item.product.id)}
+                        onClick={() => handleAddToCart(item.productId)}
                         className="flex-1"
                       >
                         <ShoppingCart className="h-4 w-4 mr-1" />
@@ -285,7 +340,7 @@ export default function WishlistPage() {
                     </div>
                   </div>
                   
-                  {item.product.stock === 0 && (
+                  {item.stock === 0 && (
                     <div className="mt-2 text-xs text-red-600">
                       Out of Stock
                     </div>

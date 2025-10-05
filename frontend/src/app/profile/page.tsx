@@ -17,7 +17,7 @@ import { useAuthAPI } from '../../hooks/useAuthAPI';
 import { ProtectedRoute } from '../../components/auth/ProtectedRoute';
 import { Button } from '../../components/ui/Button';
 import MainLayout from '../../components/layout/MainLayout';
-import { UpdateProfileInput, AddressInput, UserPreferences, Address } from '../../graphql/types';
+import { UpdateProfileInput, AddressInput, Address, UserPreferences } from '../../lib/api';
 
 function ProfilePageContent() {
   const { user, updateProfile, loading } = useAuthAPI();
@@ -29,7 +29,7 @@ function ProfilePageContent() {
     phone: user?.phone || '',
     preferences: {
       newsletter: user?.preferences?.newsletter || false,
-      notifications: user?.preferences?.notifications || false,
+      notifications: user?.preferences?.notifications || { email: false, sms: false, push: false },
       language: user?.preferences?.language || 'en',
       currency: user?.preferences?.currency || 'USD'
     }
@@ -57,7 +57,10 @@ function ProfilePageContent() {
       ...prev,
       preferences: {
         ...prev.preferences,
-        [field]: value
+        [field]: field === 'notifications' ? {
+          ...prev.preferences?.notifications,
+          email: value as boolean
+        } : value
       }
     }));
   };
@@ -198,7 +201,7 @@ function ProfilePageContent() {
                         </label>
                         <input
                           type="email"
-                          value={user.email}
+                          value={user?.email || ''}
                           disabled
                           className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
                         />
@@ -224,7 +227,7 @@ function ProfilePageContent() {
                         </label>
                         <input
                           type="text"
-                          value={new Date(user.createdAt).toLocaleDateString()}
+                          value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''}
                           disabled
                           className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
                         />
@@ -318,7 +321,7 @@ function ProfilePageContent() {
                     {/* Existing Addresses */}
                     <div className="space-y-4">
                       {user?.addresses?.map((address: Address) => (
-                        <div key={address.id} className="border border-gray-200 rounded-lg p-4">
+                        <div key={address._id} className="border border-gray-200 rounded-lg p-4">
                           <div className="flex items-center justify-between">
                             <div>
                               <h3 className="text-md font-medium text-gray-900 capitalize">
@@ -339,14 +342,14 @@ function ProfilePageContent() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setEditingAddress(address.id)}
+                                onClick={() => setEditingAddress(address._id)}
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleDeleteAddress(address.id)}
+                                onClick={() => handleDeleteAddress(address._id)}
                                 className="text-red-600 hover:text-red-700"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -385,7 +388,7 @@ function ProfilePageContent() {
                         </div>
                         <input
                           type="checkbox"
-                          checked={formData.preferences?.notifications || false}
+                          checked={formData.preferences?.notifications?.email || false}
                           onChange={(e) => handlePreferenceChange('notifications', e.target.checked)}
                           className="h-4 w-4 text-blue-600 focus:ring-blue-500"
                         />

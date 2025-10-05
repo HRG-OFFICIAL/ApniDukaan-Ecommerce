@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Star, ShoppingCart, Heart, Eye } from 'lucide-react'
-import { Product } from '../graphql/types'
+import { Product } from '../lib/api'
 import { QuickViewModal } from './QuickViewModal'
 import { useCartStore } from '../store/useCartStore'
 import { usePreferencesStore } from '../store/usePreferencesStore'
@@ -17,8 +17,7 @@ interface ProductCardProps {
 }
 
 const getBadge = (product: Product) => {
-  if (product.isBestseller) return { text: 'Best Seller', classes: 'bg-yellow-400 text-yellow-900' };
-  if (product.isNew) return { text: 'New', classes: 'bg-blue-500 text-white' };
+  if (product.featured) return { text: 'Featured', classes: 'bg-yellow-400 text-yellow-900' };
   if (product.isOnSale) return { text: 'Sale', classes: 'bg-red-500 text-white' };
   return null;
 };
@@ -40,9 +39,9 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
   const badge = getBadge(product)
   const productImage = Array.isArray(product.images) ? product.images[0] : product.images
   const imageUrl = typeof productImage === 'string' ? productImage : productImage || '/placeholder.jpg'
-  const isOutOfStock = product.stock <= 0
-  const isLowStock = product.stock <= 5 && product.stock > 0
-  const isInWishlist = wishlist.includes(product.id)
+  const isOutOfStock = (product.inventory?.quantity || 0) <= 0
+  const isLowStock = (product.inventory?.quantity || 0) <= 5 && (product.inventory?.quantity || 0) > 0
+  const isInWishlist = wishlist.includes(product._id)
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -54,12 +53,12 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
     }
 
     addItem({
-      id: product.id,
-      productId: product.id,
+      id: product._id,
+      productId: product._id,
       name: product.name,
       price: product.price,
       image: product.images[0] || '',
-      maxStock: product.stock
+      maxStock: product.inventory?.quantity || 0
     })
     
     toast.success('Added to cart!')
@@ -75,10 +74,10 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
     }
 
     if (isInWishlist) {
-      removeFromWishlist(product.id)
+      removeFromWishlist(product._id)
       toast.success('Removed from wishlist')
     } else {
-      addToWishlist(product.id)
+      addToWishlist(product._id)
       toast.success('Added to wishlist')
     }
   }
@@ -90,12 +89,12 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
     }
 
     addItem({
-      id: product.id,
-      productId: product.id,
+      id: product._id,
+      productId: product._id,
       name: product.name,
       price: product.price,
       image: product.images[0] || '',
-      maxStock: product.stock
+      maxStock: product.inventory.quantity
     })
     
     toast.success(`Added ${quantity}x ${product.name} to cart!`)
@@ -108,10 +107,10 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
     }
 
     if (isInWishlist) {
-      removeFromWishlist(product.id)
+      removeFromWishlist(product._id)
       toast.success('Removed from wishlist')
     } else {
-      addToWishlist(product.id)
+      addToWishlist(product._id)
       toast.success('Added to wishlist')
     }
   }
@@ -145,7 +144,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
               )}
               {isLowStock && !isOutOfStock && (
                 <span className="bg-orange-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                  Only {product.stock} left
+                  Only {product.inventory.quantity} left
                 </span>
               )}
             </div>
@@ -167,7 +166,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
             <div className="flex justify-between items-start">
               <div className="flex-1">
                 <Link 
-                  href={`/products/${product.id}`} 
+                  href={`/products/${product._id}`} 
                   aria-label={`View details for ${product.name}`}
                   className="block"
                 >
@@ -181,13 +180,13 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
                   <div 
                     className="flex items-center"
                     role="img"
-                    aria-label={`Rating: ${product.rating} out of 5 stars`}
+                    aria-label={`Rating: ${product.rating.average} out of 5 stars`}
                   >
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
                         className={`w-4 h-4 ${
-                          i < Math.floor(product.rating) 
+                          i < Math.floor(product.rating.average) 
                             ? "text-yellow-400 fill-current" 
                             : "text-gray-300"
                         }`}
@@ -196,7 +195,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
                     ))}
                   </div>
                   <span className="text-sm text-gray-600 ml-2">
-                    {product.rating} ({product.reviewCount} reviews)
+                    {product.rating.average} ({product.rating.count} reviews)
                   </span>
                 </div>
 
@@ -242,7 +241,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
                 </button>
                 
                 <Link 
-                  href={`/products/${product.id}`}
+                  href={`/products/${product._id}`}
                   className="px-6 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-center"
                 >
                   <Eye className="w-4 h-4 mr-2 inline" />
@@ -278,7 +277,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
       </button>
 
       <Link 
-        href={`/products/${product.id}`} 
+        href={`/products/${product._id}`} 
         aria-label={`View details for ${product.name}`}
       >
         <div className="relative">
@@ -305,7 +304,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
             )}
             {isLowStock && !isOutOfStock && (
               <span className="bg-orange-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                Only {product.stock} left
+                Only {product.inventory.quantity} left
               </span>
             )}
           </div>
@@ -346,13 +345,13 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
             <div 
               className="flex items-center"
               role="img"
-              aria-label={`Rating: ${product.rating} out of 5 stars`}
+              aria-label={`Rating: ${product.rating.average} out of 5 stars`}
             >
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
                   className={`w-3 h-3 ${
-                    i < Math.floor(product.rating) 
+                    i < Math.floor(product.rating.average) 
                       ? "text-yellow-400 fill-current" 
                       : "text-gray-300"
                   }`}
@@ -361,7 +360,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
               ))}
             </div>
             <span className="text-xs text-gray-600 ml-2">
-              {product.rating} ({product.reviewCount})
+              {product.rating.average} ({product.rating.count})
             </span>
           </div>
           

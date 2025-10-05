@@ -11,11 +11,23 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-react';
-import { useCartWithOperations } from '../../hooks/useCart';
+import { useCart, useCartMutations } from '../../hooks/useCart';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../../components/ui/Button';
 import MainLayout from '../../components/layout/MainLayout';
-import { PaymentMethod, Address } from '../../graphql/types';
+// Payment and Address types
+export type PaymentMethod = 'card' | 'upi' | 'netbanking' | 'wallet';
+
+export interface Address {
+  id: string;
+  type: 'home' | 'work' | 'other' | 'shipping' | 'billing';
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  isDefault: boolean;
+}
 import { CouponManager, Coupon } from '../../components/checkout/SimpleCouponManager';
 import { AddressManager, Address as AddressType } from '../../components/checkout/AddressManager';
 import { FadeIn, SlideIn, AnimatedProgress } from '../../components/ui/Animations';
@@ -36,7 +48,8 @@ interface CheckoutFormData {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cart, loading: cartLoading } = useCartWithOperations();
+  const { cart, loading: cartLoading } = useCart();
+  const { updateCartItem, removeFromCart, loading: mutationLoading } = useCartMutations();
   const { user } = useAuth();
   
   const [currentStep, setCurrentStep] = useState(1);
@@ -80,7 +93,7 @@ export default function CheckoutPage() {
       country: 'US',
       isDefault: false
     },
-    paymentMethod: PaymentMethod.CREDIT_CARD,
+    paymentMethod: 'card',
     sameAsShipping: true,
     couponCode: '',
     notes: '',
@@ -398,7 +411,7 @@ export default function CheckoutPage() {
                         Payment Method *
                       </label>
                       <div className="space-y-3">
-                        {Object.values(PaymentMethod).map((method) => (
+                        {(['card', 'upi', 'netbanking', 'wallet'] as PaymentMethod[]).map((method) => (
                           <label key={method} className="flex items-center p-3 border border-gray-200 rounded-md cursor-pointer hover:bg-gray-50">
                             <input
                               type="radio"
@@ -425,7 +438,7 @@ export default function CheckoutPage() {
                     />
 
                     {/* Razorpay Payment Form */}
-                    {formData.paymentMethod === PaymentMethod.RAZORPAY && (
+                    {formData.paymentMethod === 'card' && (
                       <RazorpayPaymentForm
                         amount={cart?.total || 0}
                         currency="INR"
@@ -519,7 +532,7 @@ export default function CheckoutPage() {
                 </h2>
                 
                 <div className="space-y-4 mb-6">
-                  {cart.items.map((item) => (
+                  {cart.items.map((item: any) => (
                     <div key={item.id} className="flex items-center space-x-3">
                       <div className="flex-shrink-0 w-12 h-12 bg-gray-200 rounded-md"></div>
                       <div className="flex-1 min-w-0">

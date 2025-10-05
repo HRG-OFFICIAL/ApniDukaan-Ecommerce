@@ -159,15 +159,103 @@ services:
       - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID}
       - PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET}
       - PAYPAL_MODE=sandbox
-      - KAFKA_BROKERS=kafka:9092
-      - KAFKA_CLIENT_ID=payment-service
-      - KAFKA_GROUP_ID=payment-service-group
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
     volumes:
       - ./backend/payment-service:/app
       - /app/node_modules
     depends_on:
       - mongodb
-      - kafka
+    networks:
+      - ApniDukaan-network
+
+  # Cart Service
+  cart-service:
+    build:
+      context: ./backend/cart-service
+      dockerfile: Dockerfile
+    ports:
+      - "4005:4005"
+    environment:
+      - NODE_ENV=development
+      - PORT=4005
+      - MONGODB_URI=mongodb://mongodb:27017/ApniDukaan_cart
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./backend/cart-service:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - ApniDukaan-network
+
+  # Search Service
+  search-service:
+    build:
+      context: ./backend/search-service
+      dockerfile: Dockerfile
+    ports:
+      - "4006:4006"
+    environment:
+      - NODE_ENV=development
+      - PORT=4006
+      - MONGODB_URI=mongodb://mongodb:27017/ApniDukaan_search
+    volumes:
+      - ./backend/search-service:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+    networks:
+      - ApniDukaan-network
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./backend/notification-service
+      dockerfile: Dockerfile
+    ports:
+      - "4007:4007"
+    environment:
+      - NODE_ENV=development
+      - PORT=4007
+      - MONGODB_URI=mongodb://mongodb:27017/ApniDukaan_notifications
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - FRONTEND_URL=http://localhost:3000
+    volumes:
+      - ./backend/notification-service:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+    networks:
+      - ApniDukaan-network
+
+  # Order Management Service
+  order-management-service:
+    build:
+      context: ./backend/order-management-service
+      dockerfile: Dockerfile
+    ports:
+      - "4008:4008"
+    environment:
+      - NODE_ENV=development
+      - PORT=4008
+      - MONGODB_URI=mongodb://mongodb:27017/ApniDukaan_order_management
+      - USER_SERVICE_URL=http://user-service:4002
+      - CATALOG_SERVICE_URL=http://catalog-service:4001
+      - PAYMENT_SERVICE_URL=http://payment-service:4004
+      - NOTIFICATION_SERVICE_URL=http://notification-service:4007
+    volumes:
+      - ./backend/order-management-service:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+      - user-service
+      - catalog-service
+      - payment-service
+      - notification-service
     networks:
       - ApniDukaan-network
 
@@ -199,41 +287,6 @@ services:
     networks:
       - ApniDukaan-network
 
-  # Kafka & Zookeeper
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.4.0
-    restart: unless-stopped
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    volumes:
-      - zookeeper_data:/var/lib/zookeeper/data
-    networks:
-      - ApniDukaan-network
-
-  kafka:
-    image: confluentinc/cp-kafka:7.4.0
-    restart: unless-stopped
-    depends_on:
-      - zookeeper
-    ports:
-      - "9092:9092"
-      - "9101:9101"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_JMX_PORT: 9101
-      KAFKA_JMX_HOSTNAME: localhost
-    volumes:
-      - kafka_data:/var/lib/kafka/data
-    networks:
-      - ApniDukaan-network
 
   # MinIO (S3 Compatible Storage for local development)
   minio:
@@ -251,20 +304,6 @@ services:
     networks:
       - ApniDukaan-network
 
-  # Elasticsearch (for advanced product search)
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
-    restart: unless-stopped
-    ports:
-      - "9200:9200"
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    networks:
-      - ApniDukaan-network
 
   # Nginx (Load Balancer & Reverse Proxy)
   nginx:
@@ -282,48 +321,11 @@ services:
     networks:
       - ApniDukaan-network
 
-  # Monitoring with Prometheus
-  prometheus:
-    image: prom/prometheus:v2.48.0
-    restart: unless-stopped
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--web.enable-lifecycle'
-    networks:
-      - ApniDukaan-network
-
-  # Grafana for metrics visualization
-  grafana:
-    image: grafana/grafana:10.2.0
-    restart: unless-stopped
-    ports:
-      - "3001:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./infrastructure/monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
-      - ./infrastructure/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-    networks:
-      - ApniDukaan-network
 
 volumes:
   mongodb_data:
   redis_data:
-  kafka_data:
-  zookeeper_data:
   minio_data:
-  elasticsearch_data:
-  prometheus_data:
-  grafana_data:
 
 networks:
   ApniDukaan-network:

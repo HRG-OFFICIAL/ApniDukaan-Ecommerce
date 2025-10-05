@@ -27,12 +27,12 @@ export function ProtectedRoute({
   fallback,
   showUnauthorized = true
 }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, user } = useAuthStatus()
+  const { isAuthenticated, loading, user } = useAuthStatus()
   const { hasPermission, hasAnyPermission, hasAllPermissions } = usePermissions()
   const router = useRouter()
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!loading) {
       if (!isAuthenticated) {
         // Redirect to login with return URL
         const currentPath = window.location.pathname + window.location.search
@@ -88,10 +88,10 @@ export function ProtectedRoute({
         }
       }
     }
-  }, [isAuthenticated, isLoading, user, requireRole, router, redirectTo])
+  }, [isAuthenticated, loading, user, requireRole, router, redirectTo])
 
   // Show loading spinner while checking authentication
-  if (isLoading) {
+  if (loading) {
     return fallback || (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -155,16 +155,16 @@ export function useProtectedRoute(
   requirePermissions?: Permission[],
   requireAllPermissions = false
 ) {
-  const { isAuthenticated, isLoading, user } = useAuthStatus()
+  const { isAuthenticated, loading, user } = useAuthStatus()
   const { hasPermission, hasAnyPermission, hasAllPermissions } = usePermissions()
   const router = useRouter()
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       const currentPath = window.location.pathname + window.location.search
       router.push(`/auth/login?redirect=${encodeURIComponent(currentPath)}`)
     }
-  }, [isAuthenticated, isLoading, router])
+  }, [isAuthenticated, loading, router])
 
   const hasRequiredRole = !requireRole || 
     user?.role === requireRole || 
@@ -181,7 +181,7 @@ export function useProtectedRoute(
 
   return {
     isAuthenticated,
-    isLoading,
+    loading,
     user,
     hasRequiredRole,
     hasRequiredPermission,

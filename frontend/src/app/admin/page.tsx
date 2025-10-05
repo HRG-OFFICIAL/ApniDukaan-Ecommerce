@@ -20,7 +20,7 @@ import { mockDashboardStats, mockUsers } from '../../services/mockData';
 import { Button } from '../../components/ui/Button';
 import { ThemeToggle } from '../../components/ui/ThemeToggle';
 import MainLayout from '../../components/layout/MainLayout';
-import { DashboardStats, OrderResponse, User } from '../../graphql/types';
+import { DashboardStats, OrderResponse, User } from '../../lib/api';
 import { ProductManagement } from '../../components/admin/ProductManagement';
 import { OrderManagement } from '../../components/admin/OrderManagement';
 import { UserManagement } from '../../components/admin/UserManagement';

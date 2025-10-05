@@ -1,13 +1,13 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import { Product, ProductFilter, ProductSort } from '../graphql/types'
+import { Product, ProductFilters, ProductSort } from '../lib/api'
 
 interface ProductsState {
   products: Product[]
   featuredProducts: Product[]
   categories: string[]
   currentProduct: Product | null
-  filters: ProductFilter
+  filters: ProductFilters
   sort: ProductSort
   searchQuery: string
   loading: boolean
@@ -23,7 +23,7 @@ interface ProductsActions {
   setFeaturedProducts: (products: Product[]) => void
   setCurrentProduct: (product: Product | null) => void
   setCategories: (categories: string[]) => void
-  setFilters: (filters: ProductFilter) => void
+  setFilters: (filters: ProductFilters) => void
   setSort: (sort: ProductSort) => void
   setSearchQuery: (query: string) => void
   setLoading: (loading: boolean) => void
@@ -44,7 +44,7 @@ const initialState: ProductsState = {
   categories: [],
   currentProduct: null,
   filters: {},
-  sort: { field: 'createdAt', direction: 'DESC' },
+  sort: { field: 'createdAt', order: 'desc' },
   searchQuery: '',
   loading: false,
   error: null,
@@ -80,7 +80,7 @@ export const useProductsStore = create<ProductsStore>()(
         set({ categories }, false, 'setCategories')
       },
       
-      setFilters: (filters: ProductFilter) => {
+      setFilters: (filters: ProductFilters) => {
         set({ filters, currentPage: 1 }, false, 'setFilters')
       },
       
@@ -126,15 +126,15 @@ export const useProductsStore = create<ProductsStore>()(
       
       updateProduct: (productId: string, updates: Partial<Product>) => {
         const products = get().products.map(product =>
-          product.id === productId ? { ...product, ...updates } : product
+          product._id === productId ? { ...product, ...updates } : product
         )
         
         const featuredProducts = get().featuredProducts.map(product =>
-          product.id === productId ? { ...product, ...updates } : product
+          product._id === productId ? { ...product, ...updates } : product
         )
         
         const currentProduct = get().currentProduct
-        const updatedCurrentProduct = currentProduct?.id === productId 
+        const updatedCurrentProduct = currentProduct?._id === productId 
           ? { ...currentProduct, ...updates }
           : currentProduct
         
@@ -157,9 +157,9 @@ export const selectFilteredProducts = (state: ProductsStore) => {
 }
 
 export const selectProductsByCategory = (category: string) => (state: ProductsStore) => {
-  return state.products.filter(product => product.category === category)
+  return state.products.filter(product => product.category.name === category)
 }
 
 export const selectProductById = (productId: string) => (state: ProductsStore) => {
-  return state.products.find(product => product.id === productId)
+  return state.products.find(product => product._id === productId)
 }

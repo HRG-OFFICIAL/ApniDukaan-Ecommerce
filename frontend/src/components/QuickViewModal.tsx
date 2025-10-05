@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Star, ShoppingCart, Heart, X, Truck, Shield, RotateCcw } from 'lucide-react'
-import { Product } from '../graphql/types'
+import { Product } from '../lib/api'
 import { Button } from './ui/Button'
 
 interface QuickViewModalProps {
@@ -76,8 +76,8 @@ export function QuickViewModal({
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) 
     : 0
 
-  const isOutOfStock = product.stock <= 0
-  const isLowStock = product.stock <= 5 && product.stock > 0
+  const isOutOfStock = product.inventory.quantity <= 0
+  const isLowStock = product.inventory.quantity <= 5 && product.inventory.quantity > 0
 
   const handleAddToCart = async () => {
     if (isOutOfStock) return
@@ -100,7 +100,7 @@ export function QuickViewModal({
   }
 
   const handleQuantityChange = (newQuantity: number) => {
-    if (newQuantity >= 1 && newQuantity <= product.stock) {
+    if (newQuantity >= 1 && newQuantity <= product.inventory.quantity) {
       setQuantity(newQuantity)
     }
   }
@@ -109,7 +109,7 @@ export function QuickViewModal({
     // Close the modal first
     onClose()
     // Navigate to the product detail page
-    router.push(`/products/${product.id}`)
+    router.push(`/products/${product._id}`)
   }
 
   const modalContent = (
@@ -158,14 +158,9 @@ export function QuickViewModal({
                   />
                   {/* Badges */}
                   <div className="absolute top-2 left-2 flex flex-col space-y-1">
-                    {product.isBestseller && (
+                    {product.featured && (
                       <span className="bg-yellow-400 text-yellow-900 text-xs font-semibold px-2 py-1 rounded">
-                        Best Seller
-                      </span>
-                    )}
-                    {product.isNew && (
-                      <span className="bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                        New
+                        Featured
                       </span>
                     )}
                     {product.isOnSale && (
@@ -180,7 +175,7 @@ export function QuickViewModal({
                     )}
                     {isLowStock && !isOutOfStock && (
                       <span className="bg-orange-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                        Only {product.stock} left
+                        Only {product.inventory.quantity} left
                       </span>
                     )}
                   </div>
@@ -228,12 +223,12 @@ export function QuickViewModal({
                 
                 <div className="flex items-center space-x-4 mb-4">
                   <div className="flex items-center">
-                    <div className="flex items-center" role="img" aria-label={`Rating: ${product.rating} out of 5 stars`}>
+                    <div className="flex items-center" role="img" aria-label={`Rating: ${product.rating.average} out of 5 stars`}>
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
                           className={`w-4 h-4 ${
-                            i < Math.floor(product.rating) 
+                            i < Math.floor(product.rating.average) 
                               ? "text-yellow-400 fill-current" 
                               : "text-gray-300"
                           }`}
@@ -242,7 +237,7 @@ export function QuickViewModal({
                       ))}
                     </div>
                     <span className="text-sm text-gray-600 ml-2">
-                      {product.rating} ({product.reviewCount} reviews)
+                      {product.rating.average} ({product.rating.count} reviews)
                     </span>
                   </div>
                 </div>
@@ -285,7 +280,7 @@ export function QuickViewModal({
                     <input
                       type="number"
                       min="1"
-                      max={product.stock}
+                      max={product.inventory.quantity}
                       value={quantity}
                       onChange={(e) => {
                         const newQuantity = parseInt(e.target.value) || 1
@@ -294,7 +289,7 @@ export function QuickViewModal({
                       className="w-20 text-center border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                     <span className="text-sm text-gray-500">
-                      {product.stock} available
+                      {product.inventory.quantity} available
                     </span>
                   </div>
                 )}
