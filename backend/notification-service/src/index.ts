@@ -54,14 +54,15 @@ const PORT = process.env.PORT || 4007;
       const notificationService = new NotificationService();
 
       // Validation middleware
-      const handleValidationErrors = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const handleValidationErrors: express.RequestHandler = (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-          return res.status(400).json({
+          res.status(400).json({
             success: false,
             message: 'Validation failed',
             errors: errors.array()
           });
+          return;
         }
         next();
       };
@@ -73,7 +74,7 @@ const PORT = process.env.PORT || 4007;
         body('template').notEmpty().withMessage('Template is required'),
         body('data').isObject().withMessage('Data must be an object'),
         handleValidationErrors
-      ], async (req, res) => {
+      ], async (req: express.Request, res: express.Response) => {
         try {
           const { type, recipient, template, data, priority = 'normal' } = req.body;
           
@@ -114,7 +115,7 @@ const PORT = process.env.PORT || 4007;
         body('email').isEmail().withMessage('Valid email is required'),
         body('userName').notEmpty().withMessage('User name is required'),
         handleValidationErrors
-      ], async (req, res) => {
+      ], async (req: express.Request, res: express.Response) => {
         try {
           const { email, userName } = req.body;
           const success = await notificationService.sendWelcomeEmail(email, userName);
@@ -135,7 +136,7 @@ const PORT = process.env.PORT || 4007;
         body('email').isEmail().withMessage('Valid email is required'),
         body('orderData').isObject().withMessage('Order data is required'),
         handleValidationErrors
-      ], async (req, res) => {
+      ], async (req: express.Request, res: express.Response) => {
         try {
           const { email, orderData } = req.body;
           const success = await notificationService.sendOrderConfirmation(email, orderData);
@@ -157,7 +158,7 @@ const PORT = process.env.PORT || 4007;
         body('resetToken').notEmpty().withMessage('Reset token is required'),
         body('userName').notEmpty().withMessage('User name is required'),
         handleValidationErrors
-      ], async (req, res) => {
+      ], async (req: express.Request, res: express.Response) => {
         try {
           const { email, resetToken, userName } = req.body;
           const success = await notificationService.sendPasswordResetEmail(email, resetToken, userName);
@@ -175,10 +176,10 @@ const PORT = process.env.PORT || 4007;
       });
 
       app.post('/api/notifications/sms/otp', [
-        body('phoneNumber').isMobilePhone().withMessage('Valid phone number is required'),
+        body('phoneNumber').isMobilePhone('any').withMessage('Valid phone number is required'),
         body('otp').isLength({ min: 4, max: 6 }).withMessage('OTP must be 4-6 digits'),
         handleValidationErrors
-      ], async (req, res) => {
+      ], async (req: express.Request, res: express.Response) => {
         try {
           const { phoneNumber, otp } = req.body;
           const success = await notificationService.sendOTP(phoneNumber, otp);
