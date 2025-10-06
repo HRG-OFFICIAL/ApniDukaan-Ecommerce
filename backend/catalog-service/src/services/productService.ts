@@ -45,10 +45,7 @@ export class ProductService {
 
   async getProductById(id: string): Promise<IProduct | null> {
     try {
-      const product = await Product.findById(id)
-        .populate('category', 'name slug')
-        .populate('subcategory', 'name slug');
-      
+      const product = await Product.findById(id);
       return product;
     } catch (error: any) {
       logger.error('Failed to get product by ID', {
@@ -62,10 +59,7 @@ export class ProductService {
 
   async getProductBySlug(slug: string): Promise<IProduct | null> {
     try {
-      const product = await Product.findOne({ slug })
-        .populate('category', 'name slug')
-        .populate('subcategory', 'name slug');
-      
+      const product = await Product.findOne({ slug });
       return product;
     } catch (error: any) {
       logger.error('Failed to get product by slug', {
@@ -88,13 +82,13 @@ export class ProductService {
 
       // Apply filters
       if (filters.category) {
-        query.category = filters.category;
+        query['category.id'] = filters.category;
       }
       if (filters.subcategory) {
-        query.subcategory = filters.subcategory;
+        query['subcategory.id'] = filters.subcategory;
       }
       if (filters.brand) {
-        query.brand = new RegExp(filters.brand, 'i');
+        query['brand.name'] = new RegExp(filters.brand, 'i');
       }
       if (filters.minPrice || filters.maxPrice) {
         query.price = {};
@@ -116,31 +110,24 @@ export class ProductService {
 
       // Build sort object
       const sortObj: any = {};
-      sortObj[sort.field] = sort.order === 'asc' ? 1 : -1;
+      if (sort.field === 'sales') {
+        sortObj['sales.totalSold'] = sort.order === 'asc' ? 1 : -1;
+      } else if (sort.field === 'rating') {
+        sortObj['rating.average'] = sort.order === 'asc' ? 1 : -1;
+      } else {
+        sortObj[sort.field] = sort.order === 'asc' ? 1 : -1;
+      }
 
       // Execute query
       const skip = (page - 1) * limit;
       
-      // Debug logging
-      console.log('=== ProductService.getProducts Debug ===');
-      console.log('Query:', JSON.stringify(query, null, 2));
-      console.log('Sort:', JSON.stringify(sortObj, null, 2));
-      console.log('Page:', page, 'Limit:', limit, 'Skip:', skip);
-      console.log('Database name:', mongoose.connection.db?.databaseName);
-      
       const [products, total] = await Promise.all([
         Product.find(query)
-          .populate('category', 'name slug')
-          .populate('subcategory', 'name slug')
           .sort(sortObj)
           .skip(skip)
           .limit(limit),
         Product.countDocuments(query)
       ]);
-      
-      console.log('Results - Products found:', products.length, 'Total count:', total);
-      console.log('First product:', products[0] ? products[0].name : 'No products');
-      console.log('=== End Debug ===');
 
       const pages = Math.ceil(total / limit);
 
@@ -164,8 +151,7 @@ export class ProductService {
         id,
         updateData,
         { new: true, runValidators: true }
-      ).populate('category', 'name slug')
-       .populate('subcategory', 'name slug');
+      );
 
       if (product) {
         logger.info('Product updated successfully', {

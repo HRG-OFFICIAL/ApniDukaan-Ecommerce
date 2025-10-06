@@ -41,7 +41,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
   const fallbackPlaceholder = 'https://placehold.co/400x300/png'
   const imageUrl = typeof productImage === 'string' ? (productImage || fallbackPlaceholder) : fallbackPlaceholder
   const isOutOfStock = (product.inventory?.quantity || 0) <= 0
-  const isLowStock = (product.inventory?.quantity || 0) <= 5 && (product.inventory?.quantity || 0) > 0
+  const isLowStock = (product.inventory?.quantity || 0) <= (product.inventory?.lowStockThreshold || 5) && (product.inventory?.quantity || 0) > 0
   const isInWishlist = wishlist.includes(product._id)
 
   const handleAddToCart = async (e: React.MouseEvent) => {
@@ -56,7 +56,8 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
       name: product.name,
       price: product.price,
       image: product.images[0] || '',
-      maxStock: product.inventory?.quantity || 0
+      maxStock: product.inventory?.quantity || 0,
+      sku: product.sku
     })
     
     toast.success('Added to cart!')
