@@ -41,6 +41,51 @@ export interface ProductShippingInfo {
   shippingClass?: string;
 }
 
+// Product Category Interface
+export interface ProductCategory {
+  id: string;
+  name: string;
+  slug: string;
+  parentId?: string;
+}
+
+// Product Brand Interface
+export interface ProductBrand {
+  id: string;
+  name: string;
+  slug: string;
+  logo?: string;
+}
+
+// Product Inventory Interface
+export interface ProductInventory {
+  quantity: number;
+  lowStockThreshold: number;
+  trackQuantity: boolean;
+  allowBackorder: boolean;
+  sku: string;
+  barcode?: string;
+  weight?: number;
+  dimensions?: ProductDimensions;
+}
+
+// Product Sales Interface
+export interface ProductSales {
+  totalSold: number;
+  revenue: number;
+  lastSoldAt?: string;
+  conversionRate?: number;
+}
+
+// Product Analytics Interface
+export interface ProductAnalytics {
+  views: number;
+  clicks: number;
+  addToCart: number;
+  wishlist: number;
+  share: number;
+}
+
 // Main Product Interface
 export interface Product {
   _id: string;
@@ -51,79 +96,131 @@ export interface Product {
   description: string;
   shortDescription?: string;
   sku: string;
-  barcode?: string;
-  brand?: string;
-  model?: string;
   
   // Pricing
   price: number;
   originalPrice?: number;
-  costPrice?: number;
   currency: string;
-  
-  // Inventory
-  stock: number;
-  minStock?: number;
-  maxStock?: number;
-  trackInventory: boolean;
-  
-  // Categories
-  category: string; // Category ID or category name if not mapped
-  categoryName?: string; // Resolved category display name (from backend)
-  subCategory?: string;
-  tags?: string[];
+  costPrice?: number;
+  margin?: number;
   
   // Media
   images: string[];
-  thumbnail?: string;
+  thumbnailImage?: string;
   videos?: string[];
+  documents?: string[];
+  
+  // Categorization
+  category: ProductCategory;
+  subcategory?: ProductCategory;
+  brand?: ProductBrand;
+  tags: string[];
+  
+  // Inventory
+  inventory: ProductInventory;
+  
+  // Variants
+  variants?: ProductVariant[];
+  hasVariants: boolean;
   
   // Specifications
-  specifications?: Record<string, any>;
-  dimensions?: ProductDimensions;
+  specifications?: Array<{
+    name: string;
+    value: string;
+    unit?: string;
+    category: 'general' | 'technical' | 'dimensions' | 'warranty' | 'other';
+  }>;
+  
+  // Reviews and ratings
+  reviews: Array<{
+    id: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    rating: number;
+    title: string;
+    comment: string;
+    verified: boolean;
+    helpful: number;
+    images?: string[];
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  rating: ProductRating;
+  
+  // Sales data
+  sales: ProductSales;
+  
+  // Status and visibility
+  isOnSale: boolean;
+  featured: boolean;
+  status: 'draft' | 'published' | 'archived' | 'out_of_stock';
+  visibility: 'public' | 'private' | 'password_protected';
+  password?: string;
   
   // SEO
   seo?: ProductSEO;
   
-  // Status & Visibility
-  isActive: boolean;
-  isFeatured: boolean;
+  // Shipping
+  shipping?: {
+    weight: number;
+    dimensions: ProductDimensions;
+    freeShipping: boolean;
+    shippingClass?: string;
+    estimatedDelivery?: {
+      min: number;
+      max: number;
+      unit: 'days' | 'weeks';
+    };
+  };
+  
+  // FAQ
+  faq?: Array<{
+    question: string;
+    answer: string;
+    category: string;
+    order: number;
+  }>;
+  
+  // Vendor information
+  vendor?: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+  };
+  
+  // Digital product specific
   isDigital: boolean;
-  requiresShipping: boolean;
+  downloadLimit?: number;
+  downloadExpiry?: number;
   
-  // Variants
-  variants?: ProductVariant[];
+  // Subscription product specific
+  isSubscription: boolean;
+  subscriptionInterval?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  subscriptionPrice?: number;
   
-  // Reviews & Ratings
-  rating?: ProductRating;
+  // Bundle product specific
+  isBundle: boolean;
+  bundleItems?: Array<{
+    productId: string;
+    quantity: number;
+    discount?: number;
+  }>;
+  
+  // Related products
+  relatedProducts?: string[];
+  crossSellProducts?: string[];
+  upSellProducts?: string[];
   
   // Analytics
-  views?: number;
-  sales?: number;
-  wishlistCount?: number;
+  analytics: ProductAnalytics;
   
   // Timestamps
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
-  
-  // Additional Fields
-  warranty?: string;
-  returnPolicy?: string;
-  shippingInfo?: ProductShippingInfo;
-  
-  // Digital Product Fields
-  digitalFile?: string;
-  downloadLimit?: number;
-  
-  // Bundle Products
-  isBundle?: boolean;
-  bundleItems?: string[];
-  
-  // Related Products
-  relatedProducts?: string[];
-  crossSells?: string[];
-  upSells?: string[];
+  archivedAt?: string;
   
   // Virtual Fields (computed)
   discountPercentage?: number;
@@ -142,19 +239,24 @@ export interface ProductListResponse {
 // Product Filter Interface
 export interface ProductFilters {
   category?: string;
-  subCategory?: string;
+  subcategory?: string;
   brand?: string;
   minPrice?: number;
   maxPrice?: number;
   inStock?: boolean;
-  isFeatured?: boolean;
-  isActive?: boolean;
+  featured?: boolean;
+  status?: 'draft' | 'published' | 'archived' | 'out_of_stock';
+  visibility?: 'public' | 'private' | 'password_protected';
   tags?: string[];
   search?: string;
   sortBy?: 'name' | 'price' | 'createdAt' | 'sales' | 'rating';
   sortOrder?: 'asc' | 'desc';
   page?: number;
   limit?: number;
+  isOnSale?: boolean;
+  isDigital?: boolean;
+  isSubscription?: boolean;
+  isBundle?: boolean;
 }
 
 // Product Create/Update Interface

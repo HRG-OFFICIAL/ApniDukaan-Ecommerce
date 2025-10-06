@@ -95,7 +95,7 @@ services:
       - PORT=4001
       - MONGODB_URI=mongodb://mongodb:27017/ApniDukaan_catalog
       - REDIS_URL=redis://redis:6379
-      - KAFKA_BROKERS=kafka:9092
+      # - KAFKA_BROKERS=kafka:9092
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=${AWS_REGION}
@@ -110,7 +110,7 @@ services:
     depends_on:
       - mongodb
       - redis
-      - kafka
+      # - kafka
       - minio
     networks:
       - ApniDukaan-network
@@ -127,9 +127,9 @@ services:
       - PORT=4003
       - MONGODB_URI=mongodb://mongodb:27017/ApniDukaan_orders
       - REDIS_URL=redis://redis:6379
-      - KAFKA_BROKERS=kafka:9092
-      - KAFKA_CLIENT_ID=order-service
-      - KAFKA_GROUP_ID=order-service-group
+      # - KAFKA_BROKERS=kafka:9092
+      # - KAFKA_CLIENT_ID=order-service
+      # - KAFKA_GROUP_ID=order-service-group
       - USER_SERVICE_URL=http://user-service:4002
       - CATALOG_SERVICE_URL=http://catalog-service:4001
       - PAYMENT_SERVICE_URL=http://payment-service:4004
@@ -139,7 +139,7 @@ services:
     depends_on:
       - mongodb
       - redis
-      - kafka
+      # - kafka
     networks:
       - ApniDukaan-network
 
