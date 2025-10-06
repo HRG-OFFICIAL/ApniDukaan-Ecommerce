@@ -45,52 +45,119 @@ export default function DealsOfTheDay({ products: propProducts }: { products?: P
           setDeals(data.data.products)
         } else {
           setDataSource('fallback')
-          // Fallback to premium deals based on user's requested items
+          // Helper to generate slug
+          const toSlug = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-').replace(/^-|-$/g, '')
+          // Helper to create a valid mock Product matching the schema
+          const createMock = (
+            id: string,
+            name: string,
+            price: number,
+            originalPrice: number,
+            image: string,
+            ratingAvg: number,
+            ratingCount: number,
+            qty: number,
+            lowStock: number
+          ): Product => ({
+            _id: id,
+            name,
+            slug: toSlug(name),
+            description: name,
+            shortDescription: name,
+            sku: `SKU-${id}`,
+            price,
+            originalPrice,
+            currency: 'USD',
+            images: [image],
+            thumbnailImage: image,
+            category: { id: 'electronics', name: 'Electronics', slug: 'electronics' },
+            tags: [],
+            inventory: {
+              quantity: qty,
+              lowStockThreshold: lowStock,
+              trackQuantity: true,
+              allowBackorder: false,
+              sku: `SKU-${id}`
+            },
+            hasVariants: false,
+            reviews: [],
+            rating: {
+              average: ratingAvg,
+              count: ratingCount,
+              breakdown: {
+                5: Math.round(ratingCount * 0.4),
+                4: Math.round(ratingCount * 0.3),
+                3: Math.round(ratingCount * 0.2),
+                2: Math.round(ratingCount * 0.06),
+                1: Math.max(0, ratingCount - (Math.round(ratingCount * 0.4) + Math.round(ratingCount * 0.3) + Math.round(ratingCount * 0.2) + Math.round(ratingCount * 0.06)))
+              }
+            },
+            sales: { totalSold: 0, revenue: 0 },
+            isOnSale: originalPrice > price,
+            featured: true,
+            status: 'published',
+            visibility: 'public',
+            seo: { title: name, description: name, keywords: [] },
+            shipping: {
+              weight: 1,
+              dimensions: { length: 10, width: 10, height: 10, unit: 'cm' },
+              freeShipping: price > 50
+            },
+            isDigital: false,
+            isSubscription: false,
+            isBundle: false,
+            analytics: { views: 0, clicks: 0, addToCart: 0, wishlist: 0, share: 0 },
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            publishedAt: new Date().toISOString()
+          })
+
+          // Fallback to premium deals
           const mockDeals: Product[] = [
-            {
-              _id: 'deal1',
-              name: 'Anker PowerCore 20000mAh Power Bank',
-              price: 29,
-              originalPrice: 39,
-              rating: { average: 4.6, count: 1234 },
-              images: ['https://via.placeholder.com/300x300/1F2937/FFFFFF?text=Anker+PowerBank'],
-              category: { _id: 'electronics', name: 'Electronics', slug: 'electronics' },
-              inventory: { quantity: 100, lowStockThreshold: 20, trackQuantity: true, allowBackorder: false },
-              isFeatured: true
-            },
-            {
-              _id: 'deal2',
-              name: 'Belkin 3-in-1 Wireless Charging Station',
-              price: 79,
-              originalPrice: 99,
-              rating: { average: 4.4, count: 567 },
-              images: ['https://via.placeholder.com/300x300/3B82F6/FFFFFF?text=Belkin+Charger'],
-              category: { _id: 'electronics', name: 'Electronics', slug: 'electronics' },
-              inventory: { quantity: 75, lowStockThreshold: 15, trackQuantity: true, allowBackorder: false },
-              isFeatured: true
-            },
-            {
-              _id: 'deal3',
-              name: 'JBL Flip 6 Bluetooth Speaker',
-              price: 89,
-              originalPrice: 119,
-              rating: { average: 4.5, count: 2345 },
-              images: ['https://via.placeholder.com/300x300/EF4444/FFFFFF?text=JBL+Flip+6'],
-              category: { _id: 'electronics', name: 'Electronics', slug: 'electronics' },
-              inventory: { quantity: 60, lowStockThreshold: 12, trackQuantity: true, allowBackorder: false },
-              isFeatured: true
-            },
-            {
-              _id: 'deal4',
-              name: 'Logitech MX Master 3S Wireless Mouse',
-              price: 99,
-              originalPrice: 129,
-              rating: { average: 4.7, count: 3456 },
-              images: ['https://via.placeholder.com/300x300/10B981/FFFFFF?text=Logitech+MX+Master'],
-              category: { _id: 'electronics', name: 'Electronics', slug: 'electronics' },
-              inventory: { quantity: 40, lowStockThreshold: 8, trackQuantity: true, allowBackorder: false },
-              isFeatured: true
-            }
+            createMock(
+              'deal1',
+              'Anker PowerCore 20000mAh Power Bank',
+              29,
+              39,
+              'https://via.placeholder.com/300x300/1F2937/FFFFFF?text=Anker+PowerBank',
+              4.6,
+              1234,
+              100,
+              20
+            ),
+            createMock(
+              'deal2',
+              'Belkin 3-in-1 Wireless Charging Station',
+              79,
+              99,
+              'https://via.placeholder.com/300x300/3B82F6/FFFFFF?text=Belkin+Charger',
+              4.4,
+              567,
+              75,
+              15
+            ),
+            createMock(
+              'deal3',
+              'JBL Flip 6 Bluetooth Speaker',
+              89,
+              119,
+              'https://via.placeholder.com/300x300/EF4444/FFFFFF?text=JBL+Flip+6',
+              4.5,
+              2345,
+              60,
+              12
+            ),
+            createMock(
+              'deal4',
+              'Logitech MX Master 3S Wireless Mouse',
+              99,
+              129,
+              'https://via.placeholder.com/300x300/10B981/FFFFFF?text=Logitech+MX+Master',
+              4.7,
+              3456,
+              40,
+              8
+            )
           ]
           setDeals(mockDeals)
         }
