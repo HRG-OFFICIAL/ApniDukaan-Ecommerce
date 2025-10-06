@@ -24,6 +24,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 export default function CartPage() {
   const { items: cartItems, itemCount, total, subtotal, tax, shipping, discount, updateQuantity, removeItem, clearCart, calculateTotals } = useCartStore();
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(false);
   const { isAuthenticated, isGuest, user, guestUser } = useAuthStore();
   const isSynced = true; // Always synced with localStorage
 
