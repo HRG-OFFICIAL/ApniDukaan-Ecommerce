@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import MainLayout from '../components/layout/MainLayout'
-import InitialPageLoader from '../components/InitialPageLoader'
 import FeaturedProducts from '../components/FeaturedProducts'
 import CategoriesGrid from '../components/CategoriesGrid'
 import DealsOfTheDay from '../components/DealsOfTheDay'
@@ -35,7 +34,6 @@ export default function Home() {
 
   return (
     <MainLayout pageTitle="Home" className="bg-gray-50">
-      <InitialPageLoader />
       <div className="min-h-screen bg-gray-50">
         <main className="bg-gray-50">
           {/* Restored original in-page Hero section */}

@@ -189,15 +189,33 @@ class ApiClient {
     params.append('sortField', sort.field);
     params.append('sortOrder', sort.order);
 
-    const response = await this.request<{products: Product[], pagination: any}>(`/api/catalog/products?${params.toString()}`);
+    const response = await this.request<any>(`/api/catalog/products?${params.toString()}`);
     
-    // Transform the response to match expected format
+    // Be robust to both gateway and service shapes
+    // Possible shapes:
+    // 1) { success, data: { products: Product[], pagination: {...} } }
+    // 2) { success, data: Product[], pagination: {...} }
+    // 3) { success, products: Product[], pagination: {...} }
+    let products: Product[] = [];
+    let pagination: any = undefined;
+    const d = response?.data;
+    if (d && Array.isArray(d.products)) {
+      products = d.products;
+      pagination = d.pagination ?? response.pagination;
+    } else if (Array.isArray(d)) {
+      products = d;
+      pagination = response.pagination;
+    } else if (Array.isArray(response?.products)) {
+      products = response.products;
+      pagination = response.pagination;
+    }
+
     return {
-      success: response.success,
-      data: response.data.products || [],
-      pagination: response.data.pagination,
-      message: response.message,
-      error: response.error
+      success: !!response?.success,
+      data: products,
+      pagination,
+      message: response?.message,
+      error: response?.error
     };
   }
 
@@ -252,6 +270,10 @@ export const productsApi = {
     apiClient.getProducts(filters, sort, page, limit),
   getById: (id: string) => apiClient.getProduct(id),
   getBySlug: (slug: string) => apiClient.getProductBySlug(slug),
+  getBySkus: async (skus: string[]): Promise<ApiResponse<Product[]>> => {
+    const params = new URLSearchParams({ skus: skus.join(',') })
+    return apiClient.request<Product[]>(`/api/catalog/products/by-skus?${params.toString()}`)
+  },
   search: (query: string, filters?: ProductFilters, page?: number, limit?: number) =>
     apiClient.searchProducts(query, filters, page, limit),
 };
