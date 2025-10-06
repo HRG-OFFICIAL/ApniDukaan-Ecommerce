@@ -11,7 +11,7 @@ interface UseProductsOptions {
     isOnSale?: boolean
     isNew?: boolean
     isBestseller?: boolean
-    isFeatured?: boolean
+    featured?: boolean
     isActive?: boolean
     tags?: string[]
     colors?: string[]
@@ -111,7 +111,7 @@ export function useProducts(options: UseProductsOptions = {}): UseProductsResult
           maxPrice: stableFilter?.maxPrice,
           tags: stableFilter?.tags,
           status: stableFilter?.isActive ? 'published' : undefined,
-          featured: stableFilter?.isFeatured,
+          featured: stableFilter?.featured,
           search: search
         };
 
@@ -306,7 +306,7 @@ interface UseProductFiltersResult {
     isOnSale?: boolean
     isNew?: boolean
     isBestseller?: boolean
-    isFeatured?: boolean
+    featured?: boolean
     isActive?: boolean
     tags?: string[]
     colors?: string[]
@@ -328,7 +328,7 @@ export function useProductFilters(): UseProductFiltersResult {
     isOnSale: undefined as boolean | undefined,
     isNew: undefined as boolean | undefined,
     isBestseller: undefined as boolean | undefined,
-    isFeatured: undefined as boolean | undefined,
+    featured: undefined as boolean | undefined,
     isActive: undefined as boolean | undefined,
     tags: undefined as string[] | undefined,
     colors: undefined as string[] | undefined,
@@ -358,7 +358,7 @@ export function useProductFilters(): UseProductFiltersResult {
       isOnSale: undefined,
       isNew: undefined,
       isBestseller: undefined,
-      isFeatured: undefined,
+      featured: undefined,
       isActive: undefined,
       tags: undefined,
       colors: undefined,

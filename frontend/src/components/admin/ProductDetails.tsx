@@ -16,7 +16,7 @@ interface Product {
   stock: number;
   sku: string;
   isActive: boolean;
-  isFeatured: boolean;
+  featured: boolean;
   isOnSale: boolean;
   rating: number;
   reviewCount: number;
@@ -309,7 +309,7 @@ export function ProductDetails({ product, onEdit, onDelete, onClose }: ProductDe
               <div className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={product.isFeatured}
+                  checked={product.featured}
                   disabled
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />

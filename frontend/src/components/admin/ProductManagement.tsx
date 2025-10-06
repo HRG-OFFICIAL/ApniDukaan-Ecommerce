@@ -32,7 +32,7 @@ interface Product {
   stock: number;
   sku: string;
   isActive: boolean;
-  isFeatured: boolean;
+  featured: boolean;
   isOnSale: boolean;
   rating: number;
   reviewCount: number;
