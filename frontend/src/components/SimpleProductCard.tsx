@@ -117,7 +117,7 @@ export default function SimpleProductCard({ product }: ProductCardProps) {
       <div className="p-4 pt-0">
         <button
           disabled={false}
-          className="w-full py-1 px-3 h-7 rounded-md font-medium transition-all duration-200 flex items-center justify-center bg-blue-600 text-white hover:bg-blue-700 text-sm"
+          className="w-full h-8 px-3 rounded-md font-medium transition-all duration-200 flex items-center justify-center bg-black text-white hover:bg-gray-800 text-sm"
         >
           <ShoppingCart className="w-4 h-4 mr-2" />
           Add to Cart

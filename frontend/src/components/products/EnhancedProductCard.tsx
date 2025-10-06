@@ -253,7 +253,9 @@ export function EnhancedProductCard({
               <div className="absolute bottom-4 left-4 right-4">
                 <Button
                   onClick={handleAddToCart}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
+                  variant="success"
+                  size="sm"
+                  className="w-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Add to Cart
@@ -439,7 +441,9 @@ export function EnhancedProductCard({
               {!isOutOfStock && (
                 <Button
                   onClick={handleAddToCart}
-                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white"
+                  variant="success"
+                  size="sm"
+                  className="mt-4"
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Add to Cart

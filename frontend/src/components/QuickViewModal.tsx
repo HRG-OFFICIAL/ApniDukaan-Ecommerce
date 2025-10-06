@@ -302,6 +302,8 @@ export function QuickViewModal({
                     onClick={handleAddToCart}
                     disabled={isOutOfStock || isAddingToCart}
                     loading={isAddingToCart}
+                    variant="success"
+                    size="sm"
                     className="flex-1"
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />

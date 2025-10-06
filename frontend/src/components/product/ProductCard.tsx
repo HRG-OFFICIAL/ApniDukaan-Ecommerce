@@ -163,9 +163,9 @@ export default function ProductCard({
                     onClick={handleAddToCart}
                     disabled={product.stock === 0}
                     className={cn(
-                      'px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                      'px-3 h-8 rounded-md text-sm font-medium transition-colors',
                       product.stock > 0
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                        ? 'bg-black hover:bg-gray-800 text-white'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     )}
                   >
@@ -256,9 +256,9 @@ export default function ProductCard({
                 onClick={handleAddToCart}
                 disabled={product.stock === 0}
                 className={cn(
-                  'w-full flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                  'w-full flex items-center justify-center px-3 h-8 rounded-md text-sm font-medium transition-colors',
                   product.stock > 0
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    ? 'bg-black hover:bg-gray-800 text-white'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 )}
               >
