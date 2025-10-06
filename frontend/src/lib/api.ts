@@ -243,6 +243,11 @@ class ApiClient {
     return response;
   }
 
+  async getProductsBySkus(skus: string[]): Promise<ApiResponse<Product[]>> {
+    const params = new URLSearchParams({ skus: skus.join(',') });
+    return this.request<Product[]>(`/api/catalog/products/by-skus?${params.toString()}`);
+  }
+
   // Categories API
   async getCategories(): Promise<ApiResponse<Category[]>> {
     return this.request<Category[]>('/api/catalog/categories');
@@ -272,8 +277,7 @@ export const productsApi = {
   getById: (id: string) => apiClient.getProduct(id),
   getBySlug: (slug: string) => apiClient.getProductBySlug(slug),
   getBySkus: async (skus: string[]): Promise<ApiResponse<Product[]>> => {
-    const params = new URLSearchParams({ skus: skus.join(',') })
-    return apiClient.request<Product[]>(`/api/catalog/products/by-skus?${params.toString()}`)
+    return apiClient.getProductsBySkus(skus)
   },
   search: (query: string, filters?: ProductFilters, page?: number, limit?: number) =>
     apiClient.searchProducts(query, filters, page, limit),
