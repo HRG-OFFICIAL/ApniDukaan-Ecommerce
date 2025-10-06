@@ -37,7 +37,27 @@ export default function DealsOfTheDay({ products: propProducts }: { products?: P
 
       setLoading(true)
       try {
-        // Prefer published, on-sale products
+        // First, try to load the explicitly requested Deal-of-the-Day products by IDs
+        const preferredIdList = [
+          '68e36fa889364caaa980d085', // Xbox Series S
+          '68e36fa889364caaa980d0b4', // Pulse 3D Wireless Headset
+          '68e36fc589364caaa9818659', // Apple Watch Series 8
+          '68e36fc689364caaa9818913'  // Samsung Galaxy Watch 3
+        ]
+
+        const byIds = await productsApi.getByIds(preferredIdList)
+        const byIdsData: Product[] = Array.isArray(byIds?.data) ? byIds.data : []
+        if (byIdsData.length > 0) {
+          setDataSource('database')
+          // Keep the provided order and show exactly four
+          setDeals(byIdsData.slice(0, 4))
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('deals-ready'))
+          }
+          return
+        }
+
+        // Fallback: Prefer published, on-sale products
         let products: Product[] = []
         const desired = 8
         // Fetch a larger published set and filter client-side for deals (isOnSale)
@@ -63,7 +83,7 @@ export default function DealsOfTheDay({ products: propProducts }: { products?: P
         }
 
         if (products.length > 0) {
-          // Reorder to prioritize requested ASINs (matched via sku)
+          // Reorder to prioritize requested ASINs (matched via sku) as a secondary preference
           const preferredSkus = new Set([
             'B09N9XB5BC','B08GSBRR9Q','B0C121T53G','B089DQ33QW'
           ].map(s => s.toLowerCase()))

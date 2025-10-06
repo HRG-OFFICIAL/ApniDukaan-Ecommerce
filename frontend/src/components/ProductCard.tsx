@@ -376,7 +376,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
         <button
           onClick={handleAddToCart}
           disabled={false}
-          className="w-full px-4 py-2 rounded-md text-sm font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white"
+          className="w-full h-8 px-3 rounded-md text-sm font-medium transition-colors bg-black hover:bg-gray-800 text-white"
           aria-label={isOutOfStock ? 'Product out of stock' : `Add ${product.name} to cart`}
         >
           <ShoppingCart className="w-4 h-4 mr-2 inline" />

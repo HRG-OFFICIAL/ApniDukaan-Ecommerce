@@ -459,12 +459,13 @@ export default function ProductDetailPage() {
                     </Button>
                   </div>
                   
-                  <Button
+                <Button
                     onClick={handleAddToCart}
                     disabled={isOutOfStock || cartLoading}
                     loading={cartLoading}
-                    className="flex-1"
-                    size="lg"
+                  className="flex-1"
+                  size="sm"
+                  variant="success"
                   >
                     <ShoppingCart className="w-5 h-5 mr-2" />
                     Add to Cart
