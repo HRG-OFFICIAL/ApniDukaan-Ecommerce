@@ -13,7 +13,7 @@ export interface MockProduct {
   stock: number;
   sku: string;
   isActive: boolean;
-  isFeatured: boolean;
+  featured: boolean;
   isOnSale: boolean;
   isBestseller: boolean;
   isNew: boolean;
@@ -97,7 +97,7 @@ export const mockProducts: MockProduct[] = [
     isBestseller: true,
     isOnSale: true,
     isNew: false,
-    isFeatured: true,
+    featured: true,
     isActive: true,
     tags: ['wireless', 'bluetooth', 'noise-cancellation'],
     colors: ['Black', 'White', 'Blue'],
@@ -127,7 +127,7 @@ export const mockProducts: MockProduct[] = [
     isBestseller: false,
     isOnSale: true,
     isNew: true,
-    isFeatured: true,
+    featured: true,
     isActive: true,
     tags: ['fitness', 'smartwatch', 'health'],
     colors: ['Black', 'Silver', 'Rose Gold'],
@@ -157,7 +157,7 @@ export const mockProducts: MockProduct[] = [
     isBestseller: true,
     isOnSale: true,
     isNew: false,
-    isFeatured: false,
+    featured: false,
     isActive: true,
     tags: ['organic', 'cotton', 'sustainable'],
     colors: ['White', 'Black', 'Navy', 'Green'],
@@ -187,7 +187,7 @@ export const mockProducts: MockProduct[] = [
     isBestseller: true,
     isOnSale: true,
     isNew: false,
-    isFeatured: true,
+    featured: true,
     isActive: true,
     tags: ['coffee', 'premium', 'single-origin'],
     colors: ['Brown'],
@@ -217,7 +217,7 @@ export const mockProducts: MockProduct[] = [
     isBestseller: false,
     isOnSale: true,
     isNew: true,
-    isFeatured: false,
+    featured: false,
     isActive: true,
     tags: ['gaming', 'mechanical', 'rgb'],
     colors: ['Black', 'White'],

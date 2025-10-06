@@ -286,7 +286,7 @@ export interface ProductInput {
   dimensions?: ProductDimensions;
   seo?: ProductSEO;
   isActive?: boolean;
-  isFeatured?: boolean;
+  featured?: boolean;
   isDigital?: boolean;
   requiresShipping?: boolean;
   variants?: ProductVariant[];
@@ -311,7 +311,7 @@ export interface ProductSearchParams {
   minPrice?: number;
   maxPrice?: number;
   inStock?: boolean;
-  isFeatured?: boolean;
+  featured?: boolean;
   tags?: string[];
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';

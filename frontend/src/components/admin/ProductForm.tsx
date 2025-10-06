@@ -17,7 +17,7 @@ interface Product {
   stock: number;
   sku: string;
   isActive: boolean;
-  isFeatured: boolean;
+  featured: boolean;
   isOnSale: boolean;
   tags: string[];
   colors: string[];
@@ -51,7 +51,7 @@ export function ProductForm({ product, categories, onSave, onCancel }: ProductFo
     stock: 0,
     sku: '',
     isActive: true,
-    isFeatured: false,
+    featured: false,
     isOnSale: false,
     tags: [] as string[],
     colors: [] as string[],
@@ -86,7 +86,7 @@ export function ProductForm({ product, categories, onSave, onCancel }: ProductFo
         stock: product.stock || 0,
         sku: product.sku || '',
         isActive: product.isActive !== false,
-        isFeatured: product.isFeatured || false,
+        featured: product.featured || false,
         isOnSale: product.isOnSale || false,
         tags: product.tags || [],
         colors: product.colors || [],
@@ -575,12 +575,12 @@ export function ProductForm({ product, categories, onSave, onCancel }: ProductFo
             <div className="flex items-center">
               <input
                 type="checkbox"
-                id="isFeatured"
-                checked={formData.isFeatured}
-                onChange={(e) => handleInputChange('isFeatured', e.target.checked)}
+                id="featured"
+                checked={formData.featured}
+                onChange={(e) => handleInputChange('featured', e.target.checked)}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
-              <label htmlFor="isFeatured" className="ml-2 text-sm text-gray-700">
+              <label htmlFor="featured" className="ml-2 text-sm text-gray-700">
                 Featured
               </label>
             </div>
