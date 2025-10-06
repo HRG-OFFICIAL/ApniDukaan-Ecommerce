@@ -31,13 +31,25 @@ connectToMongoDB();
 
 // Middleware
 app.use(helmet());
+const exactAllowedOrigins = [
+  'http://localhost:3000',
+  'https://apni-dukaan-ecommerce-frontend.vercel.app',
+  'https://apnidukaan-ecommerce.vercel.app',
+  process.env.FRONTEND_URL,
+  process.env.FRONTEND_ORIGIN
+].filter(Boolean)
+
+const dynamicOriginAllowlist = [
+  /\.vercel\.app$/i
+]
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://apni-dukaan-ecommerce-frontend.vercel.app',
-    'https://apnidukaan-ecommerce.vercel.app',
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true) // allow server-to-server / health checks
+    if (exactAllowedOrigins.includes(origin)) return callback(null, true)
+    if (dynamicOriginAllowlist.some(rx => rx.test(origin))) return callback(null, true)
+    return callback(new Error('Not allowed by CORS'))
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
