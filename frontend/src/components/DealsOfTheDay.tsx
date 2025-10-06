@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import ProductCard from './ProductCard'
 import type { Product } from '../lib/api'
+import { productsApi, type ProductFilters, type ProductSort } from '../lib/api'
 
 export default function DealsOfTheDay({ products: propProducts }: { products?: Product[] }) {
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 })
@@ -36,13 +37,34 @@ export default function DealsOfTheDay({ products: propProducts }: { products?: P
 
       setLoading(true)
       try {
-        // Fetch deals from electronics category
-        const response = await fetch(`/api/catalog/products?limit=4&category=Electronics&sortField=price&sortOrder=asc`)
-        const data = await response.json()
-        
-        if (data.success && data.data.products && data.data.products.length > 0) {
+        // Prefer published, on-sale products
+        let products: Product[] = []
+        const desired = 8
+        // Fetch a larger published set and filter client-side for deals (isOnSale)
+        const sort: ProductSort = { field: 'price', order: 'asc' }
+        const res = await productsApi.getAll({ status: 'published' }, sort, 1, 32)
+        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+          products = res.data.filter(p => p.isOnSale)
+        }
+
+        if (products.length < 8) {
+          // Top-up from top-rated published (avoid duplicates)
+          const fallback = await productsApi.getAll({ status: 'published' }, { field: 'rating', order: 'desc' }, 1, 32)
+          const fallbackProducts: Product[] = (fallback?.data || []).filter(p => p.isOnSale)
+          const seen = new Set(products.map(p => p._id || p.slug))
+          for (const p of fallbackProducts) {
+            const key = p._id || p.slug
+            if (!key || !seen.has(key)) {
+              products.push(p)
+              if (key) seen.add(key)
+            }
+            if (products.length >= 8) break
+          }
+        }
+
+        if (products.length > 0) {
           setDataSource('database')
-          setDeals(data.data.products)
+          setDeals(products)
         } else {
           setDataSource('fallback')
           // Helper to generate slug
@@ -143,6 +165,50 @@ export default function DealsOfTheDay({ products: propProducts }: { products?: P
               3456,
               40,
               8
+            ),
+            createMock(
+              'deal5',
+              'COSORI Pro LE 5-Qt Air Fryer',
+              79,
+              99,
+              'https://via.placeholder.com/300x300/F59E0B/FFFFFF?text=COSORI+Air+Fryer',
+              4.6,
+              12000,
+              80,
+              10
+            ),
+            createMock(
+              'deal6',
+              'Kasa Smart Plug Mini 4-Pack (EP10)',
+              24,
+              39,
+              'https://via.placeholder.com/300x300/3B82F6/FFFFFF?text=Kasa+Smart+Plug',
+              4.7,
+              50000,
+              200,
+              20
+            ),
+            createMock(
+              'deal7',
+              'Hydro Flask Wide Mouth Bottle (32 oz)',
+              39,
+              49,
+              'https://via.placeholder.com/300x300/0EA5E9/FFFFFF?text=Hydro+Flask',
+              4.8,
+              25000,
+              120,
+              12
+            ),
+            createMock(
+              'deal8',
+              'Kindle Paperwhite (8 GB, 2021)',
+              109,
+              129,
+              'https://via.placeholder.com/300x300/111827/FFFFFF?text=Kindle+Paperwhite',
+              4.8,
+              80000,
+              90,
+              10
             )
           ]
           setDeals(mockDeals)
@@ -189,8 +255,8 @@ export default function DealsOfTheDay({ products: propProducts }: { products?: P
         </span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {deals.map((p) => (
-          <ProductCard key={p._id} product={p} />
+        {deals.map((p, idx) => (
+          <ProductCard key={p._id || p.slug || idx} product={p} />
         ))}
       </div>
     </div>

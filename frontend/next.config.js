@@ -122,14 +122,15 @@ const nextConfig = {
   
   // API rewrites
   async rewrites() {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
     return [
       {
         source: '/api/catalog/:path*',
-        destination: 'http://localhost:4000/api/catalog/:path*',
+        destination: `${apiBase}/api/catalog/:path*`,
       },
       {
         source: '/catalog/:path*',
-        destination: 'http://localhost:4000/api/catalog/:path*',
+        destination: `${apiBase}/api/catalog/:path*`,
       },
     ]
   },
