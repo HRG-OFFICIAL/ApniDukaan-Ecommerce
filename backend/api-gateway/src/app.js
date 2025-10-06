@@ -336,6 +336,44 @@ app.get('/api/catalog/products/by-skus', async (req, res) => {
   }
 })
 
+// Fetch products by MongoDB _ids, preserving requested order
+app.get('/api/catalog/products/by-ids', async (req, res) => {
+  try {
+    const idsParam = req.query.ids
+    if (!idsParam) {
+      return res.status(400).json({ success: false, error: 'Missing ids query param' })
+    }
+    const rawIds = Array.isArray(idsParam) ? idsParam.join(',') : String(idsParam)
+    const requestedIds = rawIds.split(',').map(s => s.trim()).filter(Boolean)
+    if (requestedIds.length === 0) {
+      return res.status(400).json({ success: false, error: 'No valid ids provided' })
+    }
+
+    let products = []
+    if (db) {
+      const collection = db.collection('products')
+      const objectIds = []
+      for (const id of requestedIds) {
+        try { objectIds.push(new ObjectId(id)) } catch {}
+      }
+      const found = await collection.find({ _id: { $in: objectIds } }).toArray()
+      const map = new Map()
+      for (const p of found) {
+        if (p && p._id) map.set(String(p._id), p)
+      }
+      products = requestedIds.map(id => map.get(id)).filter(Boolean)
+      products = products.map(p => ({ ...p, id: String(p._id) }))
+    } else {
+      products = []
+    }
+
+    res.json({ success: true, data: products })
+  } catch (error) {
+    console.error('❌ Error fetching products by ids:', error)
+    res.status(500).json({ success: false, error: 'Failed to fetch products by ids' })
+  }
+})
+
 // Categories API endpoint - Uses your real MongoDB data!
 app.get('/api/catalog/categories', async (req, res) => {
   try {
