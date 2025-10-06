@@ -43,7 +43,7 @@ const dynamicOriginAllowlist = [
   /\.vercel\.app$/i
 ]
 
-app.use(cors({
+const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true) // allow server-to-server / health checks
     if (exactAllowedOrigins.includes(origin)) return callback(null, true)
@@ -53,8 +53,13 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  optionsSuccessStatus: 200
-}));
+  optionsSuccessStatus: 204
+}
+
+// Apply CORS for all routes
+app.use(cors(corsOptions))
+// Ensure preflight requests are handled with CORS headers
+app.options('*', cors(corsOptions))
 
 // Rate limiting
 const limiter = rateLimit({
