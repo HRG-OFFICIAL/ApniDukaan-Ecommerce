@@ -289,6 +289,51 @@ app.get('/api/catalog/products', async (req, res) => {
   }
 });
 
+
+// Categories API endpoint - Uses your real MongoDB data!
+app.get('/api/catalog/categories', async (req, res) => {
+  try {
+    let categories = [];
+    
+    if (db) {
+      // Use your real MongoDB data
+      const collection = db.collection('categories');
+      categories = await collection.find({}).toArray();
+      
+      // Convert MongoDB _id to id for frontend compatibility
+      categories = categories.map(category => ({
+        ...category,
+        id: category._id.toString()
+      }));
+      
+      console.log(`📂 Fetched ${categories.length} categories from MongoDB`);
+    } else {
+      // Fallback to mock data
+      categories = [
+        { id: 'electronics', name: 'Electronics', count: 245, image: 'https://via.placeholder.com/200x200?text=Electronics' },
+        { id: 'fashion', name: 'Fashion', count: 189, image: 'https://via.placeholder.com/200x200?text=Fashion' },
+        { id: 'home-garden', name: 'Home & Garden', count: 156, image: 'https://via.placeholder.com/200x200?text=Home' },
+        { id: 'sports', name: 'Sports', count: 134, image: 'https://via.placeholder.com/200x200?text=Sports' },
+        { id: 'books', name: 'Books', count: 98, image: 'https://via.placeholder.com/200x200?text=Books' },
+        { id: 'toys', name: 'Toys', count: 87, image: 'https://via.placeholder.com/200x200?text=Toys' }
+      ];
+      
+      console.log(`📂 Using mock data - ${categories.length} categories`);
+    }
+    
+    res.json({
+      success: true,
+      data: categories
+    });
+  } catch (error) {
+    console.error('❌ Error fetching categories:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch categories'
+    });
+  }
+});
+
 // Fetch products by SKUs (case-insensitive), preserving requested order
 app.get('/api/catalog/products/by-skus', async (req, res) => {
   try {
@@ -378,50 +423,6 @@ app.get('/api/catalog/products/by-ids', async (req, res) => {
     res.status(500).json({ success: false, error: 'Failed to fetch products by ids' })
   }
 })
-
-// Categories API endpoint - Uses your real MongoDB data!
-app.get('/api/catalog/categories', async (req, res) => {
-  try {
-    let categories = [];
-    
-    if (db) {
-      // Use your real MongoDB data
-      const collection = db.collection('categories');
-      categories = await collection.find({}).toArray();
-      
-      // Convert MongoDB _id to id for frontend compatibility
-      categories = categories.map(category => ({
-        ...category,
-        id: category._id.toString()
-      }));
-      
-      console.log(`📂 Fetched ${categories.length} categories from MongoDB`);
-    } else {
-      // Fallback to mock data
-      categories = [
-        { id: 'electronics', name: 'Electronics', count: 245, image: 'https://via.placeholder.com/200x200?text=Electronics' },
-        { id: 'fashion', name: 'Fashion', count: 189, image: 'https://via.placeholder.com/200x200?text=Fashion' },
-        { id: 'home-garden', name: 'Home & Garden', count: 156, image: 'https://via.placeholder.com/200x200?text=Home' },
-        { id: 'sports', name: 'Sports', count: 134, image: 'https://via.placeholder.com/200x200?text=Sports' },
-        { id: 'books', name: 'Books', count: 98, image: 'https://via.placeholder.com/200x200?text=Books' },
-        { id: 'toys', name: 'Toys', count: 87, image: 'https://via.placeholder.com/200x200?text=Toys' }
-      ];
-      
-      console.log(`📂 Using mock data - ${categories.length} categories`);
-    }
-    
-    res.json({
-      success: true,
-      data: categories
-    });
-  } catch (error) {
-    console.error('❌ Error fetching categories:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch categories'
-    });
-  }
-});
 
 // Single product API endpoint - Uses your real MongoDB data!
 app.get('/api/catalog/products/:id', async (req, res) => {
