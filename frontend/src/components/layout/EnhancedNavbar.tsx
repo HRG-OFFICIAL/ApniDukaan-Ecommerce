@@ -12,8 +12,21 @@ import {
   ChevronDown,
   ShoppingBag,
   MoreVertical,
-  Heart
+  Heart,
+  Grid3X3,
+  Package,
+  TrendingUp,
+  Sparkles,
+  Store,
+  RotateCcw,
+  Gift,
+  BookOpen,
+  History,
+  Zap,
+  HelpCircle
 } from 'lucide-react'
+import { useCartStore } from '../../store/useCartStore'
+import { useAuthStore } from '../../store/useAuthStore'
 
 // Categories for mega menu
 const categoryGroups = [
@@ -94,11 +107,10 @@ export function Navbar({ className = '' }: NavbarProps) {
   const categoriesRef = useRef<HTMLDivElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
 
-  // Mock data for cart and user
-  const cartItemCount = 0
+  // Get cart data from store
+  const { itemCount: cartItemCount, toggleCart } = useCartStore()
+  const { isAuthenticated, isGuest, user, guestUser, logout } = useAuthStore()
   const wishlistCount = 0
-  const isAuthenticated = false
-  const user: { name?: string; email?: string } | null = null
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -154,14 +166,15 @@ export function Navbar({ className = '' }: NavbarProps) {
   }
 
   const handleLogout = () => {
-    // Mock logout
+    logout()
     setIsUserMenuOpen(false)
+    router.push('/')
   }
 
   return (
     <>
       {/* Main Navigation */}
-      <nav className={`bg-white sticky top-0 z-40 text-gray-900 ${className}`}>
+      <nav className={`bg-white sticky top-0 z-40 text-gray-900 border-b border-black ${className}`}>
         <div className="mx-auto px-4 sm:px-6 lg:px-10">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -223,42 +236,112 @@ export function Navbar({ className = '' }: NavbarProps) {
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 p-2 text-black hover:text-black transition-colors"
+                  className="flex items-center space-x-2 p-2 text-black hover:text-gray-600 transition-all duration-200"
                 >
                   <CircleUser className="h-5 w-5" />
-                  <span className="hidden md:block text-black text-sm font-medium">{isAuthenticated ? (user as any)?.name || 'Account' : 'Sign In'}</span>
-                  <ChevronDown className="h-4 w-4" />
+                   <span className="hidden md:block text-black text-sm font-medium">
+                     {isAuthenticated ? (
+                       isGuest ? 'Guest' : (user as any)?.name || 'Account'
+                     ) : 'Sign In'}
+                   </span>
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
                     {isAuthenticated ? (
-                      <>
-                        <Link href="/profile" className="block px-4 py-2 text-gray-700 hover:bg-gray-50">
-                          My Profile
-                        </Link>
-                        <Link href="/orders" className="block px-4 py-2 text-gray-700 hover:bg-gray-50">
-                          My Orders
-                        </Link>
-                        <Link href="/wishlist" className="block px-4 py-2 text-gray-700 hover:bg-gray-50">
-                          Wishlist
-                        </Link>
-                        <hr className="my-2" />
-                        <button
-                          onClick={handleLogout}
-                          className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        >
-                          Sign Out
-                        </button>
-                      </>
+                      isGuest ? (
+                        <>
+                          <div className="px-4 py-2 border-b border-gray-100">
+                            <p className="text-sm font-medium text-gray-900 m-0">Welcome, Guest!</p>
+                            <p className="text-xs text-gray-500 m-0">{(guestUser as any)?.email || 'guest@apnidukaan.com'}</p>
+                          </div>
+                          <div className="py-1">
+                            <Link href="/auth/login" className="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 group">
+                              <CircleUser className="h-4 w-4 mr-3 group-hover:text-blue-600" />
+                              Sign In to Save Progress
+                            </Link>
+                          </div>
+                          <div className="border-t border-gray-100 pt-1">
+                            <button
+                              onClick={handleLogout}
+                              className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 group"
+                            >
+                              <span className="h-4 w-4 mr-3 flex items-center justify-center group-hover:text-red-600">
+                                <span className="text-xs font-bold">×</span>
+                              </span>
+                              Exit Guest Mode
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="px-4 py-2 border-b border-gray-100">
+                            <p className="text-sm font-medium text-gray-900 m-0">Welcome back!</p>
+                            <p className="text-xs text-gray-500 m-0">{(user as any)?.email || 'user@example.com'}</p>
+                          </div>
+                          <div className="py-1">
+                            <Link href="/profile" className="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 group">
+                              <CircleUser className="h-4 w-4 mr-3 group-hover:text-blue-600" />
+                              My Profile
+                            </Link>
+                            <Link href="/orders" className="flex items-center px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all duration-200 group">
+                              <ShoppingBag className="h-4 w-4 mr-3 group-hover:text-green-600" />
+                              My Orders
+                            </Link>
+                            <Link href="/wishlist" className="flex items-center px-4 py-2 text-gray-700 hover:bg-pink-50 hover:text-pink-700 transition-all duration-200 group">
+                              <Heart className="h-4 w-4 mr-3 group-hover:text-pink-600" />
+                              Wishlist
+                            </Link>
+                          </div>
+                          <div className="border-t border-gray-100 pt-1">
+                            <button
+                              onClick={handleLogout}
+                              className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 group"
+                            >
+                              <span className="h-4 w-4 mr-3 flex items-center justify-center group-hover:text-red-600">
+                                <span className="text-xs font-bold">×</span>
+                              </span>
+                              Sign Out
+                            </button>
+                          </div>
+                        </>
+                      )
                     ) : (
                       <>
-                        <Link href="/auth/login" className="block px-4 py-2 text-gray-700 hover:bg-gray-50">
-                          Sign In
-                        </Link>
-                        <Link href="/auth/register" className="block px-4 py-2 text-gray-700 hover:bg-gray-50">
-                          Create Account
-                        </Link>
+                        <div className="px-4 py-2 border-b border-gray-100">
+                          <h3 className="text-lg font-semibold text-gray-900 whitespace-nowrap m-0">Welcome to ApniDukaan</h3>
+                          <p className="text-sm text-gray-500 m-0">Sign in to access your account</p>
+                        </div>
+                        <div className="py-1">
+                          <Link 
+                            href="/auth/login" 
+                            className="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 group"
+                          >
+                            <CircleUser className="h-5 w-5 mr-3 group-hover:text-blue-600" />
+                            <div>
+                              <p className="font-medium m-0">Sign In</p>
+                              <p className="text-xs text-gray-500 m-0">Access your account</p>
+                            </div>
+                          </Link>
+                          <Link 
+                            href="/auth/register" 
+                            className="flex items-center px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all duration-200 group"
+                          >
+                            <span className="h-5 w-5 mr-3 flex items-center justify-center group-hover:text-green-600">
+                              <span className="text-sm font-bold">+</span>
+                            </span>
+                            <div>
+                              <p className="font-medium m-0">Create Account</p>
+                              <p className="text-xs text-gray-500 m-0">Join ApniDukaan today</p>
+                            </div>
+                          </Link>
+                        </div>
+                        <div className="px-4 py-2 bg-gray-50 rounded-b-2xl">
+                          <p className="text-xs text-gray-500 text-center m-0">
+                            By continuing, you agree to our Terms of Service
+                          </p>
+                        </div>
                       </>
                     )}
                   </div>
@@ -266,7 +349,10 @@ export function Navbar({ className = '' }: NavbarProps) {
               </div>
 
               {/* Cart with label */}
-              <Link href="/cart" className="relative flex items-center gap-2 p-2 text-black hover:text-black transition-colors">
+              <button 
+                onClick={toggleCart}
+                className="relative flex items-center gap-2 p-2 text-black hover:text-black transition-colors"
+              >
                 <ShoppingCart className="h-5 w-5" />
                 <span className="hidden md:inline text-sm font-medium text-black">Cart</span>
                 {cartItemCount > 0 && (
@@ -274,7 +360,7 @@ export function Navbar({ className = '' }: NavbarProps) {
                     {cartItemCount}
                   </span>
                 )}
-              </Link>
+              </button>
 
               {/* Become a Seller */}
               <Link href="/seller" className="hidden md:flex items-center gap-2 p-2 text-black hover:text-black transition-colors">
@@ -297,56 +383,58 @@ export function Navbar({ className = '' }: NavbarProps) {
             </div>
           </div>
 
-          {/* Categories Menu */}
-          <div className="hidden md:block border-t border-gray-200">
-            <div className="flex items-center space-x-8 py-3" ref={categoriesRef}>
-              <button
-                onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
-                className="flex items-center space-x-2 text-black hover:text-black transition-colors"
-              >
-                <Menu className="h-5 w-5" />
-                <span>Categories</span>
-                <ChevronDown className="h-4 w-4" />
-              </button>
-
-              <Link href="/products" className="text-black hover:text-black transition-colors">
-                All Products
-              </Link>
-              <Link href="/deals" className="text-black hover:text-black transition-colors">
-                Trending Deals
-              </Link>
-              <Link href="/new-arrivals" className="text-black hover:text-black transition-colors">
-                New Arrivals
-              </Link>
-
-              {isCategoriesOpen && (
-                <div className="absolute top-full left-0 w-full bg-white border-t border-gray-200 shadow-lg z-50">
-                  <div className="mx-auto px-4 sm:px-6 lg:px-10 py-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                      {categoryGroups.map((group) => (
-                        <div key={group.title}>
-                          <h3 className="font-semibold text-gray-900 mb-4">{group.title}</h3>
-                          <ul className="space-y-2">
-                            {group.items.map((item) => (
-                              <li key={item.name}>
-                                <Link
-                                  href={item.href}
-                                  className="text-gray-600 hover:text-blue-600 transition-colors"
-                                >
-                                  {item.name}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          
         </div>
+
+         {/* Secondary Navigation - Horizontal Links */}
+         <div className="hidden md:block">
+           <div className="flex items-center justify-between py-3 text-sm px-6 w-full">
+             <Link href="/categories" className="flex items-center gap-2 text-black hover:text-gray-600 transition-colors whitespace-nowrap">
+               <Grid3X3 className="h-4 w-4" />
+               Categories
+             </Link>
+             <Link href="/products" className="flex items-center gap-2 text-black hover:text-gray-600 transition-colors whitespace-nowrap">
+               <Package className="h-4 w-4" />
+               All Products
+             </Link>
+             <Link href="/deals" className="flex items-center gap-2 text-black hover:text-gray-600 transition-colors whitespace-nowrap">
+               <TrendingUp className="h-4 w-4" />
+               Trending Deals
+             </Link>
+             <Link href="/new-arrivals" className="flex items-center gap-2 text-black hover:text-gray-600 transition-colors whitespace-nowrap">
+               <Sparkles className="h-4 w-4" />
+               New Arrivals
+             </Link>
+             <Link href="/sell" className="flex items-center gap-2 text-black hover:text-gray-600 transition-colors whitespace-nowrap">
+               <Store className="h-4 w-4" />
+               Sell
+             </Link>
+             <Link href="/buy-again" className="flex items-center gap-2 text-black hover:text-gray-600 transition-colors whitespace-nowrap">
+               <RotateCcw className="h-4 w-4" />
+               Buy Again
+             </Link>
+             <Link href="/gift-cards" className="flex items-center gap-2 text-black hover:text-gray-600 transition-colors whitespace-nowrap">
+               <Gift className="h-4 w-4" />
+               Gift Cards
+             </Link>
+             <Link href="/kindle-ebooks" className="flex items-center gap-2 text-black hover:text-gray-600 transition-colors whitespace-nowrap">
+               <BookOpen className="h-4 w-4" />
+               Kindle eBooks
+             </Link>
+             <Link href="/history" className="flex items-center gap-2 text-black hover:text-gray-600 transition-colors whitespace-nowrap">
+               <History className="h-4 w-4" />
+               Browsing History
+             </Link>
+             <Link href="/todays-deals" className="flex items-center gap-2 text-black hover:text-gray-600 transition-colors whitespace-nowrap">
+               <Zap className="h-4 w-4" />
+               Today's Deals
+             </Link>
+             <Link href="/support" className="flex items-center gap-2 text-black hover:text-gray-600 transition-colors whitespace-nowrap">
+               <HelpCircle className="h-4 w-4" />
+               Customer Service
+             </Link>
+           </div>
+         </div>
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
@@ -395,17 +483,13 @@ export function Navbar({ className = '' }: NavbarProps) {
                 </div>
               </div>
 
-              {/* Mobile Links */}
               <div className="space-y-2">
-                <Link href="/products" className="block text-gray-700 hover:text-blue-600 transition-colors">
-                  All Products
-                </Link>
-                <Link href="/deals" className="block text-gray-700 hover:text-blue-600 transition-colors">
-                  Deals
-                </Link>
-                <Link href="/new-arrivals" className="block text-gray-700 hover:text-blue-600 transition-colors">
-                  New Arrivals
-                </Link>
+                <button 
+                  onClick={toggleCart}
+                  className="block w-full text-left text-gray-700 hover:text-blue-600 transition-colors"
+                >
+                  Cart ({cartItemCount})
+                </button>
               </div>
             </div>
           </div>

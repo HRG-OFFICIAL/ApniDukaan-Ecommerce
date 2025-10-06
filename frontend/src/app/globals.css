@@ -94,6 +94,37 @@ html.dark {
   .text-balance {
     text-wrap: balance;
   }
+  
+  /* Custom dropdown animations */
+  .animate-in {
+    animation: animate-in 0.2s ease-out;
+  }
+  
+  .slide-in-from-top-2 {
+    animation: slide-in-from-top-2 0.2s ease-out;
+  }
+  
+  @keyframes animate-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  @keyframes slide-in-from-top-2 {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
 
 /* Custom component styles */
@@ -140,4 +171,21 @@ html.dark {
   .card {
     @apply bg-white rounded-lg shadow-md border border-neutral-200 p-6;
   }
+}
+
+/* Remove green autofill background in Chrome/Safari and ensure black text */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important; /* force white background */
+  box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #000000 !important; /* black text */
+  caret-color: #000000 !important;
+  transition: background-color 9999s ease-out 0s; /* prevent flicker */
 }

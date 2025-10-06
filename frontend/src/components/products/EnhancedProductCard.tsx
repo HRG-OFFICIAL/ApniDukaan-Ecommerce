@@ -80,7 +80,22 @@ export function EnhancedProductCard({
     e.stopPropagation()
     
     if (!isAuthenticated) {
-      toast.error('Please login to add to wishlist')
+      toast.error('Please login to add to wishlist', {
+        icon: (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="9" stroke="#000000" strokeWidth="2" />
+            <path d="M12 7v6" stroke="#000000" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="12" cy="17" r="1.5" fill="#000000" />
+          </svg>
+        ),
+        style: {
+          background: '#FEE2E2',
+          border: '1px solid #FCA5A5',
+          color: '#000000',
+          borderRadius: 6,
+          boxShadow: 'none'
+        }
+      })
       return
     }
 

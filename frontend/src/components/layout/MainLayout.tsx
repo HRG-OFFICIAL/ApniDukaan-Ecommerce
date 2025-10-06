@@ -7,7 +7,7 @@ import CartSidebar from '../cart/CartSidebar'
 import { ErrorBoundary } from '../ui/ErrorBoundary'
 import { useAppStore } from '../../store/useAppStore'
 import { cn } from '../../utils/cn'
-import { SkipLinks, LiveRegion } from '../ui/Accessibility'
+import { LiveRegion } from '../ui/Accessibility'
 
 interface MainLayoutProps {
   children: ReactNode
@@ -35,7 +35,6 @@ export default function MainLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900 light">
-      <SkipLinks />
       {/* Global Loading Overlay */}
       {isLoading && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-25 flex items-center justify-center z-50">

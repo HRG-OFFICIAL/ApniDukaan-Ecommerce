@@ -46,6 +46,89 @@ async function startServer() {
       });
     });
 
+    // Razorpay endpoints
+    app.post('/api/payments/razorpay/create-order', (req, res) => {
+      try {
+        const { amount, currency = 'INR', receipt, notes } = req.body;
+        
+        if (!amount || !receipt) {
+          return res.status(400).json({
+            success: false,
+            error: 'Amount and receipt are required'
+          });
+        }
+
+        // Generate mock Razorpay order
+        const orderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        res.json({
+          success: true,
+          data: {
+            orderId,
+            amount: Math.round(amount * 100), // Convert to paise
+            currency,
+            receipt,
+            status: 'created',
+            keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_RPTmqUYFOHsjfL',
+            notes: notes || {}
+          }
+        });
+      } catch (error: any) {
+        logger.error('Razorpay order creation error', {
+          error: error.message,
+          action: 'razorpay_create_order'
+        });
+        
+        res.status(500).json({
+          success: false,
+          error: 'Failed to create Razorpay order'
+        });
+      }
+    });
+
+    app.post('/api/payments/razorpay/verify', (req, res) => {
+      try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+          return res.status(400).json({
+            success: false,
+            error: 'Missing required verification parameters'
+          });
+        }
+
+        // Mock verification - in production, you'd verify the signature
+        const isValid = Math.random() > 0.1; // 90% success rate for testing
+        
+        if (!isValid) {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid payment signature'
+          });
+        }
+
+        res.json({
+          success: true,
+          data: {
+            paymentId: razorpay_payment_id,
+            orderId: razorpay_order_id,
+            status: 'verified',
+            verifiedAt: new Date().toISOString()
+          }
+        });
+      } catch (error: any) {
+        logger.error('Razorpay payment verification error', {
+          error: error.message,
+          action: 'razorpay_verify'
+        });
+        
+        res.status(500).json({
+          success: false,
+          error: 'Payment verification failed'
+        });
+      }
+    });
+
     // API routes
     app.post('/api/payments/create', (req, res) => {
       const { amount, currency, orderId, paymentMethod } = req.body;

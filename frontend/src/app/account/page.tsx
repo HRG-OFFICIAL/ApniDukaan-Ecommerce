@@ -21,6 +21,7 @@ import MainLayout from '../../components/layout/MainLayout'
 import { Button } from '../../components/ui/Button'
 import { Loading } from '../../components/ui/LoadingSpinner'
 import { Breadcrumb } from '../../components/ui/Breadcrumb'
+import { GuestUserButton } from '../../components/auth/GuestUserButton'
 import { cn } from '../../utils/cn'
 
 interface AccountStats {
@@ -72,6 +73,11 @@ export default function AccountDashboard() {
   const breadcrumbItems = [
     { label: 'My Account' }
   ]
+
+  const handleGuestLogin = (email: string, password: string) => {
+    // Redirect to login page with guest parameter
+    window.location.href = `/auth/login?redirect=/account&guest=true`
+  }
 
   const quickActions = [
     {
@@ -126,7 +132,22 @@ export default function AccountDashboard() {
             <User className="mx-auto h-16 w-16 text-gray-300 mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Please sign in</h1>
             <p className="text-gray-600 mb-8">You need to be signed in to view your account.</p>
-            <Button href="/auth/login?redirect=/account">Sign In</Button>
+            
+            <div className="space-y-3">
+              <Button href="/auth/login?redirect=/account" className="w-full">
+                Sign In
+              </Button>
+              
+              <div className="text-center">
+                <span className="text-sm text-gray-500">or</span>
+              </div>
+              
+              <GuestUserButton
+                onGuestLogin={handleGuestLogin}
+                className="w-full"
+                size="md"
+              />
+            </div>
           </div>
         </div>
       </MainLayout>

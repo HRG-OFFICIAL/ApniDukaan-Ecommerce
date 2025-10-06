@@ -220,9 +220,10 @@ export default function CartSidebar() {
                               <Button
                                 variant="ghost"
                                 onClick={clearCart}
-                                className="mt-4 w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                                className="mt-4 w-full text-red-600 hover:text-red-700 hover:bg-red-50 border border-red-200 hover:border-red-300 transition-all duration-200 font-medium"
                                 size="sm"
                               >
+                                <Trash2 className="h-4 w-4 mr-2" />
                                 Clear Cart
                               </Button>
                             )}
@@ -231,7 +232,7 @@ export default function CartSidebar() {
                               <Button
                                 href="/checkout"
                                 onClick={closeCart}
-                                className="w-full bg-blue-600 hover:bg-blue-700"
+                                className="w-full !bg-black hover:!bg-gray-800 text-white border-0 font-semibold !py-0 px-6 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
                                 size="lg"
                               >
                                 Proceed to Checkout

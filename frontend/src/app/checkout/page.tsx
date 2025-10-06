@@ -11,8 +11,8 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-react';
-import { useCart, useCartMutations } from '../../hooks/useCart';
-import { useAuth } from '../../hooks/useAuth';
+import { useCartStore } from '../../store/useCartStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { Button } from '../../components/ui/Button';
 import MainLayout from '../../components/layout/MainLayout';
 // Payment and Address types
@@ -48,9 +48,14 @@ interface CheckoutFormData {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cart, loading: cartLoading } = useCart();
-  const { updateCartItem, removeFromCart, loading: mutationLoading } = useCartMutations();
-  const { user } = useAuth();
+  const { items: cartItems, itemCount, total, subtotal, tax, shipping, discount, calculateTotals } = useCartStore();
+  const { user, guestUser, isAuthenticated, isGuest } = useAuthStore();
+  
+  console.log('✅ CHECKOUT PAGE LOADED SUCCESSFULLY!');
+  console.log('Checkout page - Auth state:', { isAuthenticated, isGuest, user, guestUser });
+  console.log('Checkout page - Cart state:', { cartItems, itemCount, total });
+  console.log('Checkout page - Cart items structure:', cartItems.map(item => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity })));
+  console.log('Checkout page - Current URL:', window.location.href);
   
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -61,8 +66,8 @@ export default function CheckoutPage() {
     {
       id: '1',
       type: 'home',
-      name: 'John Doe',
-      street: '123 Main Street, Apt 4B',
+      name: 'Amit Kumar',
+      street: '123 MG Road, Sector 15',
       city: 'New Delhi',
       state: 'Delhi',
       zipCode: '110001',
@@ -72,7 +77,7 @@ export default function CheckoutPage() {
   ]);
 
   const [formData, setFormData] = useState<CheckoutFormData>({
-    email: user?.email || '',
+    email: (user?.email || guestUser?.email) || '',
     shippingAddress: {
       id: '',
       type: 'shipping',
@@ -102,10 +107,47 @@ export default function CheckoutPage() {
   });
 
   useEffect(() => {
-    if (!cartLoading && (!cart || cart.items.length === 0)) {
+    console.log('Checkout page - Cart check:', { cartItems, itemCount });
+    if (cartItems.length === 0) {
+      console.log('Checkout page - Redirecting to cart because cart is empty');
       router.push('/cart');
+    } else {
+      console.log('Checkout page - Cart is valid, staying on checkout page');
     }
-  }, [cart, cartLoading, router]);
+  }, [cartItems, itemCount, router]);
+
+  // Update email when user changes
+  useEffect(() => {
+    const currentEmail = user?.email || guestUser?.email;
+    if (currentEmail && currentEmail !== formData.email) {
+      setFormData(prev => ({ ...prev, email: currentEmail }));
+    }
+  }, [user, guestUser, formData.email]);
+
+  // Auto-select default address on load
+  useEffect(() => {
+    console.log('Auto-select effect:', { 
+      addressesLength: addresses.length, 
+      selectedAddressId: formData.selectedAddressId,
+      addresses: addresses.map(a => ({ id: a.id, name: a.name, isDefault: a.isDefault }))
+    });
+    
+    if (addresses.length > 0 && !formData.selectedAddressId) {
+      const defaultAddress = addresses.find(addr => addr.isDefault) || addresses[0];
+      console.log('Auto-selecting address:', defaultAddress);
+      if (defaultAddress) {
+        handleSelectAddress(defaultAddress.id);
+      }
+    }
+  }, [addresses, formData.selectedAddressId]);
+
+  // Force select address on component mount
+  useEffect(() => {
+    if (addresses.length > 0 && addresses[0]) {
+      console.log('Force selecting first address on mount:', addresses[0]);
+      handleSelectAddress(addresses[0].id);
+    }
+  }, []); // Run only once on mount
 
   const handleInputChange = (field: keyof CheckoutFormData, value: string | boolean | PaymentMethod) => {
     setFormData(prev => ({
@@ -141,18 +183,37 @@ export default function CheckoutPage() {
                  formData.shippingAddress.state && 
                  formData.shippingAddress.zipCode);
       case 2: // Payment
-        return !!(formData.paymentMethod);
+        return true; // No validation needed for payment step
       default:
         return true;
     }
   };
 
   const handleNextStep = () => {
+    console.log('Validation check:', {
+      currentStep,
+      email: formData.email,
+      shippingAddress: formData.shippingAddress,
+      paymentMethod: formData.paymentMethod,
+      isValid: validateStep(currentStep)
+    });
+    
     if (validateStep(currentStep)) {
       setCurrentStep(prev => prev + 1);
       setError(null);
     } else {
-      setError('Please fill in all required fields');
+      // More specific error message
+      if (currentStep === 1) {
+        if (!formData.email) {
+          setError('Please enter your email address');
+        } else if (!formData.shippingAddress.street) {
+          setError('Please select a delivery address');
+        } else {
+          setError('Please fill in all required fields');
+        }
+      } else {
+        setError('Please fill in all required fields');
+      }
     }
   };
 
@@ -163,13 +224,78 @@ export default function CheckoutPage() {
 
   // Address management handlers
   const handleSelectAddress = (addressId: string) => {
-    setFormData(prev => ({ ...prev, selectedAddressId: addressId }));
+    console.log('🔄 handleSelectAddress called with:', addressId);
+    console.log('🔄 Current selectedAddressId:', formData.selectedAddressId);
+    console.log('🔄 Available addresses:', addresses.map(a => ({ id: a.id, name: a.name })));
+    
+    // Handle deselection (empty string)
+    if (!addressId) {
+      console.log('🔄 Deselecting address');
+      setFormData(prev => ({
+        ...prev,
+        selectedAddressId: '',
+        shippingAddress: {
+          id: '',
+          type: 'home',
+          street: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          country: '',
+          isDefault: false
+        }
+      }));
+      return;
+    }
+    
+    const selectedAddress = addresses.find(addr => addr.id === addressId);
+    console.log('🔄 Selected address found:', selectedAddress);
+    
+    if (selectedAddress) {
+      const newShippingAddress = {
+        id: selectedAddress.id,
+        type: selectedAddress.type as 'home' | 'work' | 'other' | 'shipping' | 'billing',
+        street: selectedAddress.street,
+        city: selectedAddress.city,
+        state: selectedAddress.state,
+        zipCode: selectedAddress.zipCode,
+        country: selectedAddress.country,
+        isDefault: selectedAddress.isDefault
+      };
+      
+      console.log('✅ Setting shipping address to:', newShippingAddress);
+      
+      setFormData(prev => {
+        const newFormData = { 
+          ...prev, 
+          selectedAddressId: addressId,
+          shippingAddress: newShippingAddress
+        };
+        console.log('✅ New form data:', newFormData);
+        return newFormData;
+      });
+    } else {
+      console.error('❌ Address not found for ID:', addressId);
+    }
   };
 
   const handleAddAddress = (address: Omit<AddressType, 'id'>) => {
     const newAddress = { ...address, id: Date.now().toString() };
     setAddresses(prev => [...prev, newAddress]);
-    setFormData(prev => ({ ...prev, selectedAddressId: newAddress.id }));
+    setFormData(prev => ({ 
+      ...prev, 
+      selectedAddressId: newAddress.id,
+      shippingAddress: {
+        id: newAddress.id,
+        type: newAddress.type as 'home' | 'work' | 'other' | 'shipping' | 'billing',
+        street: newAddress.street,
+        city: newAddress.city,
+        state: newAddress.state,
+        zipCode: newAddress.zipCode,
+        country: newAddress.country,
+        isDefault: newAddress.isDefault
+      }
+    }));
   };
 
   const handleEditAddress = (addressId: string, address: Omit<AddressType, 'id'>) => {
@@ -223,7 +349,7 @@ export default function CheckoutPage() {
       return { success: false, error: 'Invalid coupon code' };
     }
     
-    if (coupon.minOrderAmount && cart && cart.subtotal < coupon.minOrderAmount) {
+    if (coupon.minOrderAmount && subtotal < coupon.minOrderAmount) {
       return { success: false, error: `Minimum order amount is ₹${coupon.minOrderAmount}` };
     }
     
@@ -280,7 +406,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (cartLoading) {
+  if (false) { // Cart loading is handled by localStorage now
     return (
       <MainLayout>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -293,7 +419,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (!cart || cart.items.length === 0) {
+  if (cartItems.length === 0) {
     return null; // Will redirect to cart
   }
 
@@ -309,7 +435,7 @@ export default function CheckoutPage() {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => router.back()}
+            onClick={() => window.location.href = '/cart'}
             className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -321,31 +447,31 @@ export default function CheckoutPage() {
         {/* Progress Steps */}
         <div className="mb-8">
           <nav aria-label="Progress">
-            <ol className="flex items-center">
+            <ol className="flex items-center justify-center space-x-8">
               {steps.map((step, stepIdx) => (
-                <li key={step.name} className={`${stepIdx !== steps.length - 1 ? 'pr-8 sm:pr-20' : ''} relative`}>
+                <li key={step.name} className="flex items-center">
                   <div className="flex items-center">
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
                       currentStep > step.id 
-                        ? 'bg-blue-600 text-white' 
+                        ? 'bg-green-500 border-green-500 text-white' 
                         : currentStep === step.id 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-gray-200 text-gray-500'
+                        ? 'bg-blue-600 border-blue-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-500'
                     }`}>
                       {currentStep > step.id ? (
                         <CheckCircle className="h-5 w-5" />
                       ) : (
-                        <span className="text-sm font-medium">{step.id}</span>
+                        <span className="text-sm font-semibold">{step.id}</span>
                       )}
                     </div>
-                    <span className={`ml-4 text-sm font-medium ${
+                    <span className={`ml-3 text-sm font-semibold ${
                       currentStep >= step.id ? 'text-gray-900' : 'text-gray-500'
                     }`}>
                       {step.name}
                     </span>
                   </div>
-                  {stepIdx !== steps.length - 1 && (
-                    <div className="absolute top-4 left-4 -ml-px mt-0.5 h-full w-0.5 bg-gray-300" />
+                  {stepIdx < steps.length - 1 && (
+                    <div className="ml-8 w-16 h-0.5 bg-gray-200" />
                   )}
                 </li>
               ))}
@@ -356,8 +482,8 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Checkout Form */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="p-6">
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200">
+              <div className="p-8">
                 {error && (
                   <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
                     <div className="flex">
@@ -406,51 +532,30 @@ export default function CheckoutPage() {
                   <div className="space-y-6">
                     <h2 className="text-lg font-semibold text-gray-900">Payment Information</h2>
                     
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-4">
-                        Payment Method *
-                      </label>
-                      <div className="space-y-3">
-                        {(['card', 'upi', 'netbanking', 'wallet'] as PaymentMethod[]).map((method) => (
-                          <label key={method} className="flex items-center p-3 border border-gray-200 rounded-md cursor-pointer hover:bg-gray-50">
-                            <input
-                              type="radio"
-                              name="paymentMethod"
-                              value={method}
-                              checked={formData.paymentMethod === method}
-                              onChange={(e) => handleInputChange('paymentMethod', e.target.value as PaymentMethod)}
-                              className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="ml-3 text-sm font-medium text-gray-700">
-                              {method.replace('_', ' ')}
-                            </span>
-                          </label>
-                        ))}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                      <div className="flex items-center">
+                        <Lock className="h-6 w-6 text-blue-600 mr-3" />
+                        <div>
+                          <h3 className="text-lg font-semibold text-blue-900">Secure Payment</h3>
+                          <p className="text-sm text-blue-700 mt-1">
+                            Your payment will be processed securely. You can choose your preferred payment method at the final step.
+                          </p>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Coupon manager */}
-                    <CouponManager
-                      currentTotal={cart?.total || 0}
-                      appliedCoupons={formData.appliedCoupons}
-                      onApplyCoupon={handleApplyCoupon}
-                      onRemoveCoupon={handleRemoveCoupon}
-                    />
-
                     {/* Razorpay Payment Form */}
-                    {formData.paymentMethod === 'card' && (
-                      <RazorpayPaymentForm
-                        amount={cart?.total || 0}
-                        currency="INR"
-                        receipt={orderId || `receipt_${Date.now()}`}
-                        customerName={user?.name || formData.email}
-                        customerEmail={formData.email}
-                        customerPhone={''}
-                        onSuccess={handlePaymentSuccess}
-                        onError={handlePaymentError}
-                        disabled={loading}
-                      />
-                    )}
+                    <RazorpayPaymentForm
+                      amount={total}
+                      currency="INR"
+                      receipt={orderId || `receipt_${Date.now()}`}
+                      customerName={user?.name || formData.email}
+                      customerEmail={formData.email}
+                      customerPhone={''}
+                      onSuccess={handlePaymentSuccess}
+                      onError={handlePaymentError}
+                      disabled={loading}
+                    />
 
                     {paymentCompleted && (
                       <div className="bg-green-50 border border-green-200 rounded-md p-4">
@@ -480,9 +585,9 @@ export default function CheckoutPage() {
                     </div>
 
                     <div className="bg-gray-50 p-4 rounded-md">
-                      <h3 className="font-medium text-gray-900 mb-2">Payment Method</h3>
+                      <h3 className="font-medium text-gray-900 mb-2">Payment</h3>
                       <p className="text-sm text-gray-600">
-                        {formData.paymentMethod.replace('_', ' ')}
+                        Secure payment processing via Razorpay
                       </p>
                     </div>
                   </div>
@@ -506,7 +611,7 @@ export default function CheckoutPage() {
                     <Button
                       onClick={handlePlaceOrder}
                       disabled={loading}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="!bg-black hover:!bg-gray-800 text-white border-0 font-semibold !py-0 px-6 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:!bg-gray-400 disabled:hover:!bg-gray-400"
                     >
                       {loading ? (
                         <>
@@ -525,50 +630,70 @@ export default function CheckoutPage() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 sticky top-8">
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 sticky top-8">
               <div className="p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">
                   Order Summary
                 </h2>
                 
                 <div className="space-y-4 mb-6">
-                  {cart.items.map((item: any) => (
-                    <div key={item.id} className="flex items-center space-x-3">
-                      <div className="flex-shrink-0 w-12 h-12 bg-gray-200 rounded-md"></div>
+                  {cartItems.map((item: any) => (
+                    <div key={item.id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-shrink-0 w-16 h-16 bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <img 
+                          src={item.image || '/placeholder-product.jpg'} 
+                          alt={item.name || 'Product'}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder-product.jpg';
+                          }}
+                        />
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {item.product.name}
+                        <p className="text-sm font-medium text-gray-900 line-clamp-2">
+                          {item.name || 'Unknown Product'}
                         </p>
-                        <p className="text-sm text-gray-500">
-                          Qty: {item.quantity}
+                        <p className="text-sm text-gray-500 mt-1">
+                          Qty: {item.quantity || 0}
                         </p>
                       </div>
-                      <p className="text-sm font-medium text-gray-900">
-                        ${(item.price * item.quantity).toFixed(2)}
+                      <p className="text-sm font-semibold text-gray-900">
+                        ${((item.price || 0) * (item.quantity || 0)).toFixed(2)}
                       </p>
                     </div>
                   ))}
                 </div>
 
-                <div className="space-y-2 mb-6">
-                  <div className="flex justify-between text-sm">
+                <div className="space-y-3 mb-6">
+                  <div className="flex justify-between text-sm py-2">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">${cart.subtotal.toFixed(2)}</span>
+                    <span className="font-medium text-gray-900">${subtotal.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-sm py-2">
                     <span className="text-gray-600">Tax</span>
-                    <span className="font-medium">${cart.tax.toFixed(2)}</span>
+                    <span className="font-medium text-gray-900">${tax.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-sm py-2">
                     <span className="text-gray-600">Shipping</span>
-                    <span className="font-medium">
-                      {cart.shipping > 0 ? `$${cart.shipping.toFixed(2)}` : 'Free'}
+                    <span className="font-medium text-green-600">
+                      {shipping > 0 ? `$${shipping.toFixed(2)}` : 'Free'}
                     </span>
                   </div>
-                  <div className="border-t border-gray-200 pt-2">
-                    <div className="flex justify-between text-base font-semibold">
-                      <span>Total</span>
-                      <span>${cart.total.toFixed(2)}</span>
+                  
+                  {/* Coupon Section */}
+                  <div className="border-t border-gray-200 pt-4">
+                    <CouponManager
+                      currentTotal={total}
+                      appliedCoupons={formData.appliedCoupons}
+                      onApplyCoupon={handleApplyCoupon}
+                      onRemoveCoupon={handleRemoveCoupon}
+                    />
+                  </div>
+                  
+                  <div className="border-t border-gray-200 pt-3">
+                    <div className="flex justify-between text-lg font-bold">
+                      <span className="text-gray-900">Total</span>
+                      <span className="text-gray-900">${total.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>

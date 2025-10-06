@@ -499,6 +499,129 @@ app.use('*', (req, res) => {
   });
 });
 
+// Razorpay Payment Endpoints
+app.post('/api/payments/razorpay/create-order', async (req, res) => {
+  try {
+    const { amount, currency = 'INR', receipt, notes } = req.body;
+    
+    if (!amount || !receipt) {
+      return res.status(400).json({
+        success: false,
+        error: 'Amount and receipt are required'
+      });
+    }
+
+    // Check if Razorpay is enabled
+    if (process.env.RAZORPAY_ENABLED !== 'true') {
+      return res.status(503).json({
+        success: false,
+        error: 'Razorpay is not enabled'
+      });
+    }
+
+    // Create Razorpay order using their API
+    const Razorpay = require('razorpay');
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET
+    });
+
+    const orderOptions = {
+      amount: Math.round(amount * 100), // Convert to paise
+      currency: currency,
+      receipt: receipt,
+      notes: notes || {}
+    };
+
+    const order = await razorpay.orders.create(orderOptions);
+    
+    console.log('✅ Razorpay order created:', order.id);
+
+    res.json({
+      success: true,
+      data: {
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        receipt: order.receipt,
+        status: order.status,
+        keyId: process.env.RAZORPAY_KEY_ID,
+        notes: order.notes
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Razorpay order creation error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to create Razorpay order'
+    });
+  }
+});
+
+app.post('/api/payments/razorpay/verify', async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required verification parameters'
+      });
+    }
+
+    // Check if Razorpay is enabled
+    if (process.env.RAZORPAY_ENABLED !== 'true') {
+      return res.status(503).json({
+        success: false,
+        error: 'Razorpay is not enabled'
+      });
+    }
+
+    // Verify payment signature
+    const crypto = require('crypto');
+    const Razorpay = require('razorpay');
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET
+    });
+
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(body.toString())
+      .digest('hex');
+
+    const isValid = expectedSignature === razorpay_signature;
+
+    if (!isValid) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid payment signature'
+      });
+    }
+
+    console.log('✅ Razorpay payment verified:', razorpay_payment_id);
+
+    res.json({
+      success: true,
+      data: {
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+        status: 'verified',
+        verifiedAt: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Razorpay payment verification error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Payment verification failed'
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 ApniDukaan API Gateway running on port ${PORT}`);

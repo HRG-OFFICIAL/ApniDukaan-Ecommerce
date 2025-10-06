@@ -63,11 +63,13 @@ class RazorpayService {
     notes?: Record<string, any>;
   }): Promise<{ success: boolean; data?: RazorpayOrderData; error?: string }> {
     try {
-      const response = await fetch(`${this.baseUrl}/payments/razorpay/create-order`, {
+      console.log('Creating Razorpay order with data:', data);
+      
+      const response = await fetch(`${this.baseUrl}/api/payments/razorpay/create-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
         },
         body: JSON.stringify({
           amount: data.amount,
@@ -78,11 +80,12 @@ class RazorpayService {
       });
 
       const result = await response.json();
+      console.log('Razorpay order creation response:', result);
 
-      if (!result.success) {
+      if (!response.ok || !result.success) {
         return {
           success: false,
-          error: result.error || 'Failed to create Razorpay order'
+          error: result.error || `HTTP ${response.status}: Failed to create Razorpay order`
         };
       }
 
@@ -109,21 +112,24 @@ class RazorpayService {
     razorpay_signature: string;
   }): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      const response = await fetch(`${this.baseUrl}/payments/razorpay/verify`, {
+      console.log('Verifying Razorpay payment with data:', data);
+      
+      const response = await fetch(`${this.baseUrl}/api/payments/razorpay/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || localStorage.getItem('token')}`
         },
         body: JSON.stringify(data)
       });
 
       const result = await response.json();
+      console.log('Razorpay payment verification response:', result);
 
-      if (!result.success) {
+      if (!response.ok || !result.success) {
         return {
           success: false,
-          error: result.error || 'Payment verification failed'
+          error: result.error || `HTTP ${response.status}: Payment verification failed`
         };
       }
 
@@ -241,8 +247,14 @@ class RazorpayService {
 
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Failed to load Razorpay script'));
+      script.onload = () => {
+        console.log('Real Razorpay script loaded successfully');
+        resolve();
+      };
+      script.onerror = () => {
+        console.error('Failed to load Razorpay script');
+        reject(new Error('Failed to load Razorpay script'));
+      };
       document.body.appendChild(script);
     });
   }

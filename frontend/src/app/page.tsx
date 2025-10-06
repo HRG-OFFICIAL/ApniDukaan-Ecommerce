@@ -1,28 +1,19 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import MainLayout from '../components/layout/MainLayout'
 import FeaturedProducts from '../components/FeaturedProducts'
-import CategoriesGrid from '../components/CategoriesGrid'
 import DealsOfTheDay from '../components/DealsOfTheDay'
 import Testimonials from '../components/Testimonials'
 import Newsletter from '../components/Newsletter'
 import { useProducts } from '../hooks/useProducts'
-import { categories as sampleCategories } from '../lib/data'
 import { ArrowRight } from 'lucide-react'
 import Image from 'next/image'
 
 export default function Home() {
   const { products, loading } = useProducts(undefined, undefined, undefined, 20)
 
-  const categories = useMemo(() => {
-    return (sampleCategories || []).map((c: any) => ({
-      name: c.name,
-      slug: (c.name || '').toLowerCase(),
-      image: '/placeholder-category.jpg'
-    }))
-  }, [])
 
   if (loading) {
     return (
@@ -70,17 +61,6 @@ export default function Home() {
                    </motion.div>
                  </section>
 
-          <section className="py-16 bg-gray-50">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
-            >
-              <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Shop by Category</h2>
-              <CategoriesGrid categories={categories} />
-            </motion.div>
-          </section>
 
           <section className="py-16 bg-gray-50">
             <motion.div

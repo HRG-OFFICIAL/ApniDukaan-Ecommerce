@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Shield, ArrowLeft, Home, LogIn } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
+import { GuestUserButton } from '../../components/auth/GuestUserButton'
 import { useAuthStatus } from '../../hooks/useAuthAPI'
 import { usePermissions, rbacService } from '../../services/rbac'
 import MainLayout from '../../components/layout/MainLayout'
@@ -26,6 +27,13 @@ export default function UnauthorizedPage() {
   const handleLogin = () => {
     const currentPath = window.location.pathname
     router.push(`/auth/login?redirect=${encodeURIComponent(currentPath)}`)
+  }
+
+  const handleGuestLogin = (email: string, password: string) => {
+    // For the unauthorized page, we'll redirect to login with guest credentials
+    // The login page will handle the actual authentication
+    const currentPath = window.location.pathname
+    router.push(`/auth/login?redirect=${encodeURIComponent(currentPath)}&guest=true`)
   }
 
   return (
@@ -84,10 +92,22 @@ export default function UnauthorizedPage() {
           {/* Action Buttons */}
           <div className="space-y-4">
             {!isAuthenticated ? (
-              <Button size="lg" onClick={handleLogin} className="w-full">
-                <LogIn className="mr-2 h-5 w-5" />
-                Sign In
-              </Button>
+              <div className="space-y-3">
+                <Button size="lg" onClick={handleLogin} className="w-full">
+                  <LogIn className="mr-2 h-5 w-5" />
+                  Sign In
+                </Button>
+                
+                <div className="text-center">
+                  <span className="text-sm text-gray-500">or</span>
+                </div>
+                
+                <GuestUserButton
+                  onGuestLogin={handleGuestLogin}
+                  className="w-full"
+                  size="lg"
+                />
+              </div>
             ) : (
               <Button size="lg" onClick={handleGoHome} className="w-full">
                 <Home className="mr-2 h-5 w-5" />
