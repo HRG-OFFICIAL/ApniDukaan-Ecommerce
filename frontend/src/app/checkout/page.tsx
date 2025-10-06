@@ -55,7 +55,7 @@ export default function CheckoutPage() {
   console.log('Checkout page - Auth state:', { isAuthenticated, isGuest, user, guestUser });
   console.log('Checkout page - Cart state:', { cartItems, itemCount, total });
   console.log('Checkout page - Cart items structure:', cartItems.map(item => ({ id: item.id, name: item.name, price: item.price, quantity: item.quantity })));
-  console.log('Checkout page - Current URL:', window.location.href);
+  console.log('Checkout page - Current URL:', typeof window !== 'undefined' ? window.location.href : 'SSR');
   
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -435,7 +435,11 @@ export default function CheckoutPage() {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => window.location.href = '/cart'}
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.location.href = '/cart';
+              }
+            }}
             className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
