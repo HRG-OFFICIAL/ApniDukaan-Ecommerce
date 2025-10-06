@@ -341,7 +341,7 @@ app.get('/api/catalog/products/by-skus', async (req, res) => {
   }
 })
 
-// Fetch products by MongoDB _ids, preserving requested order
+// Fetch products by MongoDB _ids, preserving requested order (v2)
 app.get('/api/catalog/products/by-ids', async (req, res) => {
   try {
     const idsParam = req.query.ids
