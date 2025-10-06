@@ -58,8 +58,24 @@ export default function FeaturedProducts({ products: propProducts }: FeaturedPro
               if (products.length >= desired) break
             }
           }
+          // Reorder to prioritize requested ASINs (we store ASIN in sku)
+          const preferredSkus = new Set([
+            'B0BCL2S1Q7','B095P6KQGY','B0C446WHGM','B0C7RY542H','B0BRQT9GN4','B0C6MPFQT2','B08T1NZMPN','B0CCK4F1TB'
+          ].map(s => s.toLowerCase()))
+          products = products
+            .slice(0, desired * 2)
+            .sort((a, b) => {
+              const aPref = a.sku ? preferredSkus.has(String(a.sku).toLowerCase()) : false
+              const bPref = b.sku ? preferredSkus.has(String(b.sku).toLowerCase()) : false
+              if (aPref === bPref) return 0
+              return aPref ? -1 : 1
+            })
+            .slice(0, desired)
           setDataSource('database')
           setFeaturedProducts(products)
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('featured-ready'))
+          }
         } else {
           setDataSource('fallback')
           // Helpers to create fully typed mock products
@@ -118,6 +134,9 @@ export default function FeaturedProducts({ products: propProducts }: FeaturedPro
             createMock('mock-10','Oura Ring Gen3 Horizon',349,399,'https://via.placeholder.com/300x300/111827/FFFFFF?text=Oura+Ring','wearables','Wearable Technology','wearable-technology',4.7,12000,16,2)
           ]
           setFeaturedProducts(mockProducts)
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('featured-ready'))
+          }
         }
       } catch (error) {
         // Network/API failure: fallback to mocks so homepage isn't empty
@@ -175,6 +194,9 @@ export default function FeaturedProducts({ products: propProducts }: FeaturedPro
           createMock('mock-9','"Atomic Habits" by James Clear',12,18,'https://via.placeholder.com/300x300/0EA5E9/FFFFFF?text=Atomic+Habits','books','Books','books',4.8,150000,300,30),
           createMock('mock-10','Oura Ring Gen3 Horizon',349,399,'https://via.placeholder.com/300x300/111827/FFFFFF?text=Oura+Ring','wearables','Wearable Technology','wearable-technology',4.7,12000,16,2)
         ])
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('featured-ready'))
+        }
       } finally {
         setLoading(false)
       }

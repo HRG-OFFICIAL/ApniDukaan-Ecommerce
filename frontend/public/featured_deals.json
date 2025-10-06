@@ -1,0 +1,359 @@
+{
+  "generatedAt": "2025-10-06T10:14:19.901Z",
+  "featured": [
+    {
+      "title": "essence | Lash Princess False Lash Effect Mascara | Gluten & Cruelty Free",
+      "price": 4.99,
+      "listPrice": 0,
+      "stars": 4.3,
+      "reviews": 346563,
+      "category": "Makeup",
+      "featuredScore": 0.7982000000000001,
+      "dealsScore": 0.5552,
+      "discountPct": 0
+    },
+    {
+      "title": "Neutrogena Makeup Remover Wipes Singles, Daily Facial Cleanser Towelettes, Gently Removes Oil & Makeup, Alcohol-Free Makeup Wipes, Individually Wrapped, 20 ct",
+      "price": 6.79,
+      "listPrice": 9.19,
+      "stars": 4.8,
+      "reviews": 54029,
+      "category": "Makeup",
+      "featuredScore": 0.6866158810952121,
+      "dealsScore": 0.591371958930495,
+      "discountPct": 0.2611534276387377
+    },
+    {
+      "title": "Neutrogena Cleansing Fragrance Free Makeup Remover Face Wipes, Cleansing Facial Towelettes for Waterproof Makeup, Alcohol-Free, Unscented, 100% Plant-Based Fibers, Twin Pack, 2 x 25 ct",
+      "price": 10.27,
+      "listPrice": 13.69,
+      "stars": 4.8,
+      "reviews": 0,
+      "category": "Personal Care Products",
+      "featuredScore": 0.6732,
+      "dealsScore": 0.550145215485756,
+      "discountPct": 0.2498173849525201
+    },
+    {
+      "title": "Blink Mini – Compact indoor plug-in smart security camera, 1080p HD video, night vision, motion detection, two-way audio, easy set up, Works with Alexa – 1 camera (White)",
+      "price": 34.99,
+      "listPrice": 0,
+      "stars": 4.4,
+      "reviews": 260659,
+      "category": "Smart Home: Security Cameras and Systems",
+      "featuredScore": 0.6111102102648004,
+      "dealsScore": 0.45689762265446693,
+      "discountPct": 0
+    },
+    {
+      "title": "One A Day Men’s Multivitamin, Supplement Tablet with Vitamin A, Vitamin C, Vitamin D, Vitamin E and Zinc for Immune Health Support, B12, Calcium & more, 200 count",
+      "price": 15.69,
+      "listPrice": 16.88,
+      "stars": 4.7,
+      "reviews": 42075,
+      "category": "Diet & Sports Nutrition",
+      "featuredScore": 0.5779375594047835,
+      "dealsScore": 0.4649461987523165,
+      "discountPct": 0.07049763033175353
+    },
+    {
+      "title": "Ring Video Doorbell - 1080p HD video, improved motion detection, easy installation – Satin Nickel",
+      "price": 99.99,
+      "listPrice": 0,
+      "stars": 4.6,
+      "reviews": 173248,
+      "category": "Smart Home: Security Cameras and Systems",
+      "featuredScore": 0.5653768007548411,
+      "dealsScore": 0.43438646710699064,
+      "discountPct": 0
+    },
+    {
+      "title": "Panasonic ErgoFit Wired Earbuds, In-Ear Headphones with Dynamic Crystal-Clear Sound and Ergonomic Custom-Fit Earpieces (S/M/L), 3.5mm Jack for Phones and Laptops, No Mic - RP-HJE120-K (Black)",
+      "price": 9.22,
+      "listPrice": 9.99,
+      "stars": 4.3,
+      "reviews": 136935,
+      "category": "Headphones & Earbuds",
+      "featuredScore": 0.5630295115173864,
+      "dealsScore": 0.4536403381749319,
+      "discountPct": 0.07707707707707703
+    },
+    {
+      "title": "Neutrogena Gentle Oil-Free Eye Makeup Remover & Cleanser for Sensitive Eyes, Non-Greasy Makeup Remover, Removes Waterproof Mascara, Dermatologist & Ophthalmologist Tested, 8.0 fl. oz",
+      "price": 8.71,
+      "listPrice": 0,
+      "stars": 4.7,
+      "reviews": 15828,
+      "category": "Makeup",
+      "featuredScore": 0.5567611239514894,
+      "dealsScore": 0.43519398897170214,
+      "discountPct": 0
+    },
+    {
+      "title": "BOAT Airdopes 141 Bluetooth Truly Wireless in Ear Headphones with 42H Playtime,Low Latency Mode for Gaming, ENx Tech, IWP, IPX4 Water Resistance, Smooth Touch Controls (Bold Black)",
+      "price": 54.87,
+      "listPrice": 0,
+      "stars": 3.8,
+      "reviews": 174524,
+      "category": "Headphones & Earbuds",
+      "featuredScore": 0.5520604496152215,
+      "dealsScore": 0.41370192894221247,
+      "discountPct": 0
+    },
+    {
+      "title": "OnePlus Bullets Wireless Z2 Bluetooth 5.0 in Ear Earphones, Bombastic Bass – 12.4 mm Drivers, 30 Hrs Battery Life (Magico Black)",
+      "price": 47.5,
+      "listPrice": 51.5,
+      "stars": 4.2,
+      "reviews": 126993,
+      "category": "Headphones & Earbuds",
+      "featuredScore": 0.548744529566053,
+      "dealsScore": 0.443401946453984,
+      "discountPct": 0.07766990291262135
+    },
+    {
+      "title": "Samsung Galaxy Buds Plus, True Wireless Earbuds Bluetooth 5.0 (Wireless Charging Case Included), Black – US Version",
+      "price": 0,
+      "listPrice": 0,
+      "stars": 4.6,
+      "reviews": 83829,
+      "category": "Headphones & Earbuds",
+      "featuredScore": 0.5484528215649103,
+      "dealsScore": 0.4282641459128643,
+      "discountPct": 0
+    },
+    {
+      "title": "RENPHO Smart Scale for Body Weight, Digital Bathroom Scale BMI Weighing Bluetooth Body Fat Scale, Body Composition Monitor Health Analyzer with Smartphone App, 400 lbs - Black Elis 1",
+      "price": 19.99,
+      "listPrice": 34.99,
+      "stars": 4.7,
+      "reviews": 0,
+      "category": "Home Use Medical Supplies & Equipment",
+      "featuredScore": 0.5473,
+      "dealsScore": 0.5289081737639326,
+      "discountPct": 0.4286939125464419
+    },
+    {
+      "title": "Colgate Optic White Advanced Teeth Whitening Toothpaste, 2% Hydrogen Peroxide Toothpaste, Sparkling White, 3.2 Oz, 3 Pack",
+      "price": 12.96,
+      "listPrice": 0,
+      "stars": 4.7,
+      "reviews": 0,
+      "category": "Personal Care Products",
+      "featuredScore": 0.5473,
+      "dealsScore": 0.4003,
+      "discountPct": 0
+    },
+    {
+      "title": "PowerBear 4K HDMI Cable 6 ft | High Speed, Braided Nylon & Gold Connectors, 4K @ 60Hz, Ultra HD, 2K, 1080P, ARC & CL3 Rated | for Laptop, Monitor, PS5, PS4, Xbox One, Fire TV, Apple TV & More",
+      "price": 9.99,
+      "listPrice": 0,
+      "stars": 4.7,
+      "reviews": 69968,
+      "category": "Televisions & Video Products",
+      "featuredScore": 0.5462538741873773,
+      "dealsScore": 0.4290647599426367,
+      "discountPct": 0
+    },
+    {
+      "title": "BlueDriver Bluetooth Pro OBDII Scan Tool for iPhone & Android",
+      "price": 0,
+      "listPrice": 0,
+      "stars": 4.6,
+      "reviews": 51607,
+      "category": "Automotive Tools & Equipment",
+      "featuredScore": 0.5453386102959635,
+      "dealsScore": 0.4264475226726454,
+      "discountPct": 0
+    },
+    {
+      "title": "Soundcore Anker Life P2 True Wireless Earbuds - Clear Sound, 40H Playtime, IPX7 Waterproof, Earpods for Phone Calls, Daily Use, Listening to Music, Work, Home Office",
+      "price": 31.98,
+      "listPrice": 45.99,
+      "stars": 4.2,
+      "reviews": 118833,
+      "category": "Headphones & Earbuds",
+      "featuredScore": 0.5430936089542161,
+      "dealsScore": 0.5081940377086157,
+      "discountPct": 0.304631441617743
+    }
+  ],
+  "deals": [
+    {
+      "title": "Harry Potter and the Chamber of Secrets, Book 2",
+      "price": 0,
+      "listPrice": 29.99,
+      "stars": 4.8,
+      "reviews": 88375,
+      "category": "Office Electronics",
+      "featuredScore": 0.5064009937587105,
+      "dealsScore": 0.7029005796925811,
+      "discountPct": 1
+    },
+    {
+      "title": "Azarinth Healer: Book One: A LitRPG Adventure",
+      "price": 0,
+      "listPrice": 29.95,
+      "stars": 4.8,
+      "reviews": 5343,
+      "category": "PlayStation 4 Games, Consoles & Accessories",
+      "featuredScore": 0.4489001064741476,
+      "dealsScore": 0.6693583954432527,
+      "discountPct": 1
+    },
+    {
+      "title": "Watch Dogs Legion - PlayStation 4 Standard Edition",
+      "price": 7.83,
+      "listPrice": 59.99,
+      "stars": 4.6,
+      "reviews": 5071,
+      "category": "PlayStation 4 Games, Consoles & Accessories",
+      "featuredScore": 0.49439174245375295,
+      "dealsScore": 0.6575719903436746,
+      "discountPct": 0.8694782463743957
+    },
+    {
+      "title": "Born a Crime: Stories from a South African Childhood",
+      "price": 0,
+      "listPrice": 21.7,
+      "stars": 4.7,
+      "reviews": 103595,
+      "category": "Video Games",
+      "featuredScore": 0.41954106872343555,
+      "dealsScore": 0.6426489567553374,
+      "discountPct": 1
+    },
+    {
+      "title": "Unbroken: A World War II Story of Survival, Resilience, and Redemption",
+      "price": 0,
+      "listPrice": 17.92,
+      "stars": 4.7,
+      "reviews": 75464,
+      "category": "Video Games",
+      "featuredScore": 0.4000599354229967,
+      "dealsScore": 0.6312849623300814,
+      "discountPct": 1
+    },
+    {
+      "title": "Wireless Earbuds,25 Hours Talktime Wireless Mono Bluetooth Headset with HD Microphone CVC8.0 Bluetooth Headphone Noise Reduction 270 ° Rotatable for Working/Driving",
+      "price": 8.99,
+      "listPrice": 89.9,
+      "stars": 5,
+      "reviews": 1,
+      "category": "Headphones & Earbuds",
+      "featuredScore": 0.4450006925147809,
+      "dealsScore": 0.6150004039669555,
+      "discountPct": 0.9
+    },
+    {
+      "title": "Watch Dogs Legion - Xbox One Standard Edition & 6 Xbox Series X S, Xbox One Standard Edition",
+      "price": 7.2,
+      "listPrice": 59.99,
+      "stars": 5,
+      "reviews": 0,
+      "category": "Xbox Series X & S Consoles, Games & Accessories",
+      "featuredScore": 0.44548,
+      "dealsScore": 0.6092739989998333,
+      "discountPct": 0.8799799966661109
+    },
+    {
+      "title": "PSIER Wireless Earbuds Bluetooth Headphones 153H Playtime Ear Buds Digital LED Display Cell Phones Charging Function with 2000mAh Charging Case Built in Mic Clear Calls in Ear Earphones for Sports",
+      "price": 26.99,
+      "listPrice": 76.99,
+      "stars": 4.9,
+      "reviews": 57,
+      "category": "Headphones & Earbuds",
+      "featuredScore": 0.5126394733425093,
+      "dealsScore": 0.6084535235836672,
+      "discountPct": 0.6494349915573452
+    },
+    {
+      "title": "Empire of the Summer Moon: Quanah Parker and the Rise and Fall of the Comanches, the Most Powerful Indian Tribe in American History",
+      "price": 0,
+      "listPrice": 16.72,
+      "stars": 4.7,
+      "reviews": 18201,
+      "category": "Video Games",
+      "featuredScore": 0.36040446152647576,
+      "dealsScore": 0.6081526025571109,
+      "discountPct": 1
+    },
+    {
+      "title": "Spigen Modern Fit Designed For Samsung Galaxy Watch 3 45mm Band Strap (2020) / Galaxy Watch 46mm Band (2018) / OnePlus Watch Band/Gear S3 Frontier Band / S3 Classic Band Strap",
+      "price": 8.99,
+      "listPrice": 29.99,
+      "stars": 4.6,
+      "reviews": 4901,
+      "category": "Wearable Technology",
+      "featuredScore": 0.4937940149410064,
+      "dealsScore": 0.6064498653900341,
+      "discountPct": 0.7002334111370457
+    },
+    {
+      "title": "Ego Is the Enemy",
+      "price": 0,
+      "listPrice": 15.22,
+      "stars": 4.6,
+      "reviews": 19061,
+      "category": "Video Games",
+      "featuredScore": 0.35360002423801734,
+      "dealsScore": 0.6021000141388434,
+      "discountPct": 1
+    },
+    {
+      "title": "UYY Portable Monitor 15.6\" Ultra-Thin FHD 1080P, 2023 Travel IPS Monitor, HDR Gaming Monitor with Smart Cover and Dual Speakers, HDMI, USB C, Type-C, for | Laptop| PC| Phone| Mac| PS|Swich",
+      "price": 149.99,
+      "listPrice": 399.99,
+      "stars": 4.9,
+      "reviews": 64,
+      "category": "Computer Monitors",
+      "featuredScore": 0.5126443209459752,
+      "dealsScore": 0.6011305415023426,
+      "discountPct": 0.6250156253906347
+    },
+    {
+      "title": "Legends & Lattes: A Novel of High Fantasy and Low Stakes",
+      "price": 0,
+      "listPrice": 14.99,
+      "stars": 4.6,
+      "reviews": 16215,
+      "category": "Video Games",
+      "featuredScore": 0.35162912717168304,
+      "dealsScore": 0.6009503241834817,
+      "discountPct": 1
+    },
+    {
+      "title": "Mattel Star Wars Grogu Plush 8-Inch Character Figure From Star Wars the Mandalorian, Soft Doll in Classic Look",
+      "price": 5.99,
+      "listPrice": 14.99,
+      "stars": 4.8,
+      "reviews": 16733,
+      "category": "Toys & Games",
+      "featuredScore": 0.5239878498281697,
+      "dealsScore": 0.5982796591198012,
+      "discountPct": 0.600400266844563
+    },
+    {
+      "title": "Power Up Factory Exquisite Gaming: Call of Duty: Lt. Simon \"Ghost\" Riley - Original Mobile Phone & Gaming Controller Holder, Device Stand, Cable Guys, Licensed Figure",
+      "price": 8.99,
+      "listPrice": 23.99,
+      "stars": 4.8,
+      "reviews": 1123,
+      "category": "Video Games",
+      "featuredScore": 0.5062176940989084,
+      "dealsScore": 0.5953718124566822,
+      "discountPct": 0.6252605252188411
+    },
+    {
+      "title": "Portal to Nova Roma: The Rhine, Book 3",
+      "price": 0,
+      "listPrice": 29.95,
+      "stars": 4.8,
+      "reviews": 0,
+      "category": "PC Games & Accessories",
+      "featuredScore": 0.3732,
+      "dealsScore": 0.5952,
+      "discountPct": 1
+    }
+  ]
+}
