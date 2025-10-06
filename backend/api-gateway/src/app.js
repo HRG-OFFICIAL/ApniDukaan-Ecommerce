@@ -272,6 +272,58 @@ app.get('/api/catalog/products', async (req, res) => {
   }
 });
 
+// Fetch products by SKUs (case-insensitive), preserving requested order
+app.get('/api/catalog/products/by-skus', async (req, res) => {
+  try {
+    const skusParam = req.query.skus
+    if (!skusParam) {
+      return res.status(400).json({ success: false, error: 'Missing skus query param' })
+    }
+    const rawSkus = Array.isArray(skusParam) ? skusParam.join(',') : String(skusParam)
+    const requestedSkus = rawSkus
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
+    if (requestedSkus.length === 0) {
+      return res.status(400).json({ success: false, error: 'No valid skus provided' })
+    }
+
+    let products = []
+    if (db) {
+      const collection = db.collection('products')
+      // Case-insensitive exact match via regexes
+      const skuRegexes = requestedSkus.map(s => new RegExp(`^${s}$`, 'i'))
+      const found = await collection
+        .find({ sku: { $in: skuRegexes } })
+        .project({})
+        .toArray()
+
+      // Map by lowercase sku for ordering
+      const map = new Map()
+      for (const p of found) {
+        if (!p || !p.sku) continue
+        map.set(String(p.sku).toLowerCase(), p)
+      }
+
+      // Preserve requested order
+      products = requestedSkus
+        .map(s => map.get(s.toLowerCase()))
+        .filter(Boolean)
+
+      // Normalize id
+      products = products.map(p => ({ ...p, id: p._id ? String(p._id) : p.id }))
+    } else {
+      // No DB connected; return empty set rather than mock
+      products = []
+    }
+
+    res.json({ success: true, data: products })
+  } catch (error) {
+    console.error('❌ Error fetching products by skus:', error)
+    res.status(500).json({ success: false, error: 'Failed to fetch products by skus' })
+  }
+})
+
 // Categories API endpoint - Uses your real MongoDB data!
 app.get('/api/catalog/categories', async (req, res) => {
   try {
