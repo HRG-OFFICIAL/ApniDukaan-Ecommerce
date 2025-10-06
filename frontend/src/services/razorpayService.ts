@@ -226,8 +226,12 @@ class RazorpayService {
       };
 
       // Open Razorpay modal
-      const razorpay = new (window as any).Razorpay(razorpayOptions);
-      razorpay.open();
+      if (typeof window !== 'undefined') {
+        const razorpay = new (window as any).Razorpay(razorpayOptions);
+        razorpay.open();
+      } else {
+        options.onError('Razorpay is not available in this environment');
+      }
 
     } catch (error: any) {
       console.error('Razorpay payment modal error:', error);
@@ -240,6 +244,11 @@ class RazorpayService {
    */
   private loadRazorpayScript(): Promise<void> {
     return new Promise((resolve, reject) => {
+      if (typeof window === 'undefined') {
+        reject(new Error('Razorpay script cannot be loaded in server environment'));
+        return;
+      }
+      
       if ((window as any).Razorpay) {
         resolve();
         return;
