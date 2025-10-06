@@ -95,8 +95,7 @@ export default function DealsOfTheDay({ products: propProducts }: { products?: P
               freeShipping: price > 50
             },
             createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            publishedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString()
           })
 
           // Fallback to premium deals
