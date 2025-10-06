@@ -3,14 +3,14 @@
 import Link from 'next/link'
 import { Search, ShoppingCart, User, Menu, X, Store } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { useCart } from '../contexts/CartContext'
+import { useCartStore } from '../store/useCartStore'
 import { useState, useEffect } from 'react'
 import MegaMenu from './navigation/MegaMenu'
 import CategoryService, { Category } from '../services/categoryService'
 
 export default function Header() {
   const { isAuthenticated, user } = useAuth()
-  const { itemCount } = useCart()
+  const { itemCount, toggleCart } = useCartStore()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -64,14 +64,17 @@ export default function Header() {
               <User className="h-6 w-6 mr-1" />
               <span>{isAuthenticated ? `Hi, ${user?.name}` : "Login"}</span>
             </Link>
-            <Link href="/cart" className="relative flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+            <button 
+              onClick={toggleCart}
+              className="relative flex items-center text-sm font-medium text-gray-700 hover:text-blue-600"
+            >
               <ShoppingCart className="h-6 w-6" />
               {itemCount > 0 && (
                 <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
                   {itemCount}
                 </span>
               )}
-            </Link>
+            </button>
           </div>
 
           <div className="md:hidden">
@@ -120,9 +123,12 @@ export default function Header() {
              <Link href={isAuthenticated ? "/account" : "/login"} className="flex items-center text-gray-700 hover:text-blue-600">
                <User className="h-6 w-6 mr-2" /> {isAuthenticated ? "My Account" : "Login / Sign Up"}
              </Link>
-             <Link href="/cart" className="flex items-center text-gray-700 hover:text-blue-600">
+             <button 
+               onClick={toggleCart}
+               className="flex items-center text-gray-700 hover:text-blue-600"
+             >
                <ShoppingCart className="h-6 w-6 mr-2" /> Cart ({itemCount})
-             </Link>
+             </button>
           </div>
         </div>
       )}

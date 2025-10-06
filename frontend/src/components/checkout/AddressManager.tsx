@@ -130,7 +130,7 @@ export function AddressManager({
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <MapPin className="h-5 w-5 text-blue-600 mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900">
             Delivery Address
           </h3>
         </div>
@@ -158,28 +158,42 @@ export function AddressManager({
             return (
               <motion.div
                 key={address.id}
-                whileHover={{ scale: 1.02 }}
-                className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                whileHover={{ scale: 1.01 }}
+                className={`p-4 border rounded-lg cursor-pointer transition-all relative ${
                   isSelected
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
+                    ? 'border-blue-500 bg-blue-50 shadow-md ring-1 ring-blue-200'
+                    : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
                 }`}
-                onClick={() => onSelectAddress(address.id)}
+                onClick={() => {
+                  console.log('Address clicked:', address.id, 'Current selected:', selectedAddressId);
+                  // Toggle selection - if already selected, deselect; otherwise select
+                  if (isSelected) {
+                    onSelectAddress(''); // Deselect by passing empty string
+                  } else {
+                    onSelectAddress(address.id);
+                  }
+                }}
               >
+                
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-3 flex-1">
-                    {isSelected && (
-                      <div className="flex-shrink-0 mt-1">
-                        <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
-                          <Check className="h-3 w-3 text-white" />
-                        </div>
+                    {/* Elegant radio button design */}
+                    <div className="flex-shrink-0 mt-1">
+                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-500'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                      }`}>
+                        {isSelected && (
+                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                        )}
                       </div>
-                    )}
+                    </div>
                     
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <TypeIcon className="h-4 w-4 text-gray-500" />
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                        <span className="font-medium text-gray-900">
                           {address.name}
                         </span>
                         <Badge variant="secondary" className="text-xs capitalize">
@@ -190,9 +204,14 @@ export function AddressManager({
                             Default
                           </Badge>
                         )}
+                        {isSelected && (
+                          <Badge className="text-xs bg-blue-500 text-white">
+                            SELECTED
+                          </Badge>
+                        )}
                       </div>
                       
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                      <div className="text-sm text-gray-600">
                         <p>{address.street}</p>
                         <p>{address.city}, {address.state} {address.zipCode}</p>
                         <p>{address.country}</p>
@@ -237,34 +256,34 @@ export function AddressManager({
       <AnimatePresence>
         {(showAddForm || editingAddress) && (
           <SlideIn direction="down">
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-              <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">
                 {editingAddress ? 'Edit Address' : 'Add New Address'}
               </h4>
 
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Full Name *
                     </label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 text-gray-900 bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                       placeholder="Enter full name"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Address Type *
                     </label>
                     <select
                       value={formData.type}
                       onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as any }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 text-gray-900 bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                     >
                       {ADDRESS_TYPES.map(type => (
                         <option key={type.value} value={type.value}>
@@ -276,54 +295,54 @@ export function AddressManager({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Street Address *
                   </label>
                   <textarea
                     value={formData.street}
                     onChange={(e) => setFormData(prev => ({ ...prev, street: e.target.value }))}
                     rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                     placeholder="Enter street address"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 text-gray-700 mb-2">
                       City *
                     </label>
                     <input
                       type="text"
                       value={formData.city}
                       onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 text-gray-900 bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 text-gray-900 bg-white"
                       placeholder="City"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 text-gray-700 mb-2">
                       State *
                     </label>
                     <input
                       type="text"
                       value={formData.state}
                       onChange={(e) => setFormData(prev => ({ ...prev, state: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 text-gray-900 bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 text-gray-900 bg-white"
                       placeholder="State"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 text-gray-700 mb-2">
                       ZIP Code *
                     </label>
                     <input
                       type="text"
                       value={formData.zipCode}
                       onChange={(e) => setFormData(prev => ({ ...prev, zipCode: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 text-gray-900 bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 text-gray-900 bg-white"
                       placeholder="ZIP Code"
                     />
                   </div>
@@ -337,12 +356,12 @@ export function AddressManager({
                     onChange={(e) => setFormData(prev => ({ ...prev, isDefault: e.target.checked }))}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
-                  <label htmlFor="isDefault" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  <label htmlFor="isDefault" className="ml-2 text-sm text-gray-700 text-gray-700">
                     Set as default address
                   </label>
                 </div>
 
-                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 border-gray-200">
                   <Button variant="outline" onClick={cancelEdit}>
                     Cancel
                   </Button>
@@ -362,12 +381,12 @@ export function AddressManager({
       {/* Empty State */}
       {addresses.length === 0 && !showAddForm && (
         <FadeIn>
-          <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+          <div className="text-center py-8 border-2 border-dashed border-gray-300 border-gray-300 rounded-lg">
             <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+            <h3 className="text-lg font-medium text-gray-900 text-gray-900 mb-2">
               No addresses found
             </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-gray-500 text-gray-500 mb-4">
               Add your first delivery address to continue
             </p>
             <Button onClick={() => setShowAddForm(true)}>

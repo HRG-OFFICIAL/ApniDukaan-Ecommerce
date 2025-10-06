@@ -1,18 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthAPI } from '../../../hooks/useAuthAPI';
 import { useOAuth } from '../../../services/oauth';
+import { useAuthStore } from '../../../store/useAuthStore';
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
 import { Logo } from '../../../components/ui/Logo';
+import { GuestUserButton } from '../../../components/auth/GuestUserButton';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, loading, errors } = useAuthAPI();
   const { loginWithGoogle } = useOAuth();
+  const { guestLogin } = useAuthStore();
   const [isMounted, setIsMounted] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(false);
   
@@ -57,10 +60,18 @@ export default function LoginPage() {
     try {
       const result = await login(formData.email, formData.password);
       
-      if (result?.success) {
-        // Success toast and redirect are handled by the API hook
+      if (result?.success && result.user) {
+        // Update the auth store with the logged-in user
+        const { login: storeLogin } = useAuthStore.getState();
+        storeLogin(result.user, 'mock-token');
+        
+        // Show success message and redirect
+        toast.success('Logged in successfully!');
         const redirect = new URLSearchParams(window.location.search).get('redirect');
-        router.push(redirect || '/');
+        const redirectUrl = redirect ? decodeURIComponent(redirect) : '/';
+        setTimeout(() => {
+          window.location.href = redirectUrl;
+        }, 100);
       } else {
         // Error toasts are handled by the API hook
         console.error('Login failed:', result?.error);
@@ -86,10 +97,18 @@ export default function LoginPage() {
     try {
       const result = await loginWithGoogle();
       
-      if (result.success) {
-        // Success handling is done in the OAuth service
+      if (result.success && result.user) {
+        // Update the auth store with the logged-in user
+        const { login: storeLogin } = useAuthStore.getState();
+        storeLogin(result.user, 'mock-google-token');
+        
+        // Show success message and redirect
+        toast.success('Logged in successfully!');
         const redirect = new URLSearchParams(window.location.search).get('redirect');
-        router.push(redirect || '/');
+        const redirectUrl = redirect ? decodeURIComponent(redirect) : '/';
+        setTimeout(() => {
+          window.location.href = redirectUrl;
+        }, 100);
       } else if (result.error) {
         toast.error(result.error);
       }
@@ -100,6 +119,45 @@ export default function LoginPage() {
       setOauthLoading(false);
     }
   };
+
+  const handleGuestLogin = useCallback((email: string, password: string) => {
+    setFormData({ email, password });
+    
+    // Clear any existing errors immediately when starting to fill
+    setFormErrors({});
+    
+    // If both email and password are fully filled, submit the form
+    if (email === 'guest@apnidukaan.com' && password === 'guest123456') {
+      // Use the guest login method from store
+      guestLogin({
+        email: 'guest@apnidukaan.com',
+        name: 'Guest User',
+        isGuest: true,
+        loginTime: new Date().toISOString()
+      });
+      
+      // Show success message and redirect
+      toast.success('Welcome, Guest User!');
+      const redirect = new URLSearchParams(window.location.search).get('redirect');
+      const redirectUrl = redirect ? decodeURIComponent(redirect) : '/';
+      // Small delay to ensure state is updated before redirect
+      setTimeout(() => {
+        window.location.href = redirectUrl;
+      }, 200);
+    }
+  }, [guestLogin, router]);
+
+  // Trigger guest autofill after the handler is defined
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('guest') === 'true') {
+      const timer = setTimeout(() => {
+        handleGuestLogin('guest@apnidukaan.com', 'guest123456');
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [handleGuestLogin]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -238,7 +296,7 @@ export default function LoginPage() {
               </div>
             )}
 
-            <div>
+            <div className="space-y-3">
               <button
                 type="submit"
                 disabled={loading}
@@ -256,6 +314,17 @@ export default function LoginPage() {
                   'Sign in'
                 )}
               </button>
+              
+              <div className="text-center">
+                <span className="text-sm text-gray-500">or</span>
+              </div>
+              
+              <GuestUserButton
+                onGuestLogin={handleGuestLogin}
+                disabled={loading || oauthLoading}
+                className="w-full"
+                size="md"
+              />
             </div>
           </form>
 

@@ -15,25 +15,27 @@ import {
   Truck,
   Shield
 } from 'lucide-react';
-import { useCart, useCartMutations } from '../../hooks/useCart';
+import { useCartStore } from '../../store/useCartStore';
 import { Button } from '../../components/ui/Button';
 import MainLayout from '../../components/layout/MainLayout';
 import { ApiErrorAlert } from '../../components/ui/ApiErrorAlert';
 import { useAuthStore } from '../../store/useAuthStore';
 
 export default function CartPage() {
-  const { cart, loading, refetch } = useCart();
-  const { updateCartItem, removeFromCart, clearCart, loading: mutationLoading } = useCartMutations();
+  const { items: cartItems, itemCount, total, subtotal, tax, shipping, discount, updateQuantity, removeItem, clearCart, calculateTotals } = useCartStore();
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
-  const { isAuthenticated } = useAuthStore();
-  const isSynced = Boolean(cart?.id);
+  const { isAuthenticated, isGuest, user, guestUser } = useAuthStore();
+  const isSynced = true; // Always synced with localStorage
+
+  console.log('Cart page - Auth state:', { isAuthenticated, isGuest, user, guestUser });
+  console.log('Cart page - Cart state:', { cartItems, itemCount, total });
 
   const handleQuantityChange = async (productId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
     
     setUpdatingItems(prev => new Set(prev).add(productId));
     try {
-      await updateCartItem(productId, newQuantity);
+      updateQuantity(productId, newQuantity);
     } finally {
       setUpdatingItems(prev => {
         const newSet = new Set(prev);
@@ -46,7 +48,7 @@ export default function CartPage() {
   const handleRemoveItem = async (productId: string) => {
     setUpdatingItems(prev => new Set(prev).add(productId));
     try {
-      await removeFromCart(productId);
+      removeItem(productId);
     } finally {
       setUpdatingItems(prev => {
         const newSet = new Set(prev);
@@ -79,7 +81,7 @@ export default function CartPage() {
     );
   }
 
-  if (!cart || cart.items.length === 0) {
+  if (cartItems.length === 0) {
     return (
       <MainLayout>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -107,8 +109,9 @@ export default function CartPage() {
           <Button 
             variant="outline" 
             onClick={handleClearCart}
-            className="text-red-600 hover:text-red-700"
+            className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all duration-200 font-medium px-4 py-2"
           >
+            <Trash2 className="h-4 w-4 mr-2" />
             Clear Cart
           </Button>
         </div>
@@ -128,11 +131,11 @@ export default function CartPage() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
               <div className="p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  Cart Items ({cart.itemCount})
+                  Cart Items ({itemCount})
                 </h2>
                 
                 <div className="space-y-4">
-                  {cart.items.map((item) => (
+                  {cartItems.map((item) => (
                     <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
                       <div className="flex-shrink-0">
                         <Image
@@ -212,42 +215,58 @@ export default function CartPage() {
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">${cart.subtotal.toFixed(2)}</span>
+                    <span className="font-medium">${subtotal.toFixed(2)}</span>
                   </div>
                   
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Tax</span>
-                    <span className="font-medium">${cart.tax.toFixed(2)}</span>
+                    <span className="font-medium">${tax.toFixed(2)}</span>
                   </div>
                   
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Shipping</span>
                     <span className="font-medium">
-                      {cart.shipping > 0 ? `$${cart.shipping.toFixed(2)}` : 'Free'}
+                      {shipping > 0 ? `$${shipping.toFixed(2)}` : 'Free'}
                     </span>
                   </div>
                   
-                  {cart.discount > 0 && (
+                  {discount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
                       <span>Discount</span>
-                      <span className="font-medium">-${cart.discount.toFixed(2)}</span>
+                      <span className="font-medium">-${discount.toFixed(2)}</span>
                     </div>
                   )}
                   
                   <div className="border-t border-gray-200 pt-3">
                     <div className="flex justify-between text-base font-semibold">
                       <span>Total</span>
-                      <span>${cart.total.toFixed(2)}</span>
+                      <span>${total.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
 
-                <Link href="/checkout" className="block">
-                  <Button className="w-full mb-4">
-                    Proceed to Checkout
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
+                {isAuthenticated ? (
+                  <Link 
+                    href="/checkout" 
+                    className="block"
+             onClick={() => {
+               console.log('Proceeding to checkout - Auth state:', { isAuthenticated, isGuest, user, guestUser });
+               console.log('Proceeding to checkout - Cart state:', { cartItems, itemCount });
+             }}
+                  >
+                    <Button className="w-full mb-4 !bg-black hover:!bg-gray-800 text-white border-0 font-semibold !py-0 px-6 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md">
+                      Proceed to Checkout
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href={`/auth/login?redirect=${encodeURIComponent('/checkout')}`} className="block">
+                    <Button className="w-full mb-4 !bg-black hover:!bg-gray-800 text-white border-0 font-semibold !py-0 px-6 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md">
+                      Sign In to Checkout
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                )}
 
                 <div className="space-y-3 text-sm text-gray-600">
                   <div className="flex items-center">

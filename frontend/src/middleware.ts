@@ -224,6 +224,17 @@ function getTokenFromRequest(request: NextRequest): string | null {
 
 async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
+    // Check if it's a guest token
+    if (token.startsWith('guest_')) {
+      return {
+        sub: 'guest_user',
+        email: 'guest@apnidukaan.com',
+        role: 'user',
+        exp: Date.now() / 1000 + 86400, // 24 hours from now
+        iat: Date.now() / 1000
+      }
+    }
+    
     const secret = new TextEncoder().encode(
       process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'your-secret-key'
     )
