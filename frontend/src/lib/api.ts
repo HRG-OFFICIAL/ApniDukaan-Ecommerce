@@ -198,16 +198,17 @@ class ApiClient {
     // 3) { success, products: Product[], pagination: {...} }
     let products: Product[] = [];
     let pagination: any = undefined;
-    const d = response?.data;
+    const d = (response as any)?.data;
+    const top = response as any;
     if (d && Array.isArray(d.products)) {
       products = d.products;
-      pagination = d.pagination ?? response.pagination;
+      pagination = d.pagination ?? top.pagination;
     } else if (Array.isArray(d)) {
       products = d;
-      pagination = response.pagination;
-    } else if (Array.isArray(response?.products)) {
-      products = response.products;
-      pagination = response.pagination;
+      pagination = top.pagination;
+    } else if (Array.isArray(top?.products)) {
+      products = top.products;
+      pagination = top.pagination;
     }
 
     return {
