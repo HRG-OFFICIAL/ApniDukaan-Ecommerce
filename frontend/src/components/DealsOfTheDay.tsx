@@ -70,27 +70,18 @@ export default function DealsOfTheDay({ products: propProducts }: { products?: P
             currency: 'USD',
             images: [image],
             thumbnailImage: image,
-            category: { id: 'electronics', name: 'Electronics', slug: 'electronics' },
+            category: { _id: 'electronics', name: 'Electronics', slug: 'electronics' },
             tags: [],
+            attributes: [],
             inventory: {
               quantity: qty,
               lowStockThreshold: lowStock,
               trackQuantity: true,
-              allowBackorder: false,
-              sku: `SKU-${id}`
+              allowBackorder: false
             },
-            hasVariants: false,
-            reviews: [],
             rating: {
               average: ratingAvg,
-              count: ratingCount,
-              breakdown: {
-                5: Math.round(ratingCount * 0.4),
-                4: Math.round(ratingCount * 0.3),
-                3: Math.round(ratingCount * 0.2),
-                2: Math.round(ratingCount * 0.06),
-                1: Math.max(0, ratingCount - (Math.round(ratingCount * 0.4) + Math.round(ratingCount * 0.3) + Math.round(ratingCount * 0.2) + Math.round(ratingCount * 0.06)))
-              }
+              count: ratingCount
             },
             sales: { totalSold: 0, revenue: 0 },
             isOnSale: originalPrice > price,
@@ -100,13 +91,9 @@ export default function DealsOfTheDay({ products: propProducts }: { products?: P
             seo: { title: name, description: name, keywords: [] },
             shipping: {
               weight: 1,
-              dimensions: { length: 10, width: 10, height: 10, unit: 'cm' },
+              dimensions: { length: 10, width: 10, height: 10 },
               freeShipping: price > 50
             },
-            isDigital: false,
-            isSubscription: false,
-            isBundle: false,
-            analytics: { views: 0, clicks: 0, addToCart: 0, wishlist: 0, share: 0 },
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             publishedAt: new Date().toISOString()
