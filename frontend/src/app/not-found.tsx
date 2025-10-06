@@ -1,8 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
-import { Home, Search, ShoppingBag, ArrowRight } from 'lucide-react'
+import { Home, Search, ShoppingBag, ArrowRight, AlertTriangle, Grid3X3 } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import MainLayout from '../components/layout/MainLayout'
 
@@ -26,30 +25,19 @@ const suggestions = [
     title: 'Search',
     description: 'Find exactly what you\'re looking for',
     href: '/search',
-    color: 'purple'
+    color: 'indigo'
   }
 ]
+
 
 export default function NotFound() {
   return (
     <MainLayout>
-      <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
+      <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 bg-gray-50">
         <div className="max-w-4xl w-full text-center">
-          {/* 404 Illustration */}
+          {/* 404 Display */}
           <div className="mb-8">
-            <div className="relative w-64 h-64 mx-auto mb-6">
-              <Image
-                src="https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=400"
-                alt="Page not found illustration"
-                width={256}
-                height={256}
-                className="rounded-full object-cover shadow-lg"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-blue-600/20 rounded-full"></div>
-            </div>
-            
-            <div className="text-8xl font-bold text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text mb-4">
+            <div className="text-8xl md:text-9xl font-bold text-red-500 mb-4 drop-shadow-lg">
               404
             </div>
           </div>
@@ -63,9 +51,15 @@ export default function NotFound() {
               The page you're looking for doesn't exist or may have been moved. 
               Don't worry, let's get you back on track!
             </p>
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 max-w-md mx-auto">
+            <div className="bg-white border border-gray-200 rounded-lg p-6 max-w-lg mx-auto shadow-sm">
+              <div className="flex items-center justify-center mb-3">
+                <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" />
+                <p className="text-sm font-medium text-gray-700">
+                  Looking for something specific?
+                </p>
+              </div>
               <p className="text-sm text-gray-500">
-                <strong>Looking for something specific?</strong> Try our search or browse our categories below.
+                Try our search or browse our categories below.
               </p>
             </div>
           </div>
@@ -75,21 +69,21 @@ export default function NotFound() {
             {suggestions.map((suggestion, index) => {
               const Icon = suggestion.icon
               const colorClasses = {
-                blue: 'bg-blue-100 text-blue-600',
-                green: 'bg-green-100 text-green-600',
-                purple: 'bg-purple-100 text-purple-600'
+                blue: 'bg-blue-100 text-blue-600 hover:bg-blue-200',
+                green: 'bg-green-100 text-green-600 hover:bg-green-200',
+                indigo: 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200'
               }
               
               return (
                 <Link
                   key={index}
                   href={suggestion.href}
-                  className="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
+                  className="group block p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-2"
                 >
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4 ${colorClasses[suggestion.color as keyof typeof colorClasses]}`}>
-                    <Icon className="h-6 w-6" />
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4 transition-colors ${colorClasses[suggestion.color as keyof typeof colorClasses]}`}>
+                    <Icon className="h-7 w-7" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
                     {suggestion.title}
                   </h3>
                   <p className="text-gray-600 text-sm">
@@ -105,16 +99,16 @@ export default function NotFound() {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Popular Categories</h2>
             <div className="flex flex-wrap justify-center gap-3">
               {[
-                { name: 'Electronics', href: '/categories/electronics' },
-                { name: 'Clothing', href: '/categories/clothing' },
-                { name: 'Home & Garden', href: '/categories/home-garden' },
-                { name: 'Sports', href: '/categories/sports' },
-                { name: 'Books', href: '/categories/books' }
+                { name: 'Electronics', href: '/categories/electronics', color: 'bg-blue-100 text-blue-700 hover:bg-blue-200' },
+                { name: 'Clothing', href: '/categories/clothing', color: 'bg-green-100 text-green-700 hover:bg-green-200' },
+                { name: 'Home & Garden', href: '/categories/home-garden', color: 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' },
+                { name: 'Sports', href: '/categories/sports', color: 'bg-orange-100 text-orange-700 hover:bg-orange-200' },
+                { name: 'Books', href: '/categories/books', color: 'bg-pink-100 text-pink-700 hover:bg-pink-200' }
               ].map((category, index) => (
                 <Link
                   key={index}
                   href={category.href}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                  className={`px-6 py-3 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105 ${category.color}`}
                 >
                   {category.name}
                 </Link>
@@ -123,40 +117,61 @@ export default function NotFound() {
           </div>
 
           {/* CTA Section */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
-            <h2 className="text-2xl font-bold mb-4">Need Help?</h2>
-            <p className="text-blue-100 mb-6">
-              Our customer support team is here to help you find what you're looking for.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/">
-                <Button size="lg" variant="secondary">
-                  <Home className="mr-2 h-5 w-5" />
-                  Go to Homepage
-                </Button>
-              </Link>
-              <Link href="/search">
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-white text-white hover:bg-white hover:text-blue-600"
-                >
-                  <Search className="mr-2 h-5 w-5" />
-                  Search Products
-                </Button>
-              </Link>
+          <div className="relative overflow-hidden rounded-2xl p-8 text-black shadow-2xl border-2 border-gray-300">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200"></div>
+            <div className="absolute inset-0 opacity-30">
+              <div className="w-full h-full" style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                backgroundRepeat: 'repeat'
+              }}></div>
+            </div>
+            
+            {/* Content */}
+            <div className="relative max-w-2xl mx-auto">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-black/10 rounded-full mb-4">
+                  <Search className="h-8 w-8 text-black" />
+                </div>
+                <h2 className="text-3xl font-bold mb-4 text-black">Need Help Finding Something?</h2>
+                <p className="text-gray-700 text-lg leading-relaxed">
+                  Our customer support team is here to help you find exactly what you're looking for.
+                </p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/">
+                  <Button size="lg" variant="secondary" className="bg-white text-black hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-black">
+                    <Home className="mr-2 h-5 w-5" />
+                    Go to Homepage
+                  </Button>
+                </Link>
+                <Link href="/search">
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="border-black text-black hover:bg-black hover:text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    <Search className="mr-2 h-5 w-5" />
+                    Search Products
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
 
           {/* Contact Info */}
-          <div className="mt-8 text-center text-gray-500 text-sm">
-            <p>Still can't find what you're looking for?</p>
-            <Link 
-              href="/contact" 
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Contact our support team <ArrowRight className="inline h-4 w-4" />
-            </Link>
+          <div className="mt-8 text-center">
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 max-w-md mx-auto">
+              <p className="text-gray-600 mb-3">Still can't find what you're looking for?</p>
+              <Link 
+                href="/contact" 
+                className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              >
+                Contact our support team 
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>

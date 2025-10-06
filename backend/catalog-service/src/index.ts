@@ -17,7 +17,7 @@ async function startServer() {
 
   try {
     // Connect to MongoDB Atlas using default mongoose connection
-    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0';
+    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:eKtnLTAnmTlPVM9H@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0';
     await mongoose.connect(mongoUri, {
       dbName: 'apnidukaan'
     });

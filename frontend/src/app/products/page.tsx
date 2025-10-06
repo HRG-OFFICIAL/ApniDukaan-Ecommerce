@@ -305,32 +305,8 @@ function ProductsContent() {
               )}
             </div>
             
-            {/* View Toggle & Mobile Filter */}
+            {/* Mobile Filter Button */}
             <div className="flex items-center space-x-4 mt-4 lg:mt-0">
-              {/* View Mode Toggle */}
-              <div className="hidden sm:flex items-center border border-gray-300 rounded-md p-1 bg-white shadow-sm">
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className="px-3 py-2 min-w-[40px] border-0 mr-1"
-                  aria-label="Grid view"
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <div className="w-px h-6 bg-gray-300 mx-1"></div>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  className="px-3 py-2 min-w-[40px] border-0 ml-1"
-                  aria-label="List view"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              {/* Mobile Filter Button */}
               <Button
                 variant="outline"
                 onClick={() => setShowFilters(!showFilters)}
@@ -345,117 +321,144 @@ function ProductsContent() {
           <div className="pt-6 lg:grid lg:grid-cols-4 lg:gap-x-8">
             {/* Filters Sidebar */}
             <aside className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
-              <div className="space-y-6">
-                {/* Search */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-900">Search</h3>
-                  <div className="mt-2 relative">
-                    <input
-                      type="text"
-                      placeholder="Search products..."
-                      value={searchQuery}
-                      onChange={(e) => handleSearch(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                  </div>
-                </div>
-
-                {/* Categories */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-900">Categories</h3>
-                  <div className="mt-2 space-y-2">
-                    {categories.map((category) => (
-                      <label key={category} className="flex items-center">
-                        <input
-                          type="radio"
-                          name="category"
-                          value={category}
-                          checked={selectedCategory === category}
-                          onChange={(e) => handleCategoryChange(e.target.value)}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                        />
-                        <span className="ml-3 text-sm text-gray-600">{category}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Price Range */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-900">Price Range</h3>
-                  <div className="mt-2 space-y-3">
-                    <div className="flex items-center space-x-3">
+              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <div className="space-y-8">
+                  {/* Search */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <Search className="h-5 w-5 mr-2 text-gray-600" />
+                      Search Products
+                    </h3>
+                    <div className="relative">
                       <input
-                        type="number"
-                        placeholder="Min"
-                        value={priceRange.min}
-                      onChange={(e) => handlePriceRangeChange({ min: Number(e.target.value), max: priceRange.max })}
-                        className="w-20 px-2 py-1 border border-gray-300 rounded-md text-sm"
+                        type="text"
+                        placeholder="Search products..."
+                        value={searchQuery}
+                        onChange={(e) => handleSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                       />
-                      <span className="text-gray-500">to</span>
-                      <input
-                        type="number"
-                        placeholder="Max"
-                        value={priceRange.max}
-                      onChange={(e) => handlePriceRangeChange({ min: priceRange.min, max: Number(e.target.value) })}
-                        className="w-20 px-2 py-1 border border-gray-300 rounded-md text-sm"
-                      />
+                      <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
                     </div>
                   </div>
-                </div>
 
-                {/* Quick Filters */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-900">Quick Filters</h3>
-                  <div className="mt-2 space-y-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        updateFilter('isNew', true)
-                        const params = new URLSearchParams(searchParams)
-                        params.set('filter', 'new')
-                        router.push(`/products?${params.toString()}`)
-                      }}
-                      className="w-full justify-start text-primary-600 hover:text-primary-500 h-8"
-                    >
-                      New Arrivals
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        updateFilter('isBestseller', true)
-                        const params = new URLSearchParams(searchParams)
-                        params.set('filter', 'bestseller')
-                        router.push(`/products?${params.toString()}`)
-                      }}
-                      className="w-full justify-start text-primary-600 hover:text-primary-500 h-8"
-                    >
-                      Bestsellers
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        updateFilter('isOnSale', true)
-                        const params = new URLSearchParams(searchParams)
-                        params.set('filter', 'sale')
-                        router.push(`/products?${params.toString()}`)
-                      }}
-                      className="w-full justify-start text-primary-600 hover:text-primary-500 h-8"
-                    >
-                      On Sale
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearAllFilters}
-                      className="w-full justify-start text-gray-600 hover:text-gray-500 h-8"
-                    >
-                      Clear Filters
-                    </Button>
+                  {/* Categories */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Categories</h3>
+                    <div className="space-y-3">
+                      {categories.map((category) => (
+                        <label key={category} className="flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                          <input
+                            type="radio"
+                            name="category"
+                            value={category}
+                            checked={selectedCategory === category}
+                            onChange={(e) => handleCategoryChange(e.target.value)}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                          />
+                          <span className={`ml-3 text-sm font-medium ${
+                            selectedCategory === category ? 'text-blue-600' : 'text-gray-700'
+                          }`}>
+                            {category}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Price Range */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Price Range</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Min Price</label>
+                          <input
+                            type="number"
+                            placeholder="0"
+                            value={priceRange.min}
+                            onChange={(e) => handlePriceRangeChange({ min: Number(e.target.value), max: priceRange.max })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
+                          />
+                        </div>
+                        <div className="flex items-center pt-6">
+                          <span className="text-gray-500 font-medium">to</span>
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Max Price</label>
+                          <input
+                            type="number"
+                            placeholder="1000"
+                            value={priceRange.max}
+                            onChange={(e) => handlePriceRangeChange({ min: priceRange.min, max: Number(e.target.value) })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
+                          />
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <span className="text-sm text-gray-600">
+                          ₹{priceRange.min} - ₹{priceRange.max}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Filters */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Filters</h3>
+                    <div className="space-y-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          updateFilter('isNew', true)
+                          const params = new URLSearchParams(searchParams)
+                          params.set('filter', 'new')
+                          router.push(`/products?${params.toString()}`)
+                        }}
+                        className="w-full justify-start text-gray-700 hover:text-blue-600 hover:border-blue-300 h-10 border-gray-300"
+                      >
+                        <span className="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                        New Arrivals
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          updateFilter('isBestseller', true)
+                          const params = new URLSearchParams(searchParams)
+                          params.set('filter', 'bestseller')
+                          router.push(`/products?${params.toString()}`)
+                        }}
+                        className="w-full justify-start text-gray-700 hover:text-blue-600 hover:border-blue-300 h-10 border-gray-300"
+                      >
+                        <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                        Bestsellers
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          updateFilter('isOnSale', true)
+                          const params = new URLSearchParams(searchParams)
+                          params.set('filter', 'sale')
+                          router.push(`/products?${params.toString()}`)
+                        }}
+                        className="w-full justify-start text-gray-700 hover:text-blue-600 hover:border-blue-300 h-10 border-gray-300"
+                      >
+                        <span className="w-2 h-2 bg-red-500 rounded-full mr-3"></span>
+                        On Sale
+                      </Button>
+                      <div className="pt-2 border-t border-gray-200">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearAllFilters}
+                          className="w-full justify-start text-gray-600 hover:text-red-600 hover:bg-red-50 h-10"
+                        >
+                          Clear All Filters
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -463,23 +466,73 @@ function ProductsContent() {
 
             {/* Product Grid */}
             <div className="mt-6 lg:col-span-3 lg:mt-0">
-              {/* Sort */}
+              {/* Sort & View Controls */}
               <div className="flex items-center justify-between mb-6">
-                <p className="text-sm text-gray-700">
-                  Showing {displayProducts.length} of {totalProducts} products
+                <p className="text-sm text-black font-medium">
+                  {(() => {
+                    const startItem = (currentPage - 1) * itemsPerPage + 1;
+                    const endItem = Math.min(currentPage * itemsPerPage, totalProducts);
+                    return `Showing ${startItem}-${endItem} of ${totalProducts.toLocaleString()} products`;
+                  })()}
                 </p>
                 <div className="flex items-center space-x-4">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => handleSortChange(e.target.value)}
-                    className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    {sortOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
+                  {/* Sort Dropdown */}
+                  <div className="flex items-center space-x-2">
+                    <label htmlFor="sort-select" className="text-sm font-medium text-black">
+                      Sort by:
+                    </label>
+                    <select
+                      id="sort-select"
+                      value={sortBy}
+                      onChange={(e) => handleSortChange(e.target.value)}
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm min-w-[180px]"
+                    >
+                      {sortOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  {/* View Mode Toggle */}
+                  <div className="flex items-center border border-gray-300 rounded-md p-1 bg-white shadow-sm">
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('grid')}
+                      className={`px-3 py-2 min-w-[40px] border-0 mr-1 ${
+                        viewMode === 'grid' 
+                          ? '!bg-black !text-white hover:!bg-gray-800' 
+                          : '!text-black hover:!bg-gray-100'
+                      }`}
+                      style={{
+                        color: viewMode === 'grid' ? 'white' : 'black',
+                        backgroundColor: viewMode === 'grid' ? 'black' : 'transparent'
+                      }}
+                      aria-label="Grid view"
+                    >
+                      <Grid className="h-4 w-4" />
+                    </Button>
+                    <div className="w-px h-6 bg-gray-300 mx-1"></div>
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('list')}
+                      className={`px-3 py-2 min-w-[40px] border-0 ml-1 ${
+                        viewMode === 'list' 
+                          ? '!bg-black !text-white hover:!bg-gray-800' 
+                          : '!text-black hover:!bg-gray-100'
+                      }`}
+                      style={{
+                        color: viewMode === 'list' ? 'white' : 'black',
+                        backgroundColor: viewMode === 'list' ? 'black' : 'transparent'
+                      }}
+                      aria-label="List view"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
 
@@ -494,15 +547,78 @@ function ProductsContent() {
                     viewMode === 'grid' 
                       ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
                       : 'grid-cols-1'
-                  }`} style={{ minHeight: '200px' }}>
+                  }`}>
                     {displayProducts.map((product) => (
-                      <div key={(product as any)._id || (product as any).id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                        <div className="aspect-square bg-gray-200 rounded-lg mb-4"></div>
-                        <h3 className="font-semibold text-gray-900 mb-2">{product.name}</h3>
-                        <p className="text-sm text-gray-600 mb-2">{product.description}</p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold text-blue-600">₹{product.price}</span>
-                          <span className="text-sm text-gray-500">{typeof product.rating === 'number' ? product.rating : product.rating?.average || 0} ⭐</span>
+                      <div key={(product as any)._id || (product as any).id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col h-full">
+                        {/* Product Image - Fixed Height */}
+                        <div className="aspect-square bg-gray-100 relative overflow-hidden">
+                          {product.images && product.images.length > 0 ? (
+                            <img
+                              src={product.images[0]}
+                              alt={product.name}
+                              className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/placeholder-product.jpg'
+                              }}
+                            />
+                          ) : product.image ? (
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/placeholder-product.jpg'
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                              <div className="text-center">
+                                <div className="w-16 h-16 mx-auto mb-2 bg-gray-300 rounded-lg flex items-center justify-center">
+                                  <span className="text-2xl text-gray-500">📦</span>
+                                </div>
+                                <p className="text-xs text-gray-500">No Image</p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Product Badges */}
+                          <div className="absolute top-2 left-2 flex flex-col gap-1">
+                            {product.isNew && (
+                              <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">New</span>
+                            )}
+                            {product.isOnSale && (
+                              <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">Sale</span>
+                            )}
+                            {product.isBestseller && (
+                              <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium">Bestseller</span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Product Info - Flexible Height with Fixed Bottom */}
+                        <div className="p-4 flex flex-col flex-grow">
+                          <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 h-12 flex items-start">{product.name}</h3>
+                          <p className="text-sm text-gray-600 mb-3 line-clamp-2 h-10 flex items-start">{product.description}</p>
+                          
+                          {/* Price and Rating - Fixed Height */}
+                          <div className="flex items-center justify-between mb-3 h-8">
+                            <div className="flex flex-col">
+                              <span className="text-lg font-bold text-blue-600">₹{product.price}</span>
+                              {product.originalPrice && product.originalPrice > product.price && (
+                                <span className="text-sm text-gray-500 line-through">₹{product.originalPrice}</span>
+                              )}
+                            </div>
+                            <div className="flex items-center">
+                              <span className="text-sm text-gray-500">
+                                {typeof product.rating === 'number' ? product.rating : product.rating?.average || 0} ⭐
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Add to Cart Button - Fixed at Bottom */}
+                          <button className="w-full mt-auto bg-black text-white py-2 px-4 rounded-md hover:bg-gray-800 transition-colors duration-200 text-sm font-medium">
+                            Add to Cart
+                          </button>
                         </div>
                       </div>
                     ))}

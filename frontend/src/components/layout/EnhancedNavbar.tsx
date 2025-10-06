@@ -23,55 +23,233 @@ import {
   BookOpen,
   History,
   Zap,
-  HelpCircle
+  HelpCircle,
+  Shirt,
+  Smartphone,
+  Home,
+  Gamepad2,
+  Sparkles as BeautyIcon,
+  Dumbbell,
+  Baby,
+  Dog
 } from 'lucide-react'
 import { useCartStore } from '../../store/useCartStore'
 import { useAuthStore } from '../../store/useAuthStore'
 
-// Categories for mega menu
+// Comprehensive categories organized by main groups
 const categoryGroups = [
   {
-    title: 'Electronics',
-    items: [
-      { name: 'Smartphones', href: '/products?category=smartphones' },
-      { name: 'Laptops', href: '/products?category=laptops' },
-      { name: 'Headphones', href: '/products?category=headphones' },
-      { name: 'Smart Watches', href: '/products?category=smart-watches' },
-      { name: 'Cameras', href: '/products?category=cameras' },
-      { name: 'Gaming', href: '/products?category=gaming' }
+    title: 'Fashion & Clothing',
+    icon: <Shirt className="h-5 w-5 text-gray-700" />,
+    subcategories: [
+      {
+        title: 'Women\'s Fashion',
+        items: [
+          { name: 'Women\'s Clothing', count: 2683, href: '/products?category=womens-clothing' },
+          { name: 'Women\'s Shoes', count: 2410, href: '/products?category=womens-shoes' },
+          { name: 'Women\'s Handbags', count: 2930, href: '/products?category=womens-handbags' },
+          { name: 'Women\'s Jewelry', count: 2623, href: '/products?category=womens-jewelry' },
+          { name: 'Women\'s Accessories', count: 2147, href: '/products?category=womens-accessories' },
+          { name: 'Women\'s Watches', count: 1009, href: '/products?category=womens-watches' }
+        ]
+      },
+      {
+        title: 'Men\'s Fashion',
+        items: [
+          { name: 'Men\'s Clothing', count: 2816, href: '/products?category=mens-clothing' },
+          { name: 'Men\'s Shoes', count: 3057, href: '/products?category=mens-shoes' },
+          { name: 'Men\'s Accessories', count: 2727, href: '/products?category=mens-accessories' },
+          { name: 'Men\'s Watches', count: 1980, href: '/products?category=mens-watches' }
+        ]
+      },
+      {
+        title: 'Kids\' Fashion',
+        items: [
+          { name: 'Girls\' Clothing', count: 4412, href: '/products?category=girls-clothing' },
+          { name: 'Boys\' Clothing', count: 3804, href: '/products?category=boys-clothing' },
+          { name: 'Girls\' Shoes', count: 1687, href: '/products?category=girls-shoes' },
+          { name: 'Boys\' Shoes', count: 922, href: '/products?category=boys-shoes' },
+          { name: 'Girls\' Jewelry', count: 2856, href: '/products?category=girls-jewelry' },
+          { name: 'Boys\' Jewelry', count: 1676, href: '/products?category=boys-jewelry' }
+        ]
+      }
     ]
   },
   {
-    title: 'Fashion',
-    items: [
-      { name: 'Men\'s Clothing', href: '/products?category=mens-clothing' },
-      { name: 'Women\'s Clothing', href: '/products?category=womens-clothing' },
-      { name: 'Shoes', href: '/products?category=shoes' },
-      { name: 'Accessories', href: '/products?category=accessories' },
-      { name: 'Watches', href: '/products?category=watches' },
-      { name: 'Jewelry', href: '/products?category=jewelry' }
+    title: 'Electronics & Technology',
+    icon: <Smartphone className="h-5 w-5 text-gray-700" />,
+    subcategories: [
+      {
+        title: 'Computers & Tablets',
+        items: [
+          { name: 'Computers & Tablets', count: 1290, href: '/products?category=computers-tablets' },
+          { name: 'Computers', count: 1143, href: '/products?category=computers' },
+          { name: 'Computer Components', count: 1302, href: '/products?category=computer-components' },
+          { name: 'Computer Monitors', count: 553, href: '/products?category=computer-monitors' },
+          { name: 'Laptop Accessories', count: 1043, href: '/products?category=laptop-accessories' }
+        ]
+      },
+      {
+        title: 'Mobile & Accessories',
+        items: [
+          { name: 'Cell Phones & Accessories', count: 531, href: '/products?category=cell-phones' },
+          { name: 'Tablet Accessories', count: 1306, href: '/products?category=tablet-accessories' },
+          { name: 'Wearable Technology', count: 1248, href: '/products?category=wearable-tech' }
+        ]
+      },
+      {
+        title: 'Audio & Video',
+        items: [
+          { name: 'Headphones & Earbuds', count: 1425, href: '/products?category=headphones' },
+          { name: 'Home Audio & Theater Products', count: 744, href: '/products?category=home-audio' },
+          { name: 'Televisions & Video Products', count: 1361, href: '/products?category=tv-video' },
+          { name: 'Camera & Photo', count: 952, href: '/products?category=camera-photo' }
+        ]
+      },
+      {
+        title: 'Gaming',
+        items: [
+          { name: 'Video Games', count: 819, href: '/products?category=video-games' },
+          { name: 'PlayStation 5 Consoles, Games & Accessories', count: 792, href: '/products?category=playstation-5' },
+          { name: 'Nintendo Switch Consoles, Games & Accessories', count: 889, href: '/products?category=nintendo-switch' },
+          { name: 'Xbox Series X & S Consoles, Games & Accessories', count: 871, href: '/products?category=xbox-series' }
+        ]
+      }
     ]
   },
   {
     title: 'Home & Garden',
-    items: [
-      { name: 'Furniture', href: '/products?category=furniture' },
-      { name: 'Kitchen', href: '/products?category=kitchen' },
-      { name: 'Bedding', href: '/products?category=bedding' },
-      { name: 'Decor', href: '/products?category=decor' },
-      { name: 'Garden', href: '/products?category=garden' },
-      { name: 'Tools', href: '/products?category=tools' }
+    icon: <Home className="h-5 w-5 text-gray-700" />,
+    subcategories: [
+      {
+        title: 'Furniture & Decor',
+        items: [
+          { name: 'Furniture', count: 899, href: '/products?category=furniture' },
+          { name: 'Home Décor Products', count: 1263, href: '/products?category=home-decor' },
+          { name: 'Wall Art', count: 1315, href: '/products?category=wall-art' },
+          { name: 'Seasonal Décor', count: 1359, href: '/products?category=seasonal-decor' },
+          { name: 'Lighting & Ceiling Fans', count: 1311, href: '/products?category=lighting' }
+        ]
+      },
+      {
+        title: 'Kitchen & Dining',
+        items: [
+          { name: 'Kitchen & Dining', count: 753, href: '/products?category=kitchen-dining' },
+          { name: 'Home Appliances', count: 1081, href: '/products?category=home-appliances' },
+          { name: 'Vacuum Cleaners & Floor Care', count: 1278, href: '/products?category=vacuum-cleaners' }
+        ]
+      },
+      {
+        title: 'Bedding & Bath',
+        items: [
+          { name: 'Bedding', count: 1286, href: '/products?category=bedding' },
+          { name: 'Bath Products', count: 1326, href: '/products?category=bath-products' }
+        ]
+      }
     ]
   },
   {
-    title: 'Sports',
-    items: [
-      { name: 'Fitness', href: '/products?category=fitness' },
-      { name: 'Outdoor', href: '/products?category=outdoor' },
-      { name: 'Team Sports', href: '/products?category=team-sports' },
-      { name: 'Water Sports', href: '/products?category=water-sports' },
-      { name: 'Winter Sports', href: '/products?category=winter-sports' },
-      { name: 'Cycling', href: '/products?category=cycling' }
+    title: 'Toys & Games',
+    icon: <Gamepad2 className="h-5 w-5 text-gray-700" />,
+    subcategories: [
+      {
+        title: 'Kids\' Toys',
+        items: [
+          { name: 'Toys & Games', count: 3215, href: '/products?category=toys-games' },
+          { name: 'Baby & Toddler Toys', count: 1391, href: '/products?category=baby-toddler-toys' },
+          { name: 'Dolls & Accessories', count: 1160, href: '/products?category=dolls' },
+          { name: 'Stuffed Animals & Plush Toys', count: 833, href: '/products?category=stuffed-animals' }
+        ]
+      },
+      {
+        title: 'Educational & Learning',
+        items: [
+          { name: 'Learning & Education Toys', count: 551, href: '/products?category=learning-toys' },
+          { name: 'Puzzles', count: 1108, href: '/products?category=puzzles' },
+          { name: 'Building Toys', count: 987, href: '/products?category=building-toys' }
+        ]
+      }
+    ]
+  },
+  {
+    title: 'Beauty & Personal Care',
+    icon: <BeautyIcon className="h-5 w-5 text-gray-700" />,
+    subcategories: [
+      {
+        title: 'Beauty & Cosmetics',
+        items: [
+          { name: 'Makeup', count: 1296, href: '/products?category=makeup' },
+          { name: 'Skin Care Products', count: 1245, href: '/products?category=skin-care' },
+          { name: 'Hair Care Products', count: 1337, href: '/products?category=hair-care' },
+          { name: 'Beauty Tools & Accessories', count: 938, href: '/products?category=beauty-tools' }
+        ]
+      },
+      {
+        title: 'Personal Care',
+        items: [
+          { name: 'Shaving & Hair Removal Products', count: 1176, href: '/products?category=shaving' },
+          { name: 'Oral Care Products', count: 621, href: '/products?category=oral-care' },
+          { name: 'Foot, Hand & Nail Care Products', count: 1471, href: '/products?category=foot-hand-nail' }
+        ]
+      }
+    ]
+  },
+  {
+    title: 'Sports & Outdoors',
+    icon: <Dumbbell className="h-5 w-5 text-gray-700" />,
+    subcategories: [
+      {
+        title: 'Sports & Fitness',
+        items: [
+          { name: 'Sports & Fitness', count: 1028, href: '/products?category=sports-fitness' },
+          { name: 'Sports Nutrition Products', count: 682, href: '/products?category=sports-nutrition' },
+          { name: 'Outdoor Recreation', count: 548, href: '/products?category=outdoor-recreation' }
+        ]
+      },
+      {
+        title: 'Automotive',
+        items: [
+          { name: 'Automotive Performance Parts & Accessories', count: 1453, href: '/products?category=auto-performance' },
+          { name: 'Automotive Tires & Wheels', count: 1449, href: '/products?category=auto-tires' },
+          { name: 'Car Care', count: 1336, href: '/products?category=car-care' }
+        ]
+      }
+    ]
+  },
+  {
+    title: 'Baby & Kids',
+    icon: <Baby className="h-5 w-5 text-gray-700" />,
+    subcategories: [
+      {
+        title: 'Baby Clothing',
+        items: [
+          { name: 'Baby Boys\' Clothing & Shoes', count: 1366, href: '/products?category=baby-boys-clothing' },
+          { name: 'Baby Girls\' Clothing & Shoes', count: 504, href: '/products?category=baby-girls-clothing' }
+        ]
+      },
+      {
+        title: 'Baby Care',
+        items: [
+          { name: 'Baby Care Products', count: 1030, href: '/products?category=baby-care' },
+          { name: 'Baby & Toddler Feeding Supplies', count: 1180, href: '/products?category=baby-feeding' },
+          { name: 'Baby Safety Products', count: 720, href: '/products?category=baby-safety' }
+        ]
+      }
+    ]
+  },
+  {
+    title: 'Pets & Animals',
+    icon: <Dog className="h-5 w-5 text-gray-700" />,
+    subcategories: [
+      {
+        title: 'Pet Supplies',
+        items: [
+          { name: 'Dog Supplies', count: 1284, href: '/products?category=dog-supplies' },
+          { name: 'Cat Supplies', count: 1380, href: '/products?category=cat-supplies' },
+          { name: 'Fish & Aquatic Pets', count: 1094, href: '/products?category=fish-aquatic' },
+          { name: 'Small Animal Supplies', count: 927, href: '/products?category=small-animals' }
+        ]
+      }
     ]
   }
 ]
@@ -389,10 +567,71 @@ export function Navbar({ className = '' }: NavbarProps) {
          {/* Secondary Navigation - Horizontal Links */}
          <div className="hidden md:block">
            <div className="flex items-center justify-between py-3 text-sm px-6 w-full">
-             <Link href="/categories" className="flex items-center gap-2 text-black hover:text-gray-600 transition-colors whitespace-nowrap">
-               <Grid3X3 className="h-4 w-4" />
-               Categories
-             </Link>
+             {/* Categories Dropdown */}
+             <div className="relative" ref={categoriesRef}>
+               <button
+                 onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
+                 className="flex items-center gap-2 text-black hover:text-gray-600 transition-colors whitespace-nowrap"
+               >
+                 <Grid3X3 className="h-4 w-4" />
+                 Categories
+                 <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isCategoriesOpen ? 'rotate-180' : ''}`} />
+               </button>
+
+               {/* Mega Menu Dropdown */}
+               {isCategoriesOpen && (
+                 <div className="absolute top-full left-0 mt-2 w-screen max-w-5xl bg-white rounded-lg shadow-2xl border border-gray-200 z-50 animate-in slide-in-from-top-2 duration-200">
+                   <div className="p-4">
+                     <div className="grid grid-cols-4 gap-4">
+                       {categoryGroups.map((group) => (
+                         <div key={group.title} className="space-y-2">
+                           {/* Main Category Header */}
+                           <div className="flex items-center space-x-2 pb-1 border-b border-gray-200">
+                             {group.icon}
+                             <h3 className="text-sm font-bold text-gray-900 leading-tight">{group.title}</h3>
+                           </div>
+                           
+                           {/* Subcategories */}
+                           <div className="space-y-2">
+                             {group.subcategories.map((subcategory) => (
+                               <div key={subcategory.title}>
+                                 <h4 className="text-xs font-semibold text-gray-700 mb-1">{subcategory.title}</h4>
+                                 <ul className="space-y-0.5">
+                                   {subcategory.items.map((item) => (
+                                     <li key={item.name}>
+                                       <Link
+                                         href={item.href}
+                                         className="flex items-center text-xs text-gray-600 hover:text-blue-600 transition-colors group py-0.5 px-1 rounded hover:bg-blue-50"
+                                         onClick={() => setIsCategoriesOpen(false)}
+                                       >
+                                         <span className="group-hover:text-blue-600 font-medium">{item.name}</span>
+                                         <span className="text-xs text-gray-400 ml-2">({item.count})</span>
+                                       </Link>
+                                     </li>
+                                   ))}
+                                 </ul>
+                               </div>
+                             ))}
+                           </div>
+                         </div>
+                       ))}
+                     </div>
+                     
+                     {/* Footer with View All Categories */}
+                     <div className="mt-4 pt-4 border-t border-gray-200 text-center">
+                       <Link
+                         href="/categories"
+                         className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium text-sm bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded transition-colors"
+                         onClick={() => setIsCategoriesOpen(false)}
+                       >
+                         View All 241 Categories
+                         <ChevronDown className="h-4 w-4 ml-1 rotate-[-90deg]" />
+                       </Link>
+                     </div>
+                   </div>
+                 </div>
+               )}
+             </div>
              <Link href="/products" className="flex items-center gap-2 text-black hover:text-gray-600 transition-colors whitespace-nowrap">
                <Package className="h-4 w-4" />
                All Products
@@ -462,22 +701,33 @@ export function Navbar({ className = '' }: NavbarProps) {
               {/* Mobile Categories */}
               <div>
                 <h3 className="font-semibold text-gray-900 mb-2">Categories</h3>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {categoryGroups.map((group) => (
                     <div key={group.title}>
-                      <h4 className="font-medium text-gray-700 mb-1">{group.title}</h4>
-                      <ul className="ml-4 space-y-1">
-                        {group.items.slice(0, 3).map((item) => (
-                          <li key={item.name}>
-                            <Link
-                              href={item.href}
-                              className="text-gray-600 hover:text-blue-600 transition-colors text-sm"
-                            >
-                              {item.name}
-                            </Link>
-                          </li>
+                      <div className="flex items-center space-x-2 mb-2">
+                        {group.icon}
+                        <h4 className="font-medium text-gray-700">{group.title}</h4>
+                      </div>
+                      <div className="ml-6 space-y-2">
+                        {group.subcategories.slice(0, 2).map((subcategory) => (
+                          <div key={subcategory.title}>
+                            <h5 className="text-sm font-medium text-gray-600 mb-1">{subcategory.title}</h5>
+                            <ul className="ml-3 space-y-1">
+                              {subcategory.items.slice(0, 3).map((item) => (
+                                <li key={item.name}>
+                                  <Link
+                                    href={item.href}
+                                    className="text-gray-600 hover:text-blue-600 transition-colors text-sm"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                  >
+                                    {item.name} ({item.count})
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                     </div>
                   ))}
                 </div>

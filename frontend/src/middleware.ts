@@ -152,6 +152,11 @@ function handleApiProxy(request: NextRequest): NextResponse {
     return NextResponse.next()
   }
   
+  // Handle Razorpay API routes - let Next.js handle them
+  if (pathname.startsWith('/api/razorpay/')) {
+    return NextResponse.next()
+  }
+  
   // Handle other API routes (API Gateway)
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
   const backendUrl = `${apiUrl}${pathname.replace('/api', '')}${search}`
@@ -170,11 +175,11 @@ function addSecurityHeaders(response: NextResponse) {
   response.headers.set(
     'Content-Security-Policy',
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://www.googletagmanager.com https://www.google-analytics.com; " +
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://checkout-static-next.razorpay.com https://www.googletagmanager.com https://www.google-analytics.com https://browser.sentry-cdn.com; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://checkout.razorpay.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
     "img-src 'self' data: https: blob:; " +
-    "connect-src 'self' http://localhost:4000 https://apnidukaan-api-gateway.onrender.com https://api.apnidukaan.com https://api.razorpay.com https://www.google-analytics.com https://*.onrender.com; " +
+    "connect-src 'self' http://localhost:4000 https://apnidukaan-api-gateway.onrender.com https://api.apnidukaan.com https://api.razorpay.com https://lumberjack.razorpay.com https://checkout.razorpay.com https://www.google-analytics.com https://*.onrender.com; " +
     "frame-src 'self' https://accounts.google.com https://checkout.razorpay.com https://api.razorpay.com; " +
     "object-src 'none'; " +
     "base-uri 'self';"
@@ -185,7 +190,7 @@ function addSecurityHeaders(response: NextResponse) {
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('Referrer-Policy', 'origin-when-cross-origin')
   response.headers.set('X-XSS-Protection', '1; mode=block')
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(self "https://checkout.razorpay.com")')
+  response.headers.set('Permissions-Policy', 'camera=(self "https://checkout.razorpay.com"), microphone=(), geolocation=(), payment=(self "https://checkout.razorpay.com" "https://api.razorpay.com")')
   
   // HSTS (only in production)
   if (process.env.NODE_ENV === 'production') {

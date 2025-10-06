@@ -4,8 +4,18 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
-import { razorpayService } from '../../services/razorpayService';
-import { Loader2, CreditCard, Smartphone, Building2, Wallet } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { 
+  loadScript, 
+  createRazorpayOrder, 
+  verifyRazorpayPayment, 
+  formatCurrency, 
+  formatAmountForRazorpay,
+  getSupportedPaymentMethods,
+  RAZORPAY_CONFIG,
+  type RazorpayOrderData,
+  type RazorpayVerificationData
+} from '../../utils/razorpay';
 
 interface RazorpayPaymentFormProps {
   amount: number;
@@ -14,17 +24,11 @@ interface RazorpayPaymentFormProps {
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
-  onSuccess: (response: any) => void;
+  onSuccess: (paymentId: string, orderId: string) => void;
   onError: (error: string) => void;
   disabled?: boolean;
 }
 
-const paymentMethods = [
-  { id: 'card', name: 'Credit/Debit Card', icon: CreditCard },
-  { id: 'upi', name: 'UPI', icon: Smartphone },
-  { id: 'netbanking', name: 'Net Banking', icon: Building2 },
-  { id: 'wallet', name: 'Wallet', icon: Wallet }
-];
 
 export function RazorpayPaymentForm({
   amount,
@@ -38,189 +42,280 @@ export function RazorpayPaymentForm({
   disabled = false
 }: RazorpayPaymentFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState('card');
+  const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [customerDetails, setCustomerDetails] = useState({
     name: customerName || '',
     email: customerEmail || '',
     phone: customerPhone || ''
   });
 
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: currency
-    }).format(amount);
-  };
+  // Load Razorpay script on component mount
+  useEffect(() => {
+    const loadRazorpayScript = async () => {
+      try {
+        await loadScript('https://checkout.razorpay.com/v1/checkout.js');
+        setIsRazorpayLoaded(true);
+        console.log('Razorpay script loaded successfully');
+      } catch (error) {
+        console.error('Failed to load Razorpay script:', error);
+        onError('Failed to load payment gateway. Please refresh the page.');
+      }
+    };
+
+    loadRazorpayScript();
+  }, [onError]);
 
   const handlePayment = async () => {
-    if (disabled || isLoading) return;
+    if (disabled || isLoading || !isRazorpayLoaded) return;
+
+    // Use props directly for validation and payment
+    const finalName = customerName || customerDetails.name || 'Guest User';
+    const finalEmail = customerEmail || customerDetails.email || 'guest@apnidukaan.com';
+    const finalPhone = customerPhone || customerDetails.phone || '+919876543210';
 
     // Validate customer details
-    if (!customerDetails.name.trim()) {
+    if (!finalName.trim()) {
       onError('Customer name is required');
       return;
     }
 
-    if (!customerDetails.email.trim()) {
+    if (!finalEmail.trim()) {
       onError('Customer email is required');
       return;
     }
 
-    if (!customerDetails.phone.trim()) {
+    if (!finalPhone.trim()) {
       onError('Customer phone is required');
       return;
     }
 
     setIsLoading(true);
+    setPaymentStatus('processing');
 
     try {
-      await razorpayService.openPaymentModal({
+      // Create Razorpay order
+      const orderData: RazorpayOrderData = {
         amount,
         currency,
         receipt,
-        customerName: customerDetails.name,
-        customerEmail: customerDetails.email,
-        customerPhone: customerDetails.phone,
-        description: `Payment for order ${receipt}`,
-        onSuccess: (response) => {
-          setIsLoading(false);
-          onSuccess(response);
+        customerName: finalName,
+        customerEmail: finalEmail,
+        customerPhone: finalPhone,
+        description: `Payment for order ${receipt}`
+      };
+
+      const orderResponse = await createRazorpayOrder(orderData);
+      
+      console.log('Order response:', orderResponse);
+      
+      if (!orderResponse.success) {
+        throw new Error(orderResponse.error || 'Failed to create order');
+      }
+
+      // Configure Razorpay options
+      const options = {
+        key: RAZORPAY_CONFIG.keyId,
+        amount: formatAmountForRazorpay(amount),
+        currency: currency,
+        name: 'ApniDukaan',
+        description: `Order #${receipt}`,
+        order_id: orderResponse.data.id,
+        prefill: {
+          name: finalName,
+          email: finalEmail,
+          contact: finalPhone
         },
-        onError: (error) => {
-          setIsLoading(false);
-          onError(error);
+        theme: RAZORPAY_CONFIG.theme,
+        // Add debugging options
+        modal: {
+          ondismiss: function() {
+            console.log('Razorpay modal dismissed');
+            setIsLoading(false);
+            setPaymentStatus('idle');
+          }
         },
-        onDismiss: () => {
-          setIsLoading(false);
+        // Real payment verification
+        handler: async function (response: any) {
+          console.log('Razorpay payment response:', response);
+          try {
+            // Verify payment on backend
+            const verificationData: RazorpayVerificationData = {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            };
+
+            const verificationResponse = await verifyRazorpayPayment(verificationData);
+            
+            if (verificationResponse.success) {
+              setPaymentStatus('success');
+              onSuccess(response.razorpay_payment_id, response.razorpay_order_id);
+            } else {
+              setPaymentStatus('error');
+              onError(verificationResponse.error || 'Payment verification failed');
+            }
+          } catch (error: any) {
+            setPaymentStatus('error');
+            onError(error.message || 'Payment verification failed');
+          } finally {
+            setIsLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: function() {
+            setIsLoading(false);
+            setPaymentStatus('idle');
+          }
         }
-      });
+      };
+
+      // Open Razorpay modal with real integration
+      console.log('Opening Razorpay with options:', options);
+      
+      const razorpay = new (window as any).Razorpay(options);
+      razorpay.open();
+
     } catch (error: any) {
+      console.error('Payment error:', error);
+      setPaymentStatus('error');
+      onError(error.message || 'Payment failed. Please try again.');
       setIsLoading(false);
-      onError(error.message || 'Payment failed');
     }
   };
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-md border border-gray-200">
-      <div className="p-6 border-b border-gray-200">
-        <h3 className="text-center text-lg font-semibold text-gray-900">Complete Payment</h3>
-        <div className="text-center text-2xl font-bold text-green-600 mt-2">
-          {formatCurrency(amount, currency)}
-        </div>
-      </div>
-      
-      <div className="p-6 space-y-6">
-        {/* Customer Details */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Customer Details</h3>
-          
-          <div className="space-y-2">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name *</label>
-            <Input
-              id="name"
-              type="text"
-              value={customerDetails.name}
-              onChange={(e) => setCustomerDetails(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Enter your full name"
-              disabled={disabled || isLoading}
-              required
-            />
+    <div className="w-full max-w-md mx-auto">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+        {/* Payment Header */}
+        <div className="px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Complete Payment</h3>
+            <span className="text-sm text-gray-500">#{receipt}</span>
           </div>
-
-          <div className="space-y-2">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email *</label>
-            <Input
-              id="email"
-              type="email"
-              value={customerDetails.email}
-              onChange={(e) => setCustomerDetails(prev => ({ ...prev, email: e.target.value }))}
-              placeholder="Enter your email"
-              disabled={disabled || isLoading}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone Number *</label>
-            <Input
-              id="phone"
-              type="tel"
-              value={customerDetails.phone}
-              onChange={(e) => setCustomerDetails(prev => ({ ...prev, phone: e.target.value }))}
-              placeholder="Enter your phone number"
-              disabled={disabled || isLoading}
-              required
-            />
-          </div>
+          <p className="text-2xl font-bold text-gray-800 mt-2">{formatCurrency(amount, currency)}</p>
         </div>
 
-        {/* Payment Method Selection */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Payment Method</h3>
-          
-          <div className="grid grid-cols-2 gap-3">
-            {paymentMethods.map((method) => {
-              const Icon = method.icon;
-              return (
-                <button
-                  key={method.id}
-                  type="button"
-                  onClick={() => setSelectedMethod(method.id)}
-                  disabled={disabled || isLoading}
-                  className={`p-3 border rounded-lg text-left transition-colors ${
-                    selectedMethod === method.id
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 hover:border-gray-300'
-                  } ${disabled || isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <Icon className="w-5 h-5" />
-                    <span className="text-sm font-medium">{method.name}</span>
-                  </div>
-                </button>
-              );
-            })}
+        {/* Form */}
+        <form className="px-6 py-4 space-y-4">
+          {/* Customer Details */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Full Name *
+              </label>
+              <Input
+                type="text"
+                value={customerDetails.name}
+                onChange={(e) => setCustomerDetails(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Enter your full name"
+                disabled={disabled || isLoading}
+                required
+                className="w-full"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email *
+              </label>
+              <Input
+                type="email"
+                value={customerDetails.email}
+                onChange={(e) => setCustomerDetails(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="Enter your email"
+                disabled={disabled || isLoading}
+                required
+                className="w-full"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Phone Number *
+              </label>
+              <Input
+                type="tel"
+                value={customerDetails.phone}
+                onChange={(e) => setCustomerDetails(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="Enter your phone number"
+                disabled={disabled || isLoading}
+                required
+                className="w-full"
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Payment Button */}
-        <Button
-          onClick={handlePayment}
-          disabled={disabled || isLoading}
-          className="w-full"
-          size="lg"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            <>
-              <CreditCard className="w-4 h-4 mr-2" />
-              Pay {formatCurrency(amount, currency)}
-            </>
+          {/* Payment Button */}
+          <div className="pt-2">
+            <Button
+              type="button"
+              onClick={handlePayment}
+              disabled={disabled || isLoading || !isRazorpayLoaded || !customerDetails.name || !customerDetails.email || !customerDetails.phone}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-md font-medium"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Pay {formatCurrency(amount, currency)}
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+
+        {/* Footer */}
+        <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+          {/* Security Notice */}
+          <div className="text-center mb-3">
+            <p className="text-xs text-gray-500 flex items-center justify-center">
+              🔒 Your payment is secured by Razorpay
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              We do not store your payment details
+            </p>
+          </div>
+
+          {/* Payment Status */}
+          {paymentStatus === 'success' && (
+            <div className="bg-green-50 border border-green-200 rounded-md p-3 mb-3">
+              <div className="flex items-center">
+                <CheckCircle className="h-4 w-4 text-green-400" />
+                <div className="ml-2">
+                  <p className="text-sm text-green-800">Payment completed successfully!</p>
+                </div>
+              </div>
+            </div>
           )}
-        </Button>
 
-        {/* Security Notice */}
-        <div className="text-xs text-gray-500 text-center">
-          <p>🔒 Your payment is secured by Razorpay</p>
-          <p>We do not store your payment details</p>
-        </div>
+          {paymentStatus === 'error' && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-3">
+              <div className="flex items-center">
+                <XCircle className="h-4 w-4 text-red-400" />
+                <div className="ml-2">
+                  <p className="text-sm text-red-800">Payment failed. Please try again.</p>
+                </div>
+              </div>
+            </div>
+          )}
 
-        {/* Supported Payment Methods */}
-        <div className="text-xs text-gray-500 text-center">
-          <p className="font-medium mb-1">Supported Payment Methods:</p>
-          <div className="flex flex-wrap justify-center gap-1">
-            {razorpayService.getSupportedMethods().map((method) => (
-              <span
-                key={method}
-                className="px-2 py-1 bg-gray-100 rounded text-xs"
-              >
-                {method.toUpperCase()}
-              </span>
-            ))}
+          {/* Supported Payment Methods */}
+          <div className="text-center">
+            <p className="text-xs text-gray-500 mb-2">Supported Payment Methods:</p>
+            <div className="flex flex-wrap justify-center gap-1">
+              {getSupportedPaymentMethods().map((method) => (
+                <span
+                  key={method}
+                  className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded"
+                >
+                  {method}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>

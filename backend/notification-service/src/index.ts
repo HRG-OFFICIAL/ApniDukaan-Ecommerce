@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 4007;
     try {
       // Connect to MongoDB Atlas
       await connectDatabase({
-        uri: process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:OELp6t3K63rHhKgJ@cluster0.0ezsixh.mongodb.net/apnidukaan_notifications?retryWrites=true&w=majority&appName=Cluster0',
+        uri: process.env.MONGODB_URI || 'mongodb+srv://userservice-dev:eKtnLTAnmTlPVM9H@cluster0.0ezsixh.mongodb.net/apnidukaan?retryWrites=true&w=majority&appName=Cluster0',
         dbName: 'notification_db'
       });
 
