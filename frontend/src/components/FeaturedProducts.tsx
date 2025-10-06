@@ -37,18 +37,20 @@ export default function FeaturedProducts({ products: propProducts }: FeaturedPro
       setLoading(true)
       try {
         // Fetch a larger pool then strictly filter to preferred SKUs (ASINs in sku)
-        const preferredSkuList = [
-          'B0BCL2S1Q7','B095P6KQGY','B0C446WHGM','B0C7RY542H','B0BRQT9GN4','B0C6MPFQT2','B08T1NZMPN','B0CCK4F1TB'
+        const preferredIdList = [
+          '68e36f6789364caaa97f3c23',
+          '68e36f6789364caaa97f3df3',
+          '68e36f6789364caaa97f3c5f',
+          '68e36f6789364caaa97f3bd3',
+          '68e36f6889364caaa97f4053',
+          '68e36f6889364caaa97f40cd',
+          '68e36f6889364caaa97f4068',
+          '68e36f6789364caaa97f3c75'
         ]
-        const preferredSkuSet = new Set(preferredSkuList.map(s => s.toLowerCase()))
 
-        // Do not require featured=true to avoid dependency on DB flag
-        const filters: ProductFilters = { status: 'published' }
-        const sort: ProductSort = { field: 'createdAt', order: 'desc' }
-
-        // Fetch exactly the preferred SKUs via by-skus endpoint for O(1) access
-        const bySkus = await productsApi.getBySkus(preferredSkuList)
-        const ordered: Product[] = Array.isArray(bySkus.data) ? bySkus.data : []
+        // Fetch exactly the preferred IDs via by-ids endpoint
+        const byIds = await productsApi.getByIds(preferredIdList)
+        const ordered: Product[] = Array.isArray(byIds.data) ? byIds.data : []
 
         if (ordered.length > 0) {
           setDataSource('database')
