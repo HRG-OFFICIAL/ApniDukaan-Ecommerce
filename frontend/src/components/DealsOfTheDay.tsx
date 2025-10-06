@@ -63,8 +63,24 @@ export default function DealsOfTheDay({ products: propProducts }: { products?: P
         }
 
         if (products.length > 0) {
+          // Reorder to prioritize requested ASINs (matched via sku)
+          const preferredSkus = new Set([
+            'B09N9XB5BC','B08GSBRR9Q','B0C121T53G','B089DQ33QW'
+          ].map(s => s.toLowerCase()))
+          products = products
+            .slice(0, desired * 2)
+            .sort((a, b) => {
+              const aPref = a.sku ? preferredSkus.has(String(a.sku).toLowerCase()) : false
+              const bPref = b.sku ? preferredSkus.has(String(b.sku).toLowerCase()) : false
+              if (aPref === bPref) return 0
+              return aPref ? -1 : 1
+            })
+            .slice(0, desired)
           setDataSource('database')
           setDeals(products)
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('deals-ready'))
+          }
         } else {
           setDataSource('fallback')
           // Helper to generate slug
@@ -212,6 +228,9 @@ export default function DealsOfTheDay({ products: propProducts }: { products?: P
             )
           ]
           setDeals(mockDeals)
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('deals-ready'))
+          }
         }
       } catch (error) {
         // Handle error silently
