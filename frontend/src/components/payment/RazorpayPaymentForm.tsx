@@ -120,22 +120,15 @@ export function RazorpayPaymentForm({
         currency: currency,
         name: 'ApniDukaan',
         description: `Order #${receipt}`,
-        order_id: orderResponse.data.id,
+        order_id: orderResponse.data.orderId,
         prefill: {
           name: finalName,
           email: finalEmail,
           contact: finalPhone
         },
         theme: RAZORPAY_CONFIG.theme,
-        // Add debugging options
-        modal: {
-          ondismiss: function() {
-            console.log('Razorpay modal dismissed');
-            setIsLoading(false);
-            setPaymentStatus('idle');
-          }
-        },
         // Real payment verification
+        
         handler: async function (response: any) {
           console.log('Razorpay payment response:', response);
           try {
