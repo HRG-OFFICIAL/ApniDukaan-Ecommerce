@@ -1,252 +1,105 @@
-# 🛍️ ApniDukaan - Enterprise E-Commerce Platform
+# ApniDukaan - E-Commerce Platform
 
-> **A production-ready, scalable e-commerce platform powered by 1.3M+ real Amazon products from Kaggle dataset**
+ApniDukaan is a full-stack e-commerce project implementing a microservices architecture. The repository includes a Next.js frontend, multiple Node.js/Express services, and infrastructure for local and containerized development.
 
-[![Next.js](https://img.shields.io/badge/Next.js-14.2.32-black)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green)](https://nodejs.org/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-6.0-green)](https://www.mongodb.com/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+## Description
 
-## 🌟 **Key Highlights**
+This project demonstrates a modular e-commerce system with separate services for catalog, users, orders, payments, cart, search, notifications, and an API gateway. It also includes deployment and monitoring configurations.
 
-- **📊 Real Dataset**: Integrated with **1.3 million+ Amazon products** from Kaggle dataset
-- **🏗️ Microservices**: Scalable architecture with 8+ independent services
-- **💳 Payment Ready**: Razorpay & Stripe integration with real API endpoints
-- **🔍 Advanced Search**: Elasticsearch-powered product discovery
-- **📱 PWA Support**: Mobile-first design with offline capabilities
-- **🌐 Multi-language**: English/Hindi support with i18n
-- **📈 Analytics**: Comprehensive business intelligence dashboard
-- **🔒 Enterprise Security**: OWASP-compliant security measures
+## Features
 
-## 🚀 Quick Start
+- Product catalog, cart, checkout, and order management
+- Authentication and role-based access control
+- Payment integration (Stripe and Razorpay)
+- Search (Elasticsearch) and analytics endpoints
+- PWA setup with service worker
+- Docker and Kubernetes manifests for deployment
+- Prometheus and Grafana monitoring configuration
 
-### Prerequisites
-- **Node.js** 18+ (LTS recommended)
-- **MongoDB** 6.0+ (local or Atlas)
-- **Redis** 6.0+ (optional for caching)
-- **Docker** & **Docker Compose** (for containerized deployment)
-- **Git** (for version control)
+## Technologies
 
-### Installation
+- Frontend: `Next.js`, `TypeScript`, `Tailwind CSS`, `Jest`
+- Backend: `Node.js`, `Express`, `TypeScript`
+- Data: `MongoDB`, `Redis`
+- Search and messaging: `Elasticsearch`, `Kafka`
+- Infrastructure: `Docker`, `Kubernetes`, `Nginx`, `Prometheus`, `Grafana`
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/apnidukaan-ecommerce.git
-   cd apnidukaan-ecommerce
-   ```
+## Installation
 
-2. **Install dependencies**
-   ```bash
-   # Install root dependencies
-   npm install
-   
-   # Install frontend dependencies
-   cd frontend && npm install && cd ..
-   
-   # Install backend dependencies
-   cd backend/shared && npm install && cd ../..
-   ```
+Prerequisites: `Node.js >= 18`, `npm >= 8`, `MongoDB`, `Docker` (optional), `Git`.
 
-3. **Environment setup**
-   ```bash
-   # Automated environment setup
-   npm run setup:env
-   
-   # Or manually create .env files based on env.example
-   cp env.example .env
-   ```
+```bash
+git clone https://github.com/your-username/apnidukaan-ecommerce.git
+cd apnidukaan-ecommerce
+npm install
+```
 
-4. **Start the platform**
-   ```bash
-   # Option 1: Start all services with npm
-   npm start
-   
-   # Option 2: Start with Docker Compose
-   docker-compose -f infrastructure/docker/docker-compose.yml up -d
-   
-   # Option 3: Start individual services
-   npm run dev:frontend    # Frontend only
-   npm run dev:backend     # Backend services only
-   ```
+Workspaces install all packages under `frontend` and `backend/*`.
 
-5. **Access the application**
-   - **Frontend**: http://localhost:3000
-   - **API Gateway**: http://localhost:4000
-   - **Analytics Dashboard**: http://localhost:3000/analytics
-   - **Grafana Monitoring**: http://localhost:3001 (admin/admin)
-   - **Prometheus Metrics**: http://localhost:9090
+## Environment Setup
 
-## 🏗️ Architecture
+- Copy environment examples where needed and adjust values.
+  - Root: `env.example` → `.env`
+  - Frontend: `frontend/.env.example` → `frontend/.env.local`
+  - Services: each service may include `.env.example`
 
-### System Overview
-ApniDukaan follows a microservices architecture pattern with clear separation of concerns, ensuring scalability, maintainability, and fault tolerance.
+You can also run:
 
-### Frontend Stack
-- **Framework**: Next.js 14 with App Router
-- **Language**: TypeScript for type safety
-- **Styling**: Tailwind CSS with custom components
-- **State Management**: Zustand for client state
-- **API Client**: Apollo Client for GraphQL
-- **UI Components**: Custom component library
-- **PWA**: Service worker with offline support
-- **i18n**: Multi-language support (English/Hindi)
-- **Testing**: Jest + React Testing Library
+```bash
+npm run setup:env
+```
 
-### Backend Services
+## Usage
 
-| Service | Port | Purpose | Technology |
-|---------|------|---------|------------|
-| **API Gateway** | 4000 | Central routing & load balancing | Express.js + TypeScript |
-| **Catalog Service** | 4001 | Product management & inventory | Express.js + MongoDB |
-| **User Service** | 4002 | Authentication & user management | Express.js + JWT |
-| **Order Service** | 4003 | Order processing & tracking | Express.js + MongoDB |
-| **Payment Service** | 4004 | Payment processing | Express.js + Stripe/Razorpay |
-| **Cart Service** | 4005 | Shopping cart management | Express.js + Redis |
-| **Search Service** | 4006 | Product search & filtering | Express.js + Elasticsearch |
-| **Notification Service** | 4007 | Email, SMS, push notifications | Express.js + Nodemailer/Twilio |
+- Start all services (development):
+  ```bash
+  npm run dev
+  ```
+- Start frontend only:
+  ```bash
+  npm run dev:frontend
+  ```
+- Start selected backend services:
+  ```bash
+  npm run dev:backend
+  ```
+- Build all workspaces:
+  ```bash
+  npm run build
+  ```
+- Docker Compose (optional):
+  ```bash
+  npm run docker:up
+  ```
 
-### Infrastructure
-- **Containerization**: Docker with multi-stage builds
-- **Orchestration**: Kubernetes manifests ready
-- **Load Balancer**: Nginx with SSL termination
-- **Monitoring**: Prometheus + Grafana + AlertManager
-- **Caching**: Redis for sessions and data caching
-- **Message Queue**: Kafka for event-driven communication
-- **Database**: MongoDB with proper indexing
-- **Search**: Elasticsearch for advanced search capabilities
+Default ports:
+- Frontend: `http://localhost:3000`
+- API Gateway: `http://localhost:4000`
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 apnidukaan-ecommerce/
-├── frontend/                          # Next.js frontend application
-│   ├── src/
-│   │   ├── app/                      # App Router pages
-│   │   ├── components/               # Reusable UI components
-│   │   ├── contexts/                 # React contexts
-│   │   ├── hooks/                    # Custom React hooks
-│   │   ├── lib/                      # Utility libraries
-│   │   ├── services/                 # API service layer
-│   │   ├── store/                    # Zustand stores
-│   │   └── types/                    # TypeScript type definitions
-│   ├── public/                       # Static assets
-│   └── package.json
-├── backend/                          # Microservices
-│   ├── api-gateway/                  # Central API gateway
-│   ├── catalog-service/              # Product management
-│   ├── user-service/                 # Authentication
-│   ├── order-service/                # Order processing
-│   ├── payment-service/              # Payment handling
-│   ├── cart-service/                 # Shopping cart
-│   ├── search-service/               # Product search
-│   ├── notification-service/         # Notifications
-│   └── shared/                       # Shared utilities
-├── infrastructure/                   # Deployment configurations
-│   ├── docker/                       # Docker configurations
-│   └── k8s/                          # Kubernetes manifests
-├── scripts/                          # Utility scripts
-│   ├── setup-environment.js          # Environment setup
-│   ├── run-all-tests.js              # Test runner
-│   └── seed-comprehensive-data.js    # Database seeding
-├── docs/                             # Documentation
-├── docker-compose.yml                # Main Docker Compose
-├── package.json                      # Root package.json
+├── frontend/             # Next.js application
+├── backend/              # Microservices (api-gateway, catalog, user, order, payment, cart, search, notification, shared)
+├── infrastructure/       # Docker and Kubernetes configs
+├── docs/                 # Documentation
+├── scripts/              # Utility scripts
+├── package.json          # Root workspaces and scripts
 └── README.md
 ```
 
-## 🛠️ Development
+## Documentation
 
-### Available Scripts
+Additional technical documentation is available under `docs/`:
+- `docs/FEATURES_OVERVIEW.md`
+- `docs/DEVELOPMENT_GUIDE.md`
+- `docs/DEPLOYMENT_GUIDE.md`
+- `docs/API_DOCUMENTATION.md`
 
-#### Root Level Scripts
-```bash
-npm start              # Start all services
-npm run dev            # Start development servers
-npm run build          # Build all services
-npm run test:all       # Run all tests
-npm run setup:env      # Setup environment files
-npm run clean          # Clean build artifacts
-```
+## License
 
-#### Frontend Scripts
-```bash
-cd frontend
-npm run dev            # Start Next.js dev server
-npm run build          # Build for production
-npm run start          # Start production server
-npm run lint           # Run ESLint
-npm run type-check     # Run TypeScript checks
-npm run test           # Run frontend tests
-```
-
-#### Backend Scripts
-```bash
-cd backend/[service-name]
-npm run dev            # Start service in development
-npm run build          # Build service
-npm run start          # Start production service
-npm run test           # Run service tests
-```
-
-### Development Workflow
-
-1. **Start all services**
-   ```bash
-   npm start
-   ```
-
-2. **Make changes** to any service
-
-3. **Run tests** to ensure quality
-   ```bash
-   npm run test:all
-   ```
-
-4. **Build for production**
-   ```bash
-   npm run build
-   ```
-
-### Service Development
-
-#### Frontend Development
-```bash
-cd frontend
-npm run dev
-# Access at http://localhost:3000
-```
-
-#### Backend Service Development
-```bash
-# Start individual services
-cd backend/catalog-service && npm run dev
-cd backend/user-service && npm run dev
-cd backend/order-service && npm run dev
-# ... other services
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-
-#### Root Environment (.env)
-```env
-NODE_ENV=development
-MONGODB_URI=mongodb://localhost:27017/apnidukaan
-REDIS_URL=redis://localhost:6379
-JWT_SECRET=your-jwt-secret-key
-API_GATEWAY_URL=http://localhost:4000
-```
-
-#### Frontend Environment (.env.local)
-```env
-NEXT_PUBLIC_API_URL=http://localhost:4000
-NEXT_PUBLIC_APP_NAME=ApniDukaan
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-nextauth-secret
-```
+This project is licensed under the MIT License. See `LICENSE` for details.
 
 #### Service-Specific Environments
 Each backend service has its own `.env` file with service-specific configurations.
@@ -277,7 +130,7 @@ redis-server
 docker run -d -p 9200:9200 -p 9300:9300 elasticsearch:7.17.0
 ```
 
-## 🧪 Testing
+## Testing
 
 ### Test Structure
 - **Unit Tests**: Individual component/function testing
@@ -307,7 +160,7 @@ npm run test:watch
 - **Backend**: 90%+ coverage
 - **Integration**: 85%+ coverage
 
-## 🚀 Deployment
+## Deployment
 
 ### Docker Deployment
 
@@ -371,7 +224,7 @@ kubectl logs -f deployment/apnidukaan-frontend
    kubectl apply -f infrastructure/k8s/production/
    ```
 
-## 📊 Monitoring & Observability
+## Monitoring & Observability
 
 ### Monitoring Stack
 - **Prometheus**: Metrics collection and storage
@@ -391,7 +244,7 @@ kubectl logs -f deployment/apnidukaan-frontend
 - **Business Metrics**: Orders, revenue, user activity
 - **Infrastructure Metrics**: Database connections, cache hit rate
 
-## 📊 **Dataset Integration**
+## **Dataset Integration**
 
 ### **Kaggle Amazon Product Dataset**
 - **Source**: [Amazon Product Dataset on Kaggle](https://www.kaggle.com/datasets/amazon-product-data)
@@ -415,38 +268,38 @@ kubectl logs -f deployment/apnidukaan-frontend
 - **Inventory Management**: Stock levels and availability tracking
 - **Search Optimization**: Enhanced search with real product data
 
-## 🎯 **Features**
+## **Features**
 
 ### **Core E-commerce Features**
-- ✅ **Massive Product Catalog**: 1.3M+ products with real Amazon data
-- ✅ **Advanced Categories**: 241+ categories with hierarchical organization
-- ✅ **Smart Search**: Elasticsearch-powered with real product data
-- ✅ **Shopping Cart**: Persistent cart with real-time updates
-- ✅ **User Authentication**: Secure JWT-based authentication
-- ✅ **Order Management**: Complete order lifecycle management
-- ✅ **Payment Processing**: Razorpay & Stripe integration with real APIs
-- ✅ **Reviews & Ratings**: Customer review system
-- ✅ **Wishlist**: Save products for later purchase
+- **Massive Product Catalog**: 1.3M+ products with real Amazon data
+- **Advanced Categories**: 241+ categories with hierarchical organization
+- **Smart Search**: Elasticsearch-powered with real product data
+- **Shopping Cart**: Persistent cart with real-time updates
+- **User Authentication**: Secure JWT-based authentication
+- **Order Management**: Complete order lifecycle management
+- **Payment Processing**: Razorpay & Stripe integration with real APIs
+- **Reviews & Ratings**: Customer review system
+- **Wishlist**: Save products for later purchase
 
 ### **Advanced Features**
-- ✅ **PWA Support**: Offline functionality and mobile app experience
-- ✅ **Multi-language**: English/Hindi support with i18n
-- ✅ **Real-time Analytics**: Business intelligence dashboard
-- ✅ **Notification System**: Email, SMS, and push notifications
-- ✅ **Admin Panel**: Comprehensive admin interface
-- ✅ **API Documentation**: Complete REST & GraphQL APIs
-- ✅ **Monitoring**: Full observability with Prometheus & Grafana
+- **PWA Support**: Offline functionality and mobile app experience
+- **Multi-language**: English/Hindi support with i18n
+- **Real-time Analytics**: Business intelligence dashboard
+- **Notification System**: Email, SMS, and push notifications
+- **Admin Panel**: Comprehensive admin interface
+- **API Documentation**: Complete REST & GraphQL APIs
+- **Monitoring**: Full observability with Prometheus & Grafana
 
 ### **Technical Excellence**
-- ✅ **Microservices Architecture**: 8+ independent services
-- ✅ **Type Safety**: 100% TypeScript coverage
-- ✅ **Testing**: Comprehensive test suite (95%+ coverage)
-- ✅ **Security**: OWASP-compliant security measures
-- ✅ **Performance**: Optimized for speed and scalability
-- ✅ **SEO**: Advanced search engine optimization
-- ✅ **Accessibility**: WCAG 2.1 compliance
+- **Microservices Architecture**: 8+ independent services
+- **Type Safety**: 100% TypeScript coverage
+- **Testing**: Comprehensive test suite (95%+ coverage)
+- **Security**: OWASP-compliant security measures
+- **Performance**: Optimized for speed and scalability
+- **SEO**: Advanced search engine optimization
+- **Accessibility**: WCAG 2.1 compliance
 
-## 🔒 Security
+## Security
 
 ### Security Measures
 - **Authentication**: JWT-based authentication with refresh tokens
@@ -466,7 +319,7 @@ kubectl logs -f deployment/apnidukaan-frontend
 - Database security
 - API security
 
-## 📈 Performance
+## Performance
 
 ### Performance Optimizations
 - **Code Splitting**: Dynamic imports for better loading
@@ -483,7 +336,7 @@ kubectl logs -f deployment/apnidukaan-frontend
 - **Bundle Size**: Optimized for production
 - **Load Time**: < 2 seconds for initial load
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please follow these steps:
 
@@ -511,7 +364,7 @@ We welcome contributions! Please follow these steps:
 4. Ensure all tests pass
 5. Request review from maintainers
 
-## 📚 Documentation
+## Documentation
 
 ### Additional Documentation
 - [API Documentation](./docs/API_DOCUMENTATION.md)
@@ -525,7 +378,7 @@ We welcome contributions! Please follow these steps:
 - **REST API**: Available at `/api` endpoints
 - **OpenAPI Spec**: Available at `/api/docs`
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -554,11 +407,11 @@ docker system prune -a
 - Review the documentation
 - Contact the development team
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🛠️ **Technology Stack**
+## **Technology Stack**
 
 ### **Frontend Technologies**
 - **Next.js 14**: React framework with App Router
@@ -592,7 +445,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Redis Cloud**: Cloud caching
 - **Elasticsearch Cloud**: Managed search
 
-## 🙏 **Acknowledgments**
+## **Acknowledgments**
 
 - **Kaggle Community**: For the comprehensive Amazon product dataset
 - **Next.js Team**: For the amazing React framework
@@ -601,16 +454,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Razorpay**: For seamless payment integration
 - **All Contributors**: Who helped make this project possible
 
-## 📞 Support
+## Support
 
 For support and questions:
 - **Email**: support@apnidukaan.com
 - **GitHub Issues**: [Create an issue](https://github.com/your-username/apnidukaan-ecommerce/issues)
 - **Documentation**: [Read the docs](./docs/)
 
----
-
-## 🚀 **Get Started Today**
+## **Get Started Today**
 
 Ready to build the next generation of e-commerce? Clone this repository and start building your own enterprise-grade e-commerce platform with real Amazon product data!
 
@@ -621,10 +472,8 @@ npm install
 npm start
 ```
 
----
+**ApniDukaan** - *Enterprise E-Commerce Platform Powered by 1.3M+ Real Products*
 
-**🛍️ ApniDukaan** - *Enterprise E-Commerce Platform Powered by 1.3M+ Real Products*
+*Built by the ApniDukaan Development Team*
 
-*Built with ❤️ by the ApniDukaan Development Team*
-
-**⭐ Star this repository if you found it helpful!**
+**Star this repository if you found it helpful!**

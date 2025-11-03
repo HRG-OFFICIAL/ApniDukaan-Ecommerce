@@ -185,6 +185,9 @@ junit.xml
 tmp/
 temp/
 
+# Buffer/temp artifacts
+tBuffer*
+
 # Vercel
 # Note: .vercel/ is needed for Vercel deployment configuration
 # But ignore build artifacts

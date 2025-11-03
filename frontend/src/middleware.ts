@@ -81,7 +81,7 @@ export async function middleware(request: NextRequest) {
   )
   
   const isPublicRoute = PUBLIC_ROUTES.some(route => 
-    pathname === route || pathname.startsWith(route)
+    pathname === route || pathname.startsWith(route + '/')
   )
   
   if (!isProtectedRoute && isPublicRoute) {
@@ -160,12 +160,6 @@ function handleApiProxy(request: NextRequest): NextResponse {
   // Handle other API routes (API Gateway)
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
   const backendUrl = `${apiUrl}${pathname.replace('/api', '')}${search}`
-  
-  // Create headers for the proxied request
-  const headers = new Headers(request.headers)
-  headers.set('X-Forwarded-For', request.ip || '')
-  headers.set('X-Forwarded-Host', request.headers.get('host') || '')
-  headers.set('X-Forwarded-Proto', request.nextUrl.protocol.slice(0, -1))
   
   return NextResponse.rewrite(new URL(backendUrl))
 }

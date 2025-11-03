@@ -561,15 +561,6 @@ function ProductsContent() {
                                 (e.target as HTMLImageElement).src = '/placeholder-product.jpg'
                               }}
                             />
-                          ) : product.image ? (
-                            <img
-                              src={product.image}
-                              alt={product.name}
-                              className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = '/placeholder-product.jpg'
-                              }}
-                            />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
                               <div className="text-center">
@@ -583,13 +574,13 @@ function ProductsContent() {
                           
                           {/* Product Badges */}
                           <div className="absolute top-2 left-2 flex flex-col gap-1">
-                            {product.isNew && (
+                            {(product as any)?.isNew && (
                               <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">New</span>
                             )}
                             {product.isOnSale && (
                               <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">Sale</span>
                             )}
-                            {product.isBestseller && (
+                            {(product as any)?.isBestseller && (
                               <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium">Bestseller</span>
                             )}
                           </div>
