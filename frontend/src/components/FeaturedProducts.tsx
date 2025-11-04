@@ -97,7 +97,12 @@ export default function FeaturedProducts({ products: propProducts }: FeaturedPro
   }
 
   if (!featuredProducts || featuredProducts.length === 0) {
-    return <div className="text-center text-gray-600">No featured products available.</div>
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-700 font-medium">No featured products available.</p>
+        <p className="text-gray-500 text-sm mt-2">If this seems unexpected, please try refreshing the page.</p>
+      </div>
+    )
   }
 
   return (

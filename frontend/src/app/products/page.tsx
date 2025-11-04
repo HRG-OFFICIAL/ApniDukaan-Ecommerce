@@ -287,11 +287,7 @@ function ProductsContent() {
             <div className="flex-1">
               <h1 className="text-4xl font-bold tracking-tight text-gray-900">Products</h1>
               <p className="mt-4 text-base text-gray-500">
-                {loading ? (
-                  <Loading size="sm" text="Loading products..." />
-                ) : (
-                  `Discover our amazing collection of ${totalProducts} products`
-                )}
+                {!loading && `Discover our amazing collection of ${totalProducts.toLocaleString()} products`}
               </p>
               
               {/* API Error Display */}
@@ -633,6 +629,7 @@ function ProductsContent() {
                   </svg>
                   <h3 className="mt-2 text-sm font-medium text-gray-900">No products found</h3>
                   <p className="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria.</p>
+                  <p className="mt-2 text-xs text-gray-500">If this seems unexpected, try refreshing the page.</p>
                   <Button
                     variant="ghost"
                     onClick={clearAllFilters}

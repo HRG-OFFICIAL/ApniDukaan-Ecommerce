@@ -12,6 +12,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, className = '' }) =
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">No products found.</p>
+        <p className="text-gray-400 text-sm mt-1">If this seems unexpected, try refreshing the page.</p>
       </div>
     );
   }

@@ -278,6 +278,7 @@ export default function CategoryPage() {
                 : `No products available in ${categoryInfo.name} yet.`
               }
             </p>
+            <p className="text-xs text-gray-500 mb-2">If this seems unexpected, try refreshing the page.</p>
             {searchQuery && (
               <Button
                 variant="outline"
