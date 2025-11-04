@@ -2,6 +2,10 @@
 
 ApniDukaan is a full-stack e-commerce project implementing a microservices architecture. The repository includes a Next.js frontend, multiple Node.js/Express services, and infrastructure for local and containerized development.
 
+## Quick Preview
+
+![Homepage Screenshot](./docs/home.png)
+
 ## Description
 
 This project demonstrates a modular e-commerce system with separate services for catalog, users, orders, payments, cart, search, notifications, and an API gateway. It also includes deployment and monitoring configurations.
