@@ -24,6 +24,7 @@ import { Breadcrumb } from '../../components/ui/Breadcrumb'
 import MainLayout from '../../components/layout/MainLayout'
 import { SyncErrorAlert } from '../../components/ui/ApiErrorAlert'
 import toast from 'react-hot-toast'
+import { useCartStore } from '../../store/useCartStore'
 
 // Fallback mock data in case API fails
 // Fallback products removed - using API products only
@@ -61,6 +62,7 @@ function ProductsContent() {
   } = useProductsStore()
   
   const { viewMode, setViewMode, addToSearchHistory } = usePreferencesStore()
+  const { addItem } = useCartStore()
   
   const [selectedCategory, setSelectedCategory] = useState('All Categories')
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 })
@@ -603,7 +605,21 @@ function ProductsContent() {
                           </div>
                           
                           {/* Add to Cart Button - Fixed at Bottom */}
-                          <button className="w-full mt-auto bg-black text-white py-2 px-4 rounded-md hover:bg-gray-800 transition-colors duration-200 text-sm font-medium">
+                          <button
+                            className="w-full mt-auto bg-black text-white py-2 px-4 rounded-md hover:bg-gray-800 transition-colors duration-200 text-sm font-medium"
+                            onClick={() => {
+                              const id = (product as any)._id || (product as any).id
+                              addItem({
+                                id,
+                                productId: id,
+                                name: product.name,
+                                price: product.price,
+                                image: Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : '',
+                                maxStock: (product as any).inventory?.quantity ?? 0
+                              })
+                              toast.success('Added to cart!')
+                            }}
+                          >
                             Add to Cart
                           </button>
                         </div>
