@@ -18,7 +18,17 @@ export default function Home() {
   if (loading) {
     return (
       <MainLayout pageTitle="Home" className="bg-gray-50">
-        <div className="min-h-[60vh] flex items-center justify-center">Loading...</div>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center max-w-xl px-4">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <h2 className="text-lg font-semibold text-gray-900">Fetching products…</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              We’re loading data from our free MongoDB tier. It can take up to about
+              1 minute while we fetch ~2 lakh (200,000) products. Thanks for your
+              patience!
+            </p>
+          </div>
+        </div>
       </MainLayout>
     )
   }

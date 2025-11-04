@@ -156,7 +156,7 @@ class ApiClient {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      // Suppress noisy console errors; rethrow for caller handling
       throw error;
     }
   }

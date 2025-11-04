@@ -265,6 +265,10 @@ export default function DealsOfTheDay({ products: propProducts }: { products?: P
   if (loading) {
     return (
       <div>
+        <p className="text-center text-sm text-gray-600 mb-4">
+          We’re fetching today’s deals from our free MongoDB tier. It may take
+          up to about 1 minute to load data. Thanks for your patience!
+        </p>
         <div className="flex justify-center items-center gap-3 mb-6 text-gray-700">
           <span className="font-medium">Offer ends in:</span>
           <span className="bg-red-500 text-white px-3 py-1 rounded-md font-semibold text-sm">

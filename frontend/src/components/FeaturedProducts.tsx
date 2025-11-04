@@ -64,7 +64,6 @@ export default function FeaturedProducts({ products: propProducts }: FeaturedPro
           setFeaturedProducts([])
         }
       } catch (error) {
-        console.error('FeaturedProducts fetch failed:', error)
         setDataSource('database')
         setFeaturedProducts([])
       } finally {
@@ -77,15 +76,22 @@ export default function FeaturedProducts({ products: propProducts }: FeaturedPro
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[...Array(8)].map((_, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-md p-4 animate-pulse">
-            <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
-            <div className="bg-gray-200 h-4 rounded mb-2"></div>
-            <div className="bg-gray-200 h-4 rounded mb-2 w-3/4"></div>
-            <div className="bg-gray-200 h-6 rounded w-1/2"></div>
-          </div>
-        ))}
+      <div>
+        <p className="text-center text-sm text-gray-600 mb-4">
+          We’re fetching featured products from our free MongoDB tier. It may
+          take up to about 1 minute to load ~2 lakh (200,000) products. Thanks
+          for your patience!
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, index) => (
+            <div key={index} className="bg-white rounded-lg shadow-md p-4 animate-pulse">
+              <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
+              <div className="bg-gray-200 h-4 rounded mb-2"></div>
+              <div className="bg-gray-200 h-4 rounded mb-2 w-3/4"></div>
+              <div className="bg-gray-200 h-6 rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
