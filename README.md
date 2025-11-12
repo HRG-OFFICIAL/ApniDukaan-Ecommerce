@@ -457,14 +457,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Open Source Contributors**: For the incredible ecosystem
 - **Razorpay**: For seamless payment integration
 - **All Contributors**: Who helped make this project possible
-
-## Support
-
-For support and questions:
-- **Email**: support@apnidukaan.com
-- **GitHub Issues**: [Create an issue](https://github.com/your-username/apnidukaan-ecommerce/issues)
-- **Documentation**: [Read the docs](./docs/)
-
+  
 ## **Get Started Today**
 
 Ready to build the next generation of e-commerce? Clone this repository and start building your own enterprise-grade e-commerce platform with real Amazon product data!
@@ -475,9 +468,3 @@ cd apnidukaan-ecommerce
 npm install
 npm start
 ```
-
-**ApniDukaan** - *Enterprise E-Commerce Platform Powered by 1.3M+ Real Products*
-
-*Built by the ApniDukaan Development Team*
-
-**Star this repository if you found it helpful!**
