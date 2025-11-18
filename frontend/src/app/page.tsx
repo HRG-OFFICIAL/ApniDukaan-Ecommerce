@@ -23,9 +23,7 @@ export default function Home() {
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <h2 className="text-lg font-semibold text-gray-900">Fetching products…</h2>
             <p className="mt-2 text-sm text-gray-600">
-              We’re loading data from our free MongoDB tier. It can take up to about
-              1 minute while we fetch ~2 lakh (200,000) products. Thanks for your
-              patience!
+              We’re reconnecting to our MongoDB Atlas cluster. After a period of inactivity, the cluster may need to resume from idle (cold start), which can take up to ~1 minute while DNS/TLS handshakes complete and the driver warms its connection pool. We have a database of 2 lakh (200,000) products to browse from, and data will appear as soon as the cluster is online. Thanks for your patience!
             </p>
           </div>
         </div>
